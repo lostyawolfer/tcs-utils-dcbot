@@ -58,6 +58,12 @@ async def remove_role(member: discord.Member, role_id: int) -> None:
 
 
 
+async def count_people_in_vc() -> int:
+    guild = bot.get_guild(TARGET_GUILD)
+    channel = guild.get_channel(CHANNELS['vc'])
+    res = len(channel.members)
+    return res
+
 async def check_voice_state(member: discord.Member) -> None:
     guild = member.guild
     if not check_guild(guild.id):
@@ -69,7 +75,7 @@ async def check_voice_state(member: discord.Member) -> None:
 
     if member.voice and member.voice.channel == vc:
         if not has_role(member, ROLES['in_vc']):
-            await send(message('join_vc', name=member.display_name))
+            await send(message('join_vc', name=member.display_name, count=count_people_in_vc()))
 
         if has_role(member, ROLES['leader']):
             await add_role(member, ROLES['in_vc_leader'])
@@ -78,7 +84,7 @@ async def check_voice_state(member: discord.Member) -> None:
 
     else:
         if has_role(member, ROLES['in_vc']):
-            await send(message('leave_vc', name=member.display_name))
+            await send(message('leave_vc', name=member.display_name, count=count_people_in_vc()))
         await remove_role(member, ROLES['in_vc'])
         await remove_role(member, ROLES['in_vc_leader'])
         await add_role(member, ROLES['not_in_vc'])
@@ -188,8 +194,9 @@ async def on_ready():
                 member_n += 1
                 await status_message.edit(
                     content=f'bot restarted\n-# *checking member {member_n}/{guild.member_count}* …')
-                await check_voice_state(member)
-                await pure_check_availability_state(member)
+                if not member.bot:
+                    await check_voice_state(member)
+                    await pure_check_availability_state(member)
                 await status_message.edit(
                     content=f'bot restarted\n-# *checking member {member_n}/{guild.member_count}* ✓')
             await status_message.edit(content=f'bot restarted\n-# *done*')
@@ -198,6 +205,9 @@ async def on_ready():
 async def on_voice_state_update(member, before, after):
     guild = member.guild
     if not check_guild(guild.id):
+        return
+
+    if member.bot:
         return
 
     vc = guild.get_channel(CHANNELS['vc'])
@@ -210,6 +220,8 @@ async def on_voice_state_update(member, before, after):
 async def on_raw_reaction_add(payload):
     if not check_guild(payload.guild_id):
         return
+    if payload.member.bot:
+        return
     if payload.message_id == CHANNELS['availability_message']:
         emoji_id = payload.emoji.id
         if emoji_id == CHANNELS['availability_reaction']:
@@ -219,6 +231,8 @@ async def on_raw_reaction_add(payload):
 @bot.event
 async def on_raw_reaction_remove(payload):
     if not check_guild(payload.guild_id):
+        return
+    if payload.member.bot:
         return
     if payload.message_id == CHANNELS['availability_message']:
         emoji_id = payload.emoji.id
