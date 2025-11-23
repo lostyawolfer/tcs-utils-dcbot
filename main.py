@@ -288,12 +288,15 @@ async def test(ctx):
     await ctx.send('test pass')
 
 @bot.command()
-@commands.has_permissions(kick_members=True)
+#@commands.has_permissions(kick_members=True)
 async def kick(ctx, member: discord.Member, *, reason: str = None):
     if member == ctx.author:
         return await ctx.send(message("nuh_uh"))
-    if member == ctx.guild.me:  # Prevent bot from kicking itself
+    if member == ctx.guild.me:
         return await ctx.send(message("nuh_uh"))
+    if not ctx.author.guild_permissions.kick_members:
+        return await ctx.send(message("nuh_uh"))
+
     try:
         await member.kick(reason=reason)
     except discord.Forbidden:
@@ -304,12 +307,15 @@ async def kick(ctx, member: discord.Member, *, reason: str = None):
         print(f"Error kicking {member.display_name} (ID: {member.id}): {e}")
 
 @bot.command()
-@commands.has_permissions(ban_members=True)
+#@commands.has_permissions(ban_members=True)
 async def ban(ctx, member: discord.Member, *, reason: str = None):
     if member == ctx.author:
         return await ctx.send(message("nuh_uh"))
     if member == ctx.guild.me:  # Prevent bot from kicking itself
         return await ctx.send(message("nuh_uh"))
+    if not ctx.author.guild_permissions.ban_members:
+        return await ctx.send(message("nuh_uh"))
+
     try:
         await member.ban(reason=reason)
     except discord.Forbidden:
@@ -320,11 +326,13 @@ async def ban(ctx, member: discord.Member, *, reason: str = None):
         print(f"Error banning {member.display_name} (ID: {member.id}): {e}")
 
 @bot.command()
-@commands.has_permissions(moderate_members=True)
+#@commands.has_permissions(moderate_members=True)
 async def mute(ctx, member: discord.Member, duration: str, *, reason: str = None):
     if member == ctx.author:
         return await ctx.send(message("nuh_uh"))
     if member == ctx.guild.me:
+        return await ctx.send(message("nuh_uh"))
+    if not ctx.author.guild_permissions.moderate_members:
         return await ctx.send(message("nuh_uh"))
 
     timeout_duration = None
@@ -366,9 +374,11 @@ async def mute(ctx, member: discord.Member, duration: str, *, reason: str = None
         print(f"Error muting {member.display_name} (ID: {member.id}): {e}")
 
 @bot.command()
-@commands.has_permissions(moderate_members=True)
+#@commands.has_permissions(moderate_members=True)
 async def unmute(ctx, member: discord.Member, *, reason: str = None):
     if not member.is_timed_out():
+        return await ctx.send(message("nuh_uh"))
+    if not ctx.author.guild_permissions.moderate_members:
         return await ctx.send(message("nuh_uh"))
 
     try:
