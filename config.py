@@ -105,7 +105,7 @@ _MESSAGES = {
         f"{_EMOJI['available']} **{{name}}** is now available to participate in the challenge *({{available_count}}/8)*"
     ],
     "available_ping": [
-        f"-# we have 8 people! <@{ROLES['available']}>, go to <#{CHANNELS['ps_link']}> before someone leaves again"
+        f"-# we have 8 people! <@&{ROLES['available']}>, go to <#{CHANNELS['ps_link']}> before someone leaves again"
     ],
     "unavailable": [
         f"{_EMOJI['unavailable']} **{{name}}** is no longer available *({{available_count}}/8)*"
