@@ -297,10 +297,10 @@ async def kick(ctx, member: discord.Member, *, reason: str = None):
     try:
         await member.kick(reason=reason)
     except discord.Forbidden:
-        await ctx.send(message("nuh_uh"))
+        await ctx.send(message("bot_doesnt_have_perms"))
         print(f"Bot lacks permissions to kick {member.display_name} (ID: {member.id})")
     except Exception as e:
-        await ctx.send(message("nuh_uh"))
+        await ctx.send(message("bot_doesnt_have_perms"))
         print(f"Error kicking {member.display_name} (ID: {member.id}): {e}")
 
 @bot.command()
@@ -313,11 +313,11 @@ async def ban(ctx, member: discord.Member, *, reason: str = None):
     try:
         await member.ban(reason=reason)
     except discord.Forbidden:
-        await ctx.send(message("nuh_uh"))
-        print(f"Bot lacks permissions to kick {member.display_name} (ID: {member.id})")
+        await ctx.send(message("bot_doesnt_have_perms"))
+        print(f"Bot lacks permissions to ban {member.display_name} (ID: {member.id})")
     except Exception as e:
-        await ctx.send(message("nuh_uh"))
-        print(f"Error kicking {member.display_name} (ID: {member.id}): {e}")
+        await ctx.send(message("bot_doesnt_have_perms"))
+        print(f"Error banning {member.display_name} (ID: {member.id}): {e}")
 
 @bot.command()
 @commands.has_permissions(moderate_members=True)

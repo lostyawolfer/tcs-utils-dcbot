@@ -129,7 +129,13 @@ _MESSAGES = {
         f"{_EMOJI['birthday']} happy birthday, {{mention}}!!"
     ],
     "nuh_uh": [
-        "https://cdn.discordapp.com/attachments/715528165132599337/1442162843452440777/nuh-uh-3d-thumbnail-url-7g84og.png?ex=69246e4f&is=69231ccf&hm=b1bf1bb44ee89017d8404d35a1b0812eef3c6dc29a870ef3a8fefaa96fc7353e&"
+        "https://cdn.discordapp.com/attachments/715528165132599337/1442162843452440777/nuh-uh-3d-thumbnail-url-7g84og.png?ex=69246e4f&is=69231ccf&hm=b1bf1bb44ee89017d8404d35a1b0812eef3c6dc29a870ef3a8fefaa96fc7353e&",
+        "https://cdn.discordapp.com/attachments/715528165132599337/1442288061550563429/image.png?ex=6924e2ee&is=6923916e&hm=a8cf353e9b11473ae21a33cb7615f2f0369e2aa47bc6649b87798ccad07b5edd&",
+        "https://cdn.discordapp.com/attachments/715528165132599337/1442289370970460351/the-sybau-image-without-text-v0-uffld2n8mj1f1.png?ex=6924e426&is=692392a6&hm=857fc631938e0ed5a2b9fd79e3765f4598d9981b1c764505979bec11d200ab7c&",
+        "https://cdn.discordapp.com/attachments/715528165132599337/1442290208904183838/image.png?ex=6924e4ee&is=6923936e&hm=c3bcf903940e91605f0ed2f8bf399bdd43007de6fb2dc682693916345c7c65eb&"
+    ],
+    "bot_doesnt_have_perms": [
+        "https://cdn.discordapp.com/attachments/715528165132599337/1442288380766457977/artworks-000519533403-ovb003-t1080x1080.png?ex=6924e33a&is=692391ba&hm=1ce891ca81be59241658390d96198e442226d78d4b4c7e708a28f5355f6ac5bb&"
     ]
 }
 
