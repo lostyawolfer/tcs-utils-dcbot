@@ -149,8 +149,11 @@ async def add_availability(member: discord.Member) -> None:
     if not check_guild(guild.id):
         return
 
+    available_people = await count_available_people()
     if not has_role(member, ROLES['available']):
-        await send(message('available', name=member.display_name, available_count=await count_available_people()))
+        await send(message('available', name=member.display_name, available_count=available_people))
+        if available_people >= 8:
+            await send(message('available_ping'))
 
     if has_role(member, ROLES['leader']):
         await add_role(member, ROLES['available_leader'])
@@ -183,9 +186,12 @@ async def on_ready():
             member_n = 0
             for member in guild.members:
                 member_n += 1
+                await status_message.edit(
+                    content=f'bot restarted\n-# *checking member {member_n}/{guild.member_count}* …')
                 await check_voice_state(member)
                 await pure_check_availability_state(member)
-                await status_message.edit(content=f'bot restarted\n-# *checking member {member_n}/{guild.member_count}*')
+                await status_message.edit(
+                    content=f'bot restarted\n-# *checking member {member_n}/{guild.member_count}* ✓')
             await status_message.edit(content=f'bot restarted\n-# *done*')
 
 @bot.event
