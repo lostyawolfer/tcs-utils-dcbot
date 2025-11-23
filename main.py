@@ -75,7 +75,7 @@ async def check_voice_state(member: discord.Member) -> None:
 
     if member.voice and member.voice.channel == vc:
         if not has_role(member, ROLES['in_vc']):
-            await send(message('join_vc', name=member.display_name, count=count_people_in_vc()))
+            await send(message('join_vc', name=member.display_name, count=await count_people_in_vc()))
 
         if has_role(member, ROLES['leader']):
             await add_role(member, ROLES['in_vc_leader'])
@@ -84,7 +84,7 @@ async def check_voice_state(member: discord.Member) -> None:
 
     else:
         if has_role(member, ROLES['in_vc']):
-            await send(message('leave_vc', name=member.display_name, count=count_people_in_vc()))
+            await send(message('leave_vc', name=member.display_name, count=await count_people_in_vc()))
         await remove_role(member, ROLES['in_vc'])
         await remove_role(member, ROLES['in_vc_leader'])
         await add_role(member, ROLES['not_in_vc'])
