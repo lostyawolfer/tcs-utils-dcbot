@@ -220,7 +220,7 @@ async def on_voice_state_update(member, before, after):
 async def on_raw_reaction_add(payload):
     if not check_guild(payload.guild_id):
         return
-    if payload.member.bot:
+    if payload.member and payload.member.bot:
         return
     if payload.message_id == CHANNELS['availability_message']:
         emoji_id = payload.emoji.id
@@ -232,7 +232,7 @@ async def on_raw_reaction_add(payload):
 async def on_raw_reaction_remove(payload):
     if not check_guild(payload.guild_id):
         return
-    if payload.member.bot:
+    if payload.member and payload.member.bot:
         return
     if payload.message_id == CHANNELS['availability_message']:
         emoji_id = payload.emoji.id
