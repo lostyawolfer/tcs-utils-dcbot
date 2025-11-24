@@ -139,6 +139,12 @@ _MESSAGES = {
     ],
     "bot_doesnt_have_perms": [
         "https://cdn.discordapp.com/attachments/715528165132599337/1442288380766457977/artworks-000519533403-ovb003-t1080x1080.png?ex=6924e33a&is=692391ba&hm=1ce891ca81be59241658390d96198e442226d78d4b4c7e708a28f5355f6ac5bb&"
+    ],
+    "channel_lock": [
+        "🔒 channel was locked"
+    ],
+    "channel_unlock": [
+        "🔓 channel was unlocked"
     ]
 }
 

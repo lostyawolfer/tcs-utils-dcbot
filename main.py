@@ -341,7 +341,6 @@ async def mute(ctx, member: discord.Member, duration: str, *, reason: str = None
     if not ctx.author.guild_permissions.moderate_members:
         return await ctx.send(message("nuh_uh"))
 
-    timeout_duration = None
     try:
         if duration.endswith('s'):
             seconds = int(duration[:-1])
@@ -373,10 +372,10 @@ async def mute(ctx, member: discord.Member, duration: str, *, reason: str = None
     except ValueError:
         return await ctx.send("wrong duration format you moron")
     except discord.Forbidden:
-        await ctx.send(message("nuh_uh"))
+        await ctx.send(message("bot_doesnt_have_perms"))
         print(f"Bot lacks permissions to timeout {member.display_name} (ID: {member.id})")
     except Exception as e:
-        await ctx.send(message("nuh_uh"))
+        await ctx.send(message("bot_doesnt_have_perms"))
         print(f"Error muting {member.display_name} (ID: {member.id}): {e}")
 
 @bot.command()
@@ -392,12 +391,95 @@ async def unmute(ctx, member: discord.Member, *, reason: str = None):
         await ctx.send(f"unmuted :white_check_mark:")
         print(f"Unmuted {member.display_name} (ID: {member.id}) by {ctx.author.display_name} for: {reason}")
     except discord.Forbidden:
-        await ctx.send(message("nuh_uh"))
+        await ctx.send(message("bot_doesnt_have_perms"))
         print(f"Bot lacks permissions to unmute {member.display_name} (ID: {member.id})")
     except Exception as e:
-        await ctx.send(message("nuh_uh"))
+        await ctx.send(message("bot_doesnt_have_perms"))
         print(f"Error unmuting {member.display_name} (ID: {member.id}): {e}")
 
+
+
+@bot.command()
+async def warn(ctx, member: discord.Member, *, reason: str = None):
+    if member == ctx.author:
+        return await ctx.send(message("nuh_uh"))
+    if member == ctx.guild.me:
+        return await ctx.send(message("nuh_uh"))
+    if ctx.author.top_role <= member.top_role and ctx.author.id != ctx.guild.owner_id:
+        return await ctx.send(message("nuh_uh"))
+    if not ctx.author.guild_permissions.moderate_members:
+        return await ctx.send(message("nuh_uh"))
+
+    try:
+        if member.guild.get_role(ROLES['warn_1']) in member.roles:
+            timeout_duration = datetime.timedelta(days=3)
+            await member.timeout(timeout_duration, reason=reason)
+            await ctx.send(f"warned the guy :white_check_mark:\nwarn 2/3\nthey're muted for 3 days")
+
+        elif member.guild.get_role(ROLES['warn_2']) in member.roles:
+            timeout_duration = datetime.timedelta(days=7)
+            await member.timeout(timeout_duration, reason=reason)
+            await ctx.send(f"warned the guy :white_check_mark:\nwarn 3/3\nthey're muted for 7 days\nnext warn will ban them btw")
+
+        elif member.guild.get_role(ROLES['warn_2']) in member.roles:
+            await member.ban()
+
+        else:
+            timeout_duration = datetime.timedelta(days=1)
+            await member.timeout(timeout_duration, reason=reason)
+            await ctx.send(f"warned the guy :white_check_mark:\nwarn 1/3\nthey're muted for 1 day")
+    except Exception as e:
+        await ctx.send(message("bot_doesnt_have_perms"))
+        print(f"Error warning {member.display_name} (ID: {member.id}): {e}")
+
+@bot.command()
+async def clear_warns(ctx, member: discord.Member):
+    if not member.is_timed_out():
+        return await ctx.send(message("nuh_uh"))
+    if not ctx.author.guild_permissions.moderate_members:
+        return await ctx.send(message("nuh_uh"))
+
+    try:
+        await member.timeout(None)
+        await remove_role(member, ROLES['warn_1'])
+        await remove_role(member, ROLES['warn_2'])
+        await remove_role(member, ROLES['warn_3'])
+        await ctx.send(f"cleared all warns :white_check_mark:")
+    except discord.Forbidden:
+        await ctx.send(message("bot_doesnt_have_perms"))
+        print(f"Bot lacks permissions to unwarn {member.display_name} (ID: {member.id})")
+    except Exception as e:
+        await ctx.send(message("bot_doesnt_have_perms"))
+        print(f"Error unwarning {member.display_name} (ID: {member.id}): {e}")
+
+
+@bot.command()
+async def lock(ctx):
+    if not ctx.author.guild_permissions.manage_channels:
+        return await ctx.send(message("nuh_uh"))
+
+    try:
+        await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
+        await ctx.send(message("channel_lock"))
+
+    except discord.Forbidden:
+        await ctx.send(message("bot_doesnt_have_perms"))
+    except Exception as e:
+        await ctx.send(message("bot_doesnt_have_perms") + '\n' + f'{e}')
+
+@bot.command()
+async def unlock(ctx):
+    if not ctx.author.guild_permissions.manage_channels:
+        return await ctx.send(message("nuh_uh"))
+
+    try:
+        await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=None)
+        await ctx.send(message("channel_unlock"))
+
+    except discord.Forbidden:
+        await ctx.send(message("bot_doesnt_have_perms"))
+    except Exception as e:
+        await ctx.send(message("bot_doesnt_have_perms") + '\n' + f'{e}')
 
 
 if __name__ == '__main__':
