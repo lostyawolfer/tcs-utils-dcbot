@@ -294,6 +294,8 @@ async def kick(ctx, member: discord.Member, *, reason: str = None):
         return await ctx.send(message("nuh_uh"))
     if member == ctx.guild.me:
         return await ctx.send(message("nuh_uh"))
+    if ctx.author.top_role <= member.top_role and ctx.author.id != ctx.guild.owner_id:
+        return await ctx.send(message("nuh_uh"))
     if not ctx.author.guild_permissions.kick_members:
         return await ctx.send(message("nuh_uh"))
 
@@ -313,11 +315,13 @@ async def ban(ctx, member: discord.Member, *, reason: str = None):
         return await ctx.send(message("nuh_uh"))
     if member == ctx.guild.me:  # Prevent bot from kicking itself
         return await ctx.send(message("nuh_uh"))
+    if ctx.author.top_role <= member.top_role and ctx.author.id != ctx.guild.owner_id:
+        return await ctx.send(message("nuh_uh"))
     if not ctx.author.guild_permissions.ban_members:
         return await ctx.send(message("nuh_uh"))
 
     try:
-        await member.ban(reason=reason)
+        await member.ban(reason=reason, delete_message_days=0, delete_message_seconds=0)
     except discord.Forbidden:
         await ctx.send(message("bot_doesnt_have_perms"))
         print(f"Bot lacks permissions to ban {member.display_name} (ID: {member.id})")
@@ -331,6 +335,8 @@ async def mute(ctx, member: discord.Member, duration: str, *, reason: str = None
     if member == ctx.author:
         return await ctx.send(message("nuh_uh"))
     if member == ctx.guild.me:
+        return await ctx.send(message("nuh_uh"))
+    if ctx.author.top_role <= member.top_role and ctx.author.id != ctx.guild.owner_id:
         return await ctx.send(message("nuh_uh"))
     if not ctx.author.guild_permissions.moderate_members:
         return await ctx.send(message("nuh_uh"))
