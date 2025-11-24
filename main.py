@@ -414,11 +414,13 @@ async def warn(ctx, member: discord.Member, *, reason: str = None):
         if member.guild.get_role(ROLES['warn_1']) in member.roles:
             timeout_duration = datetime.timedelta(days=3)
             await member.timeout(timeout_duration, reason=reason)
+            await add_role(member, ROLES['warn_2'])
             await ctx.send(f"warned the guy :white_check_mark:\nwarn 2/3\nthey're muted for 3 days")
 
         elif member.guild.get_role(ROLES['warn_2']) in member.roles:
             timeout_duration = datetime.timedelta(days=7)
             await member.timeout(timeout_duration, reason=reason)
+            await add_role(member, ROLES['warn_3'])
             await ctx.send(f"warned the guy :white_check_mark:\nwarn 3/3\nthey're muted for 7 days\nnext warn will ban them btw")
 
         elif member.guild.get_role(ROLES['warn_2']) in member.roles:
@@ -426,6 +428,7 @@ async def warn(ctx, member: discord.Member, *, reason: str = None):
 
         else:
             timeout_duration = datetime.timedelta(days=1)
+            await add_role(member, ROLES['warn_1'])
             await member.timeout(timeout_duration, reason=reason)
             await ctx.send(f"warned the guy :white_check_mark:\nwarn 1/3\nthey're muted for 1 day")
     except Exception as e:
