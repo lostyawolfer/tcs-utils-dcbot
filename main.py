@@ -425,7 +425,7 @@ async def warn(ctx, member: discord.Member, *, reason: str = None):
             await remove_role(member, ROLES['warn_2'])
             await ctx.send(f"warned the guy :white_check_mark:\nwarn 3/3\nthey're muted for 7 days\nnext warn will ban them btw")
 
-        elif member.guild.get_role(ROLES['warn_2']) in member.roles:
+        elif member.guild.get_role(ROLES['warn_3']) in member.roles:
             await member.ban()
 
         else:
