@@ -46,11 +46,12 @@ CHANNELS = {
     "availability": 1434653852367585300,
     "availability_message": 1434654321886363658,
     "availability_reaction": 1439620553572089900,
-    "ps_link": 1426974154556702720
+    "ps_link": 1426974154556702720,
+    "best_runs": 1427066908812906526
 }
 
 
-_EMOJI = {
+EMOJI = {
     "join": "<:join:1436503008924926052>",
     "leave": "<:leave:1436503027937841173>",
     "ban": "<:ban:1438882547588141118>",
@@ -63,73 +64,77 @@ _EMOJI = {
     "leave_vc": "<:leave_vc:1436528566174220289>",
     "promotion": "<:promotion:1442087863347974294>",
     "demotion": "<:demotion:1442087886391607376>",
-    "birthday": ""
+    "birthday": "",
+    "leader": "<:leader:1436531052670619791>", # ON THE SERVER
+    "death": "<:death:1436531054704852993>", # ON THE SERVER
+    "disconnect": "<:disconnected:1439792812165038080>", # ON THE SERVER
+    "blank": "<:blank:1436531505831612456>", # ON THE SERVER
 }
 
 _MESSAGES = {
     "join": [
-        f"{_EMOJI['join']} Is {{mention}} really ready for this? After all, not many people have the patience to wait for 8 players to join.",
-        f"{_EMOJI['join']} {{mention}} should now prepare to die in the backdoor a hundred times as part of join process.",
-        f"{_EMOJI['join']} Don't worry {{mention}}, the lights flicker only *most* of the time.",
-        f"{_EMOJI['join']} It's time for {{mention}} to acknowledge the possibility of pain and seizure.",
-        f"{_EMOJI['join']} {{mention}} just joined! Quick, everyone look like we know what we're doing!",
-        f"{_EMOJI['join']} Uhh, hey, {{mention}}, you have any sanity? We're running low, could we please borrow some?",
-        f"{_EMOJI['join']} Let's hope {{mention}} has it all Figured out."
+        f"{EMOJI['join']} Is {{mention}} really ready for this? After all, not many people have the patience to wait for 8 players to join.",
+        f"{EMOJI['join']} {{mention}} should now prepare to die in the backdoor a hundred times as part of join process.",
+        f"{EMOJI['join']} Don't worry {{mention}}, the lights flicker only *most* of the time.",
+        f"{EMOJI['join']} It's time for {{mention}} to acknowledge the possibility of pain and seizure.",
+        f"{EMOJI['join']} {{mention}} just joined! Quick, everyone look like we know what we're doing!",
+        f"{EMOJI['join']} Uhh, hey, {{mention}}, you have any sanity? We're running low, could we please borrow some?",
+        f"{EMOJI['join']} Let's hope {{mention}} has it all Figured out."
     ],
     "join_bot": [
-        f"{_EMOJI['app_join']} New digital entity alert! {{mention}} has manifested.",
-        f"{_EMOJI['app_join']} Beep boop! {{mention}} just computed its way in.",
-        f"{_EMOJI['app_join']} System update detected: Bot {{mention}} has joined the network."
+        f"{EMOJI['app_join']} New digital entity alert! {{mention}} has manifested.",
+        f"{EMOJI['app_join']} Beep boop! {{mention}} just computed its way in.",
+        f"{EMOJI['app_join']} System update detected: Bot {{mention}} has joined the network."
     ],
     "leave": [
-        f"{_EMOJI['leave']} {{mention}} couldn't handle the Backdoor any longer...",
-        f"{_EMOJI['leave']} {{mention}} disconnected. Please check your internet connection and try again. (Error Code: 277)",
-        f"{_EMOJI['leave']} {{mention}} ran out of crucifixes, I guess...",
-        f"{_EMOJI['leave']} Poof! {{mention}} is gone. Probably rage-quit after groundskeeper bugged on them or something.",
-        f"{_EMOJI['leave']} {{mention}} saw the light. It was outside. Outside this challenge. They're happier now.",
-        f"{_EMOJI['leave']} {{mention}} opened a Dupe door."
+        f"{EMOJI['leave']} {{mention}} couldn't handle the Backdoor any longer...",
+        f"{EMOJI['leave']} {{mention}} disconnected. Please check your internet connection and try again. (Error Code: 277)",
+        f"{EMOJI['leave']} {{mention}} ran out of crucifixes, I guess...",
+        f"{EMOJI['leave']} Poof! {{mention}} is gone. Probably rage-quit after groundskeeper bugged on them or something.",
+        f"{EMOJI['leave']} {{mention}} saw the light. It was outside. Outside this challenge. They're happier now.",
+        f"{EMOJI['leave']} {{mention}} opened a Dupe door."
     ],
     "kick": [
-        f"{_EMOJI['kick']} {{mention}} got kicked. Perhaps sold too many runs...",
-        f"{_EMOJI['kick']} {{mention}} slipped on a nanner peel and fell out of bounds! Oh? The nanner peel was placed by an admin? Ohhhh, ok, gotcha.",
-        f"{_EMOJI['kick']} An admin's mighty foot sent {{mention}} flying. A reminder that you shouldn't fly during the challenge. That's cheating."
+        f"{EMOJI['kick']} {{mention}} got kicked. Perhaps sold too many runs...",
+        f"{EMOJI['kick']} {{mention}} slipped on a nanner peel and fell out of bounds! Oh? The nanner peel was placed by an admin? Ohhhh, ok, gotcha.",
+        f"{EMOJI['kick']} An admin's mighty foot sent {{mention}} flying. A reminder that you shouldn't fly during the challenge. That's cheating."
     ],
     "ban": [
-        f"{_EMOJI['ban']} {{mention}} got electrocuted. Not by Surge, though.",
-        f"{_EMOJI['ban']} {{mention}} is now trapped out of next rooms with a groundskeeper.",
-        f"{_EMOJI['ban']} {{mention}} got figured out. By the admin."
+        f"{EMOJI['ban']} {{mention}} got electrocuted. Not by Surge, though.",
+        f"{EMOJI['ban']} {{mention}} is now trapped out of next rooms with a groundskeeper.",
+        f"{EMOJI['ban']} {{mention}} got figured out. By the admin."
     ],
     "kick_bot": [
-        f"{_EMOJI['app_leave']} Digital termination detected: Bot {{mention}} was kicked",
-        f"{_EMOJI['app_leave']} Error 403: Bot {{mention}} was forcibly removed.",
-        f"{_EMOJI['app_leave']} {{mention}} was disconnected by administrator action."
+        f"{EMOJI['app_leave']} Digital termination detected: Bot {{mention}} was kicked",
+        f"{EMOJI['app_leave']} Error 403: Bot {{mention}} was forcibly removed.",
+        f"{EMOJI['app_leave']} {{mention}} was disconnected by administrator action."
     ],
     "available": [
-        f"{_EMOJI['available']} **{{name}}** is now available to participate in the challenge *({{available_count}}/8)*"
+        f"{EMOJI['available']} **{{name}}** is now available to participate in the challenge *({{available_count}}/8)*"
     ],
     "available_ping": [
         f"-# we have 8 people! <@&{ROLES['available']}>, go to <#{CHANNELS['ps_link']}> before someone leaves again"
     ],
     "unavailable": [
-        f"{_EMOJI['unavailable']} **{{name}}** is no longer available *({{available_count}}/8)*"
+        f"{EMOJI['unavailable']} **{{name}}** is no longer available *({{available_count}}/8)*"
     ],
     "unavailable_auto": [
-        f"{_EMOJI['unavailable']} **{{name}}** was inactive for too long, so they're marked as unavailable *({{available_count}}/8)*"
+        f"{EMOJI['unavailable']} **{{name}}** was inactive for too long, so they're marked as unavailable *({{available_count}}/8)*"
     ],
     "join_vc": [
-        f"{_EMOJI['join_vc']} **{{name}}** joined the voice channel *({{count}})*"
+        f"{EMOJI['join_vc']} **{{name}}** joined the voice channel *({{count}})*"
     ],
     "leave_vc": [
-        f"{_EMOJI['leave_vc']} **{{name}}** left the voice channel *({{count}})*"
+        f"{EMOJI['leave_vc']} **{{name}}** left the voice channel *({{count}})*"
     ],
     "promotion": [
-        f"{_EMOJI['promotion']} {{mention}} was promoted to **{{role}}**"
+        f"{EMOJI['promotion']} {{mention}} was promoted to **{{role}}**"
     ],
     "demotion": [
-        f"{_EMOJI['demotion']} {{mention}} was demoted"
+        f"{EMOJI['demotion']} {{mention}} was demoted"
     ],
     "birthday": [
-        f"{_EMOJI['birthday']} happy birthday, {{mention}}!!"
+        f"{EMOJI['birthday']} happy birthday, {{mention}}!!"
     ],
     "nuh_uh": [
         "https://cdn.discordapp.com/attachments/715528165132599337/1442162843452440777/nuh-uh-3d-thumbnail-url-7g84og.png?ex=69246e4f&is=69231ccf&hm=b1bf1bb44ee89017d8404d35a1b0812eef3c6dc29a870ef3a8fefaa96fc7353e&",
