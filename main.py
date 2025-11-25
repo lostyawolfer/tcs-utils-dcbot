@@ -438,6 +438,24 @@ async def warn(ctx, member: discord.Member, *, reason: str = None):
         print(f"Error warning {member.display_name} (ID: {member.id}): {e}")
 
 @bot.command()
+async def warns(ctx, member: discord.Member):
+    try:
+        if member.guild.get_role(ROLES['warn_1']) in member.roles:
+            await ctx.send(f"this guy has 1 warn :yellow_circle:")
+
+        elif member.guild.get_role(ROLES['warn_2']) in member.roles:
+            await ctx.send(f"this guy has 2 warns :orange_circle:")
+
+        elif member.guild.get_role(ROLES['warn_3']) in member.roles:
+            await ctx.send(f"this guy has 3 warns :red_circle:\nnext warn will ban them btw")
+
+        else:
+            await ctx.send(f"this guy doesn't have warns they're an outstanding citizen :white_check_mark:")
+    except Exception as e:
+        await ctx.send(message("bot_doesnt_have_perms"))
+        print(f"Error checking warns {member.display_name} (ID: {member.id}): {e}")
+
+@bot.command()
 async def clear_warns(ctx, member: discord.Member):
     if not member.is_timed_out():
         return await ctx.send(message("nuh_uh"))
