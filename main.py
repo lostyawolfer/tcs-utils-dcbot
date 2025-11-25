@@ -1,8 +1,9 @@
 import datetime
+from dataclasses import dataclass
 
 import discord
 from discord.ext import commands
-from config import message, check_guild, TARGET_GUILD, ROLES, CHANNELS, TOKEN
+from config import message, check_guild, TARGET_GUILD, ROLES, CHANNELS, TOKEN, EMOJI
 
 intents = discord.Intents.default()
 intents.members = True
@@ -503,6 +504,273 @@ async def unlock(ctx):
         await ctx.send(message("bot_doesnt_have_perms"))
     except Exception as e:
         await ctx.send(message("bot_doesnt_have_perms") + '\n' + f'{e}')
+
+
+@dataclass
+class RunMember:
+    member: discord.Member
+    is_leader: bool = False
+    is_dead: bool = False
+    is_disconnected: bool = False
+
+    @property
+    def display_name(self):
+        return self.member.display_name if self.member else '???'
+
+
+    @property
+    def emoji(self):
+        emoji = []
+        if self.is_leader:
+            emoji.append(EMOJI['leader'])
+        if self.is_dead:
+            emoji.append(EMOJI['death'])
+        if self.is_disconnected:
+            emoji.append(EMOJI['disconnect'])
+        if not emoji:
+            emoji.append(EMOJI['blank'])
+        return ''.join(emoji)
+
+from dataclasses import dataclass
+
+
+@dataclass
+class RunDetails:
+    route: str
+    death_point: tuple[str, int]
+    reason: str
+    participants: list[RunMember]
+    is_new_best: bool = False
+
+    @property
+    def max_doors(self) -> int | None:
+        if self.route == "bhm":  # backdoor hotel mines
+            return 50 + 100 + 100
+        elif self.route == "bhom":  # backdoor hotel outdoors mines
+            return 50 + 90 + 35 + 50
+        elif self.route == "bhrm":  # backdoor hotel rooms hotel mines
+            return 50 + 60 + 200 + 33 + 100
+        elif self.route == "bhrm-l":  # backdoor hotel rooms hotel mines (long rooms)
+            return 50 + 60 + 1000 + 33 + 100
+        elif self.route == "bhrom":  # backdoor hotel rooms hotel outdoors mines
+            return 50 + 60 + 200 + 23 + 35 + 50
+        elif self.route == "bhrom-l":  # backdoor hotel rooms hotel outdoors mines (long rooms)
+            return 50 + 60 + 1000 + 23 + 35 + 50
+        else:
+            return None
+
+    @property
+    def progress_doors(self):
+        rooms_length = 1000 if "-l" in self.route else 200
+
+        if self.route == "bhm":
+            return self.death_point[1] + 50
+        elif self.route == "bhom":
+            if self.death_point[0] == "b" or self.death_point[0] == "h":
+                return self.death_point[1] + 50
+            elif self.death_point[0] == "m":
+                return self.death_point[1] - 150 + 50 + 90 + 35
+            elif self.death_point[0] == "o":
+                return self.death_point[1] / 2550 * 35 + 50 + 90
+            else:
+                return None
+        elif self.route in ["bhrm", "bhrm-l"]:
+            if (self.death_point[0] == "b" or self.death_point[0] == "h") and self.death_point[1] <= 60:
+                return self.death_point[1] + 50
+            elif self.death_point[0] == "h" and self.death_point[1] >= 67:
+                return self.death_point[1] + 50 + rooms_length
+            elif self.death_point[0] == "r":
+                return min(self.death_point[1] + 50 + 60, rooms_length + 50 + 60)
+            elif self.death_point[0] == "m":
+                return self.death_point[1] + 50 + rooms_length - 7
+            else:
+                return None
+        elif self.route in ["bhrom", "bhrom-l"]:
+            if (self.death_point[0] == "b" or self.death_point[0] == "h") and self.death_point[1] <= 60:
+                return self.death_point[1] + 50
+            elif self.death_point[0] == "h" and self.death_point[1] >= 67:
+                return self.death_point[1] + 50 + rooms_length
+            elif self.death_point[0] == "r":
+                return min(self.death_point[1] + 50 + 60, rooms_length + 50 + 60)
+            elif self.death_point[0] == "o":
+                return self.death_point[1] / 2550 * 35 + 50 + 60 + rooms_length + 23
+            elif self.death_point[0] == "m":
+                return self.death_point[1] - 150 + 50 + 60 + rooms_length + 23 + 35
+            else:
+                return None
+        else:
+            return None
+
+    @property
+    def progress_percent(self) -> float:
+        if self.max_doors is None or self.progress_doors is None:
+            return 0.0  # Handle cases where max_doors or progress_doors is None
+        return min(self.progress_doors / self.max_doors * 100, 99.9)
+
+    @property
+    def message_text(self) -> str:
+        routes = {
+            "bhm": ["backdoor", "hotel", "mines"],
+            "bhom": ["backdoor", "hotel", "outdoors", "mines"],
+            "bhrm": ["backdoor", "hotel", "rooms", "hotel", "mines"],
+            "bhrm-l": ["backdoor", "hotel", "rooms", "hotel", "mines"],
+            "bhrom": ["backdoor", "hotel", "rooms", "hotel", "outdoors", "mines"],
+            "bhrom-l": ["backdoor", "hotel", "rooms", "hotel", "outdoors", "mines"],
+        }
+
+        if self.route not in routes:
+            return "~~backdoor~~\n~~hotel~~\n~~mines~~"
+
+        stages = routes[self.route]
+        current_stage = self.death_point[0]
+        current_value = self.death_point[1]
+
+        # Format the current value appropriately
+        if current_stage == "r":
+            current_display = f"a-{current_value:03d}"
+        elif current_stage == "o":
+            current_display = f"{current_value}m"
+        else:
+            current_display = current_value
+
+        # Determine current stage index
+        if current_stage == "h" and "rooms" in stages:
+            # Routes with rooms: distinguish between first and second hotel
+            current_stage_index = 3 if current_value > 67 else 1
+        else:
+            # Find first occurrence of stage by character
+            current_stage_index = next(
+                (i for i, s in enumerate(stages) if s[0] == current_stage), -1
+            )  # Added default -1
+
+        progress_lines = []
+        for i, stage in enumerate(stages):
+            if i == current_stage_index:
+                progress_lines.append(f"**{stage}** `{current_display}`")
+            elif i < current_stage_index:
+                progress_lines.append(f"{stage} `complete`")
+            else:
+                progress_lines.append(f"~~{stage}~~")
+
+        progress = "\n".join(progress_lines)
+
+        sorted_participants = sorted(
+            self.participants,
+            key=lambda p: (not p.is_leader, p.display_name.lower()),
+        )
+
+        participant_lines = []
+        for i, p in enumerate(sorted_participants):
+            member_mention = p.member.mention if p.member else "@???"
+            participant_lines.append(
+                f"{i + 1}. {p.emoji}{member_mention} `{p.display_name}`"
+            )
+        participants_text = (
+            "\n".join(participant_lines) if participant_lines else "[no one]"
+        )
+
+        return (
+            f'# {"*NEW BEST!*" if self.is_new_best else ""} {round(self.progress_percent, 1)}%\n'
+            f"-# `{round(self.progress_doors)}/{self.max_doors}`\n"
+            f"{progress}\n"
+            f"\n"
+            f"## PARTICIPANTS\n"
+            f"{participants_text}\n"
+            f"\n"
+            f"run failure reason:\n"
+            f"**{self.reason}**"
+        )
+
+
+
+@bot.command()
+async def br(ctx, *args):
+    if not ctx.guild.get_role() not in ctx.author.roles:
+        return await ctx.send(message("nuh_uh"))
+    parsed_args = list(args)
+    if len(parsed_args) == 0:
+        return await ctx.send(
+            'usage `.br [best?] <route> <death-floor> <death-door> [flag][participants] -- <reason>`\n'
+            'format `.br [b] bh[ro]m[-l] <b/h/r/o/m> (int) [-l @leader] [-d @dead_member] [-x @disconnected_member] [@normal_member] ... -- (str)`\n'
+            'death-door argument can also represent death meters in outdoors if death-floor is \'o\'\n'
+            '-l at the end of route means long rooms and only works if r is included. long rooms means up to a-1000, short rooms means up to a-200'
+        )
+
+    new_best = False
+    if len(parsed_args) >= 1 and parsed_args[0] == 'b':
+        new_best = True
+        parsed_args.pop(0)
+
+    if len(parsed_args) < 3:  # minimum route, death-floor, death-door
+        return await ctx.send('wrong usage fk u :wilted_rose:')
+
+    route = parsed_args[0]
+    death_floor = parsed_args[1]
+    try:
+        death_time = int(parsed_args[2])
+    except ValueError:
+        await ctx.send(
+            'wrong death door fk u it has to be an integer :wilted_rose:'
+        )
+        return None
+
+    death_point = (death_floor, death_time)
+
+    # Find the separator for reason
+    try:
+        reason_separator_index = parsed_args.index('--', 3)
+    except ValueError:
+        return await ctx.send(
+            'Please specify the run failure reason after `--`.'
+        )
+
+    # Extract participant arguments and reason
+    participant_args = parsed_args[3:reason_separator_index]
+    reason = ' '.join(parsed_args[reason_separator_index + 1 :])
+
+    if not reason:
+        return await ctx.send('Please provide a reason for the run failure.')
+
+    participants: list[RunMember] = []
+
+    # Helper to create a RunMember from a discord.Member
+    async def create_run_member(member: discord.Member):
+        return RunMember(
+            member=member,
+            is_leader=current_member_flags['is_leader'],
+            is_dead=current_member_flags['is_dead'],
+            is_disconnected=current_member_flags['is_disconnected'],
+        )
+
+    current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
+    # Process participant arguments
+    for arg in participant_args:
+        if arg == '-l':
+            current_member_flags['is_leader'] = True
+        if arg == '-d':
+            current_member_flags['is_dead'] = True
+        if arg == '-x':
+            current_member_flags['is_disconnected'] = True
+        if arg not in ['-x', '-d', '-l']:
+            try:
+                # Resolve member from mention (e.g., <@123456789>)
+                member = await commands.MemberConverter().convert(ctx, arg)
+                participants.append(await create_run_member(member))
+                current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
+            except commands.MemberNotFound:
+                await ctx.send(f'Could not find member: `{arg}`')
+            finally:
+                # Reset flags after adding a member or if it's not a flag
+                current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
+
+    run_details = RunDetails(
+        route=route,
+        death_point=death_point,
+        reason=reason,
+        participants=participants,
+        is_new_best=new_best,
+    )
+    return await ctx.send(run_details.message_text)
 
 
 if __name__ == '__main__':
