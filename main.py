@@ -771,6 +771,7 @@ async def br(ctx, *args):
                 current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
 
     run_details = RunDetails(
+        run_type=run_type,
         route=route,
         death_point=death_point,
         reason=reason,
