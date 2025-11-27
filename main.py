@@ -686,8 +686,8 @@ class RunDetails:
 
 @bot.command()
 async def br(ctx, *args):
-    if not ctx.guild.get_role(ROLES['mod']) not in ctx.author.roles:
-        return await ctx.send(message("nuh_uh"))
+    # if not ctx.guild.get_role(ROLES['mod']) not in ctx.author.roles:
+    #     return await ctx.send(message("nuh_uh"))
     parsed_args = list(args)
     if len(parsed_args) == 0:
         return await ctx.send(
