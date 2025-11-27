@@ -37,7 +37,8 @@ ROLES = {
     "inactive": 1434659281822679232,
     "warn_1": 1442596622013038704,
     "warn_2": 1442596750576717905,
-    "warn_3": 1442623000452005948
+    "warn_3": 1442623000452005948,
+    "mod": 1433828741548740781
 }
 
 CHANNELS = {
@@ -69,6 +70,9 @@ EMOJI = {
     "death": "<:death:1436531054704852993>", # ON THE SERVER
     "disconnect": "<:disconnected:1439792812165038080>", # ON THE SERVER
     "blank": "<:blank:1436531505831612456>", # ON THE SERVER
+    "tcs": "<:this_challenge_sucks:1440645344252792922>", # ON THE SERVER
+    "gor": "<:group_of_rushers:1443250418418188402>", # ON THE SERVER
+    "pdo": "" # ON THE SERVER
 }
 
 _MESSAGES = {

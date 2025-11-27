@@ -536,6 +536,7 @@ from dataclasses import dataclass
 
 @dataclass
 class RunDetails:
+    run_type: str
     route: str
     death_point: tuple[str, int]
     reason: str
@@ -670,7 +671,7 @@ class RunDetails:
         )
 
         return (
-            f'# {"*NEW BEST!*" if self.is_new_best else ""} {round(self.progress_percent, 1)}%\n'
+            f'# {EMOJI[f'{self.run_type}']} {"*NEW BEST!*" if self.is_new_best else ""} {round(self.progress_percent, 1)}%\n'
             f"-# `{round(self.progress_doors)}/{self.max_doors}`\n"
             f"{progress}\n"
             f"\n"
@@ -685,15 +686,21 @@ class RunDetails:
 
 @bot.command()
 async def br(ctx, *args):
-    if not ctx.guild.get_role() not in ctx.author.roles:
+    if not ctx.guild.get_role(ROLES['mod']) not in ctx.author.roles:
         return await ctx.send(message("nuh_uh"))
     parsed_args = list(args)
     if len(parsed_args) == 0:
         return await ctx.send(
-            'usage `.br [best?] <route> <death-floor> <death-door> [flag][participants] -- <reason>`\n'
-            'format `.br [b] bh[ro]m[-l] <b/h/r/o/m> (int) [-l @leader] [-d @dead_member] [-x @disconnected_member] [@normal_member] ... -- (str)`\n'
+            'usage `.br <challenge> [best?] <route> <death-floor> <death-door> [flag][participants] -- <reason>`\n'
+            'format `.br <tcs/gor/pdo> [b] bh[ro]m[-l] <b/h/r/o/m> (int) [-l @leader] [-d @dead_member] [-x @disconnected_member] [@normal_member] ... -- (str)`\n'
             'death-door argument can also represent death meters in outdoors if death-floor is \'o\'\n'
             '-l at the end of route means long rooms and only works if r is included. long rooms means up to a-1000, short rooms means up to a-200'
+        )
+
+    run_type = parsed_args.pop(0).lower()
+    if run_type not in EMOJI:
+        return await ctx.send(
+            f'invalid challenge `{run_type}`'
         )
 
     new_best = False
