@@ -207,10 +207,10 @@ def get_status() -> str:
 @tasks.loop(seconds=3) # Updates every 60 seconds
 async def change_status():
     status_message = get_status()
-    if not count_people_in_vc('vc') and not count_people_in_vc('vc2'):
-        await bot.change_presence(status=discord.Status('Idle'))
-    else:
-        await bot.change_presence(status=discord.Status('Online'))
+    # if not count_people_in_vc('vc') and not count_people_in_vc('vc2'):
+    #     await bot.change_presence(status=discord.Status('Idle'))
+    # else:
+    #     await bot.change_presence(status=discord.Status('Online'))
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=status_message))
     print(f"Status updated to: {status_message}")
 
