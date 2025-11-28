@@ -203,7 +203,9 @@ async def get_status() -> str:
     vc = await count_people_in_vc('vc')
     vc2 = count_people_in_vc('vc2')
     av = await count_available_people()
-    return f'{av} available / {vc} in vc'
+    if not vc2:
+        return f'{av} available / {vc} in vc'
+    return f'{av} available / {vc} in vc / {vc2} in vc2'
 @tasks.loop(seconds=3) # Updates every 60 seconds
 async def change_status():
     status_message = await get_status()
