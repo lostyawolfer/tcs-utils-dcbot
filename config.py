@@ -67,7 +67,7 @@ EMOJI = {
     "unavailable": "<:notavailable:1436528517956374578>",
     "join_vc": "<:join_vc:1436503046107566181>",
     "leave_vc": "<:leave_vc:1436528566174220289>",
-    "join_vc_2": "<:join_vc_2:1444050008243699895>",
+    "join_vc_2": "<:join_vc_2:1444102928880242709>",
     "leave_vc_2": "<:leave_vc:1436528566174220289>",
     "promotion": "<:promotion:1442087863347974294>",
     "demotion": "<:demotion:1442087886391607376>",
