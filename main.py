@@ -217,6 +217,8 @@ async def change_status():
 
 @bot.event
 async def on_ready():
+    if not change_status.is_running():
+        change_status.start()
     for guild in bot.guilds:
         if check_guild(guild.id):
             status_message = await guild.get_channel(CHANNELS['chat']).send('bot restarted\n-# ...')
