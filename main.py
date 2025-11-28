@@ -2,7 +2,7 @@ import datetime
 from dataclasses import dataclass
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from config import message, check_guild, TARGET_GUILD, ROLES, CHANNELS, TOKEN, EMOJI
 
 intents = discord.Intents.default()
@@ -199,6 +199,20 @@ async def remove_availability(member: discord.Member) -> None:
 
 
 
+def get_status() -> str:
+    vc = count_people_in_vc('vc')
+    vc2 = count_people_in_vc('vc2')
+    av = count_available_people()
+    return f'{av} available / {vc} in vc'
+@tasks.loop(seconds=3) # Updates every 60 seconds
+async def change_status():
+    status_message = get_status()
+    if not count_people_in_vc('vc') and not count_people_in_vc('vc2'):
+        await bot.change_presence(status=discord.Status(discord.Status.idle))
+    else:
+        await bot.change_presence(status=discord.Status(discord.Status.online))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=status_message))
+    print(f"Status updated to: {status_message}")
 
 
 @bot.event
