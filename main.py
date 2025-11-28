@@ -201,7 +201,7 @@ async def remove_availability(member: discord.Member) -> None:
 
 async def get_status() -> str:
     vc = await count_people_in_vc('vc')
-    vc2 = count_people_in_vc('vc2')
+    vc2 = await count_people_in_vc('vc2')
     av = await count_available_people()
     if not vc2:
         return f'{av} available / {vc} in vc'
