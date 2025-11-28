@@ -199,14 +199,14 @@ async def remove_availability(member: discord.Member) -> None:
 
 
 
-def get_status() -> str:
-    vc = count_people_in_vc('vc')
+async def get_status() -> str:
+    vc = await count_people_in_vc('vc')
     vc2 = count_people_in_vc('vc2')
-    av = count_available_people()
+    av = await count_available_people()
     return f'{av} available / {vc} in vc'
 @tasks.loop(seconds=3) # Updates every 60 seconds
 async def change_status():
-    status_message = get_status()
+    status_message = await get_status()
     # if not count_people_in_vc('vc') and not count_people_in_vc('vc2'):
     #     await bot.change_presence(status=discord.Status('Idle'))
     # else:
