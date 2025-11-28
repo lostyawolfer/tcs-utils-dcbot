@@ -133,16 +133,16 @@ _MESSAGES = {
         f"{EMOJI['unavailable']} **{{name}}** was inactive for too long, so they're marked as unavailable *- {{available_count}}/8*"
     ],
     "join_vc": [
-        f"{EMOJI['join_vc']} **{{name}}** joined vc *- {{count}}*"
+        f"{EMOJI['join_vc']} **{{name}}** joined the voice channel *- {{count}}*"
     ],
     "leave_vc": [
-        f"{EMOJI['leave_vc']} **{{name}}** left vc *- {{count}}*"
+        f"{EMOJI['leave_vc']} **{{name}}** left the voice channel *- {{count}}*"
     ],
     "join_vc_2": [
-        f"{EMOJI['join_vc_2']} **{{name}}** joined vc 2 *- {{count}}*"
+        f"{EMOJI['join_vc_2']} **{{name}}** joined the second voice channel *- {{count}}*"
     ],
     "leave_vc_2": [
-        f"{EMOJI['leave_vc_2']} **{{name}}** left vc 2 *- {{count}}*"
+        f"{EMOJI['leave_vc_2']} **{{name}}** left the second voice channel *- {{count}}*"
     ],
     "promotion": [
         f"{EMOJI['promotion']} {{mention}} was promoted to **{{role}}**"
