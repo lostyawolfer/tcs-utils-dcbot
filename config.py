@@ -33,6 +33,9 @@ ROLES = {
     "in_vc": 1427076261586669688,
     "in_vc_leader": 1427076452477702191,
     "not_in_vc": 1442132263071645779,
+    "in_vc_2": 1444027828898238605,
+    "in_vc_2_leader": 1444027810594295908,
+    "not_in_vc_2": 1444027740352155688,
     "birthday": 1439339439762444552,
     "inactive": 1434659281822679232,
     "warn_1": 1442596622013038704,
@@ -43,6 +46,7 @@ ROLES = {
 
 CHANNELS = {
     "vc": 1426972811293098015,
+    "vc2": 1444027467290513448,
     "chat": 1426972811293098014,
     "availability": 1434653852367585300,
     "availability_message": 1434654321886363658,
@@ -63,6 +67,8 @@ EMOJI = {
     "unavailable": "<:notavailable:1436528517956374578>",
     "join_vc": "<:join_vc:1436503046107566181>",
     "leave_vc": "<:leave_vc:1436528566174220289>",
+    "join_vc_2": "<:join_vc_2:1444045607416365097>",
+    "leave_vc_2": "<:leave_vc:1436528566174220289>",
     "promotion": "<:promotion:1442087863347974294>",
     "demotion": "<:demotion:1442087886391607376>",
     "birthday": "",
@@ -72,7 +78,8 @@ EMOJI = {
     "blank": "<:blank:1436531505831612456>", # ON THE SERVER
     "tcs": "<:this_challenge_sucks:1440645344252792922>", # ON THE SERVER
     "gor": "<:group_of_rushers:1443250418418188402>", # ON THE SERVER
-    "pdo": "" # ON THE SERVER
+    "pdo": "<:professional_door_opener:1443719522908504215>", # ON THE SERVER
+    "nn": "<:neverending_night:1443768885097529394>", # ON THE SERVER
 }
 
 _MESSAGES = {
@@ -114,22 +121,28 @@ _MESSAGES = {
         f"{EMOJI['app_leave']} {{mention}} was disconnected by administrator action."
     ],
     "available": [
-        f"{EMOJI['available']} **{{name}}** is now available to participate in the challenge *({{available_count}}/8)*"
+        f"{EMOJI['available']} **{{name}}** is now available to participate in the challenge *- {{available_count}}/8*"
     ],
     "available_ping": [
         f"-# we have 8 people! <@&{ROLES['available']}>, go to <#{CHANNELS['ps_link']}> before someone leaves again"
     ],
     "unavailable": [
-        f"{EMOJI['unavailable']} **{{name}}** is no longer available *({{available_count}}/8)*"
+        f"{EMOJI['unavailable']} **{{name}}** is no longer available *- {{available_count}}/8*"
     ],
     "unavailable_auto": [
-        f"{EMOJI['unavailable']} **{{name}}** was inactive for too long, so they're marked as unavailable *({{available_count}}/8)*"
+        f"{EMOJI['unavailable']} **{{name}}** was inactive for too long, so they're marked as unavailable *- {{available_count}}/8*"
     ],
     "join_vc": [
-        f"{EMOJI['join_vc']} **{{name}}** joined the voice channel *({{count}})*"
+        f"{EMOJI['join_vc']} **{{name}}** joined vc *- {{count}}*"
     ],
     "leave_vc": [
-        f"{EMOJI['leave_vc']} **{{name}}** left the voice channel *({{count}})*"
+        f"{EMOJI['leave_vc']} **{{name}}** left vc *- {{count}}*"
+    ],
+    "join_vc_2": [
+        f"{EMOJI['join_vc_2']} **{{name}}** joined vc 2 *- {{count}}*"
+    ],
+    "leave_vc_2": [
+        f"{EMOJI['leave_vc_2']} **{{name}}** left vc 2 *- {{count}}*"
     ],
     "promotion": [
         f"{EMOJI['promotion']} {{mention}} was promoted to **{{role}}**"

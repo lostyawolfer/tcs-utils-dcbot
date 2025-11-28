@@ -59,9 +59,9 @@ async def remove_role(member: discord.Member, role_id: int) -> None:
 
 
 
-async def count_people_in_vc() -> int:
+async def count_people_in_vc(vc: str) -> int:
     guild = bot.get_guild(TARGET_GUILD)
-    channel = guild.get_channel(CHANNELS['vc'])
+    channel = guild.get_channel(CHANNELS[vc])
     res = len(channel.members)
     return res
 
@@ -71,12 +71,13 @@ async def check_voice_state(member: discord.Member) -> None:
         return
 
     vc = guild.get_channel(CHANNELS['vc'])
+    vc2 = guild.get_channel(CHANNELS['vc2'])
     if not vc:
         return
 
     if member.voice and member.voice.channel == vc:
         if not has_role(member, ROLES['in_vc']):
-            await send(message('join_vc', name=member.display_name, count=await count_people_in_vc()))
+            await send(message('join_vc', name=member.display_name, count=await count_people_in_vc('vc')))
 
         if has_role(member, ROLES['leader']):
             await add_role(member, ROLES['in_vc_leader'])
@@ -85,10 +86,26 @@ async def check_voice_state(member: discord.Member) -> None:
 
     else:
         if has_role(member, ROLES['in_vc']):
-            await send(message('leave_vc', name=member.display_name, count=await count_people_in_vc()))
+            await send(message('leave_vc', name=member.display_name, count=await count_people_in_vc('vc')))
         await remove_role(member, ROLES['in_vc'])
         await remove_role(member, ROLES['in_vc_leader'])
         await add_role(member, ROLES['not_in_vc'])
+
+    if member.voice and member.voice.channel == vc2:
+        if not has_role(member, ROLES['in_vc_2']):
+            await send(message('join_vc_2', name=member.display_name, count=await count_people_in_vc('vc2')))
+
+        if has_role(member, ROLES['leader']):
+            await add_role(member, ROLES['in_vc_2_leader'])
+        await add_role(member, ROLES['in_vc_2'])
+        await remove_role(member, ROLES['not_in_vc_2'])
+
+    else:
+        if has_role(member, ROLES['in_vc_2']):
+            await send(message('leave_vc_2', name=member.display_name, count=await count_people_in_vc('vc2')))
+        await remove_role(member, ROLES['in_vc_2'])
+        await remove_role(member, ROLES['in_vc_2_leader'])
+        await add_role(member, ROLES['not_in_vc_2'])
 
 
 async def count_available_people() -> int:
@@ -212,7 +229,8 @@ async def on_voice_state_update(member, before, after):
         return
 
     vc = guild.get_channel(CHANNELS['vc'])
-    if not vc:
+    vc2 = guild.get_channel(CHANNELS['vc2'])
+    if not vc or not vc2:
         return
 
     await check_voice_state(member)
