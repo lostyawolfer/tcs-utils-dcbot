@@ -35,14 +35,17 @@ async def set_status(bot: commands.Bot, status: str) -> None:
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=status))
 
 async def update_status(bot: commands.Bot) -> None:
-    if not await count_in_vc(bot, 'vc') and not await count_in_vc(bot, 'vc2'):
-        await set_status(bot, f'{await count_available(bot)} available')
-    elif await count_in_vc(bot, 'vc'):
-        await set_status(bot, f'{await count_available(bot)} available / {await count_in_vc(bot, 'vc')} in vc 🟢')
-    elif await count_in_vc(bot, 'vc2'):
-        await set_status(bot, f'{await count_available(bot)} available / {await count_in_vc(bot, 'vc2')} in vc 🟣')
+    vc_count = await count_in_vc(bot, 'vc')
+    vc_2_count = await count_in_vc(bot, 'vc2')
+    available_count = await count_available(bot)
+    if not vc_count and not vc_2_count:
+        await set_status(bot, f'{available_count} available')
+    elif vc_count and not vc_2_count:
+        await set_status(bot, f'{available_count} available / {vc_count} in vc 🟢')
+    elif not vc_count and vc_2_count:
+        await set_status(bot, f'{available_count} available / {vc_2_count} in vc 🟣')
     else:
-        await set_status(bot, f'{await count_available(bot)} available / vc - {await count_in_vc(bot, 'vc')} 🟢 - {await count_in_vc(bot, 'vc2')} 🟣')
+        await set_status(bot, f'{available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣')
 
 
 
