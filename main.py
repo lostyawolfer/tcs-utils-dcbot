@@ -103,7 +103,7 @@ async def on_message(message):
     if message.author == bot.user:
         return
     if '<#1426974154556702720>' in message.content:
-        await message.reply(f'private server link: https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server', suppress_embeds=True)
+        await message.answer(f'link: **https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server**', suppress_embeds=True)
     await bot.process_commands(message)
 
 @bot.command()
