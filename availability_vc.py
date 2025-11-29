@@ -50,9 +50,9 @@ async def remove_availability(bot: commands.Bot, member: discord.Member) -> None
     available_people = await count_available(bot)
     if has_role(member, config.roles['available']):
         if available_people >= 8:
-            await send(bot, config.message('unavailable_ping', name=member.display_name, available_count=f'{subscript(f'({available_people}/8)')}'))
+            await send(bot, config.message('unavailable_ping', name=member.display_name, available_count=f'{subscript(f'({available_people})')}'))
         else:
-            await send(bot, config.message('unavailable', name=member.display_name, available_count=f'{subscript(f'({available_people}/8)')}'))
+            await send(bot, config.message('unavailable', name=member.display_name, available_count=f'{subscript(f'({available_people})')}'))
 
     await remove_role(member, config.roles['available'])
     await remove_role(member, config.roles['available_leader'])
