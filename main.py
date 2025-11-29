@@ -58,6 +58,30 @@ async def on_raw_reaction_remove(payload):
             await availability_vc.remove_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
 
 @bot.event
+async def on_member_update(before, after):
+    if before.roles != after.roles:
+        before_roles = set(before.roles)
+        after_roles = set(after.roles)
+        added_roles = after_roles - before_roles
+        removed_roles = before_roles - after_roles
+        for role in added_roles:
+            if role.id == config.roles['mod']:
+                await general.send(bot, config.message('promotion', mention=after.mention))
+                await general.send(bot, config.message('promotion_welcome', mention=after.mention), 'mod_chat')
+            if role.id == config.roles['leader']:
+                await general.send(bot, config.message('new_leader', mention=after.mention))
+        for role in removed_roles:
+            if role.id == config.roles['mod']:
+                await general.send(bot, config.message('demotion', mention=after.mention))
+                await general.send(bot, config.message('demotion_goodbye', mention=after.mention), 'mod_chat')
+            if role.id == config.roles['leader']:
+                await general.send(bot, config.message('leader_removed', mention=after.mention))
+    if before.nick != after.nick:
+        old = before.nick if before.nick else before.name
+        new = after.nick if after.nick else after.name
+        await general.send(bot, config.message('name_change', mention=after.mention, old_name=old, new_name=new))
+
+@bot.event
 async def on_member_join(member):
     guild = member.guild
     if not config.check_guild(guild.id):

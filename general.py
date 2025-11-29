@@ -75,9 +75,9 @@ async def remove_role(member: discord.Member, role_id: int) -> None:
 
 def subscript(text: str) -> str:
     conversion_map = {
-        '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
-        '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
-        '/': '⸝', '(': '₍', ')': '₎'
+        '0': config.emoji['0'], '1': config.emoji['1'], '2': config.emoji['2'], '3': config.emoji['3'], '4': config.emoji['4'],
+        '5': config.emoji['5'], '6': config.emoji['6'], '7': config.emoji['7'], '8': config.emoji['8'], '9': config.emoji['9'],
+        '/': '/', '(': '', ')': ''
     }
     converted_text = []
     for char in text:

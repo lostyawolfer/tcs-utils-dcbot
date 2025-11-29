@@ -52,7 +52,8 @@ channels = {
     "availability_message": 1434654321886363658,
     "availability_reaction": 1439620553572089900,
     "ps_link": 1426974154556702720,
-    "best_runs": 1427066908812906526
+    "best_runs": 1427066908812906526,
+    "mod_chat": 1442499917728976917
 }
 
 
@@ -80,45 +81,57 @@ emoji = {
     "gor": "<:group_of_rushers:1443250418418188402>", # ON THE SERVER
     "pdo": "<:professional_door_opener:1443719522908504215>", # ON THE SERVER
     "nn": "<:neverending_night:1443768885097529394>", # ON THE SERVER
+    "edit": "<:edit:1444467941860053113>",
+
+
+    '0': '<:0_:1444462399632445473>',
+    '1': '<:1_:1444462401075548353>',
+    '2': '<:2_:1444462402312736962>',
+    '3': '<:3_:1444462403902505134>',
+    '4': '<:4_:1444462405286629618>',
+    '5': '<:5_:1444462406779801734>',
+    '6': '<:6_:1444462407962329088>',
+    '7': '<:7_:1444462409342255204>',
+    '8': '<:8_:1444462410584035388>',
+    '9': '<:9_:1444462412559290492>'
 }
 
 _messages = {
     "join": [
-        f"{emoji['join']} Is {{mention}} really ready for this? After all, not many people have the patience to wait for 8 players to join.",
-        f"{emoji['join']} {{mention}} should now prepare to die in the backdoor a hundred times as part of join process.",
-        f"{emoji['join']} Don't worry {{mention}}, the lights flicker only *most* of the time.",
-        f"{emoji['join']} It's time for {{mention}} to acknowledge the possibility of pain and seizure.",
-        f"{emoji['join']} {{mention}} just joined! Quick, everyone look like we know what we're doing!",
-        f"{emoji['join']} Uhh, hey, {{mention}}, you have any sanity? We're running low, could we please borrow some?",
-        f"{emoji['join']} Let's hope {{mention}} has it all Figured out."
+        f"{emoji['join']} {{mention}}, are you ready for the pain?",
+        f"{emoji['join']} {{mention}} should now prepare to die in the backdoor a hundred times",
+        f"{emoji['join']} heya, {{mention}}, welcome! mind you, this entire server is a safespot",
+        f"{emoji['join']} it's time for {{mention}} to acknowledge the possibility of pain and seizure",
+        f"{emoji['join']} {{mention}} just joined! quick, everyone look like we know what we're doing!",
+        f"{emoji['join']} uhh, hey, {{mention}}, you have any sanity? We're running low, could we please borrow some?",
+        f"{emoji['join']} let's hope {{mention}} has it all Figured out"
     ],
     "join_bot": [
-        f"{emoji['app_join']} New digital entity alert! {{mention}} has manifested.",
-        f"{emoji['app_join']} Beep boop! {{mention}} just computed its way in.",
-        f"{emoji['app_join']} System update detected: Bot {{mention}} has joined the network."
+        f"{emoji['app_join']} someone added a clanker who's called {{mention}}",
+        f"{emoji['app_join']} i think {{mention}} just hacked us",
+        f"{emoji['app_join']} {{mention}} computed its way in"
     ],
     "leave": [
-        f"{emoji['leave']} {{mention}} couldn't handle the Backdoor any longer...",
+        f"{emoji['leave']} {{mention}} couldn't handle The Backdoor any longer...",
         f"{emoji['leave']} {{mention}} disconnected. Please check your internet connection and try again. (Error Code: 277)",
         f"{emoji['leave']} {{mention}} ran out of crucifixes, I guess...",
-        f"{emoji['leave']} Poof! {{mention}} is gone. Probably rage-quit after groundskeeper bugged on them or something.",
-        f"{emoji['leave']} {{mention}} saw the light. It was outside. Outside this challenge. They're happier now.",
-        f"{emoji['leave']} {{mention}} opened a Dupe door."
+        f"{emoji['leave']} {{mention}} decided to ragequit",
+        f"{emoji['leave']} {{mention}} saw the light. it was outside. Outside this challenge. they're happier now"
     ],
     "kick": [
-        f"{emoji['kick']} {{mention}} got kicked. Perhaps sold too many runs...",
-        f"{emoji['kick']} {{mention}} slipped on a nanner peel and fell out of bounds! Oh? The nanner peel was placed by an admin? Ohhhh, ok, gotcha.",
-        f"{emoji['kick']} An admin's mighty foot sent {{mention}} flying. A reminder that you shouldn't fly during the challenge. That's cheating."
+        f"{emoji['kick']} {{mention}} was kicked from this experience (Error Code: 267)",
+        f"{emoji['kick']} {{mention}} slipped on a nanner peel and fell out of bounds! what? the nanner peel was placed by an admin? ohhhh, ok, gotcha",
+        f"{emoji['kick']} an admin's mighty foot sent {{mention}} flying. a reminder that you shouldn't fly during the challenge, that's cheating"
     ],
     "ban": [
-        f"{emoji['ban']} {{mention}} got electrocuted. Not by Surge, though.",
-        f"{emoji['ban']} {{mention}} is now trapped out of next rooms with a groundskeeper.",
-        f"{emoji['ban']} {{mention}} got figured out. By the admin."
+        f"{emoji['ban']} {{mention}} got electrocuted. not by surge, though",
+        f"{emoji['ban']} {{mention}} was kicked from this experience: You have been permanently blacklisted from This Challenge Sucks (Error Code: 267)",
+        f"{emoji['ban']} {{mention}} got figured out. by an admin."
     ],
     "kick_bot": [
-        f"{emoji['app_leave']} Digital termination detected: Bot {{mention}} was kicked",
-        f"{emoji['app_leave']} Error 403: Bot {{mention}} was forcibly removed.",
-        f"{emoji['app_leave']} {{mention}} was disconnected by administrator action."
+        f"{emoji['app_leave']} digital termination detected: Bot {{mention}} was kicked",
+        f"{emoji['app_leave']} error 403: bot {{mention}} was forcibly removed",
+        f"{emoji['app_leave']} {{mention}} was disconnected by administrator action"
     ],
     "available": [
         f"{emoji['available']} **{{name}}** is now available {{available_count}}"
@@ -148,10 +161,25 @@ _messages = {
         f"{emoji['leave_vc_2']} **{{name}}** left the second voice channel {{count}}"
     ],
     "promotion": [
-        f"{emoji['promotion']} {{mention}} was promoted to **{{role}}**"
+        f"{emoji['promotion']} {{mention}} is now a moderator!"
     ],
     "demotion": [
         f"{emoji['demotion']} {{mention}} was demoted"
+    ],
+    "new_leader": [
+        f"{emoji['promotion']} {{mention}} is now a leader!"
+    ],
+    "leader_removed": [
+        f"{emoji['demotion']} {{mention}} is no longer a leader"
+    ],
+    "promotion_welcome": [
+        f"{emoji['promotion']} welcome, {{mention}}. hope this chat is cozy!"
+    ],
+    "demotion_goodbye": [
+        f"{emoji['demotion']} {{mention}} wasn't worthy of being a mod, it seems. well, off you go"
+    ],
+    "name_change": [
+        f"{emoji['edit']} {{mention}}'s name was changed from **{{old_name}}** to **{{new_name}}**"
     ],
     "birthday": [
         f"{emoji['birthday']} happy birthday, {{mention}}!!"

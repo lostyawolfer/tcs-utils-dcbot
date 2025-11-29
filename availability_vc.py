@@ -32,9 +32,9 @@ async def add_availability(bot: commands.Bot, member: discord.Member) -> None:
     available_people = await count_available(bot)
     if not has_role(member, config.roles['available']):
         if available_people >= 8:
-            await send(bot, config.message('available_ping', name=member.display_name, available_count=f'{subscript(f'({available_people}/8)')}'))
+            await send(bot, config.message('available_ping', name=member.display_name, available_count=f'{subscript(f'({available_people})')}'))
         else:
-            await send(bot, config.message('available', name=member.display_name, available_count=f'{subscript(f'({available_people}/8)')}'))
+            await send(bot, config.message('available', name=member.display_name, available_count=f'{subscript(f'({available_people})')}'))
 
     if has_role(member, config.roles['leader']):
         await add_role(member, config.roles['available_leader'])
