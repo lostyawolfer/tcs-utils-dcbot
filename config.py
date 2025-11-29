@@ -121,16 +121,16 @@ _messages = {
         f"{emoji['app_leave']} {{mention}} was disconnected by administrator action."
     ],
     "available": [
-        f"{emoji['available']} **{{name}}** is now available to participate in the challenge {{available_count}}"
+        f"{emoji['available']} **{{name}}** is now available {{available_count}}"
     ],
     "available_ping": [
-        f"{emoji['available']} **{{name}}** is now available to participate in the challenge {{available_count}} *<@&{roles['available']}>*"
+        f"{emoji['available']} **{{name}}** is now available {{available_count}} *<@&{roles['available']}>*"
     ],
     "unavailable": [
         f"{emoji['unavailable']} **{{name}}** is no longer available {{available_count}}"
     ],
     "unavailable_ping": [
-        f"{emoji['unavailable']} **{{name}}** is no longer available {{available_count}} *(we still have more than 8 though)*"
+        f"{emoji['unavailable']} **{{name}}** is no longer available {{available_count}} *(we still have 8 tho)*"
     ],
     "unavailable_auto": [
         f"{emoji['unavailable']} **{{name}}** was inactive for too long, so they're marked as unavailable {{available_count}}"
