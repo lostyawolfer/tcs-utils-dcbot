@@ -124,13 +124,13 @@ _messages = {
         f"{emoji['available']} **{{name}}** is now available to participate in the challenge {{available_count}}"
     ],
     "available_ping": [
-        f"{emoji['available']} **{{name}}** is now available to participate in the challenge {{available_count}} <@&{roles['available']}>*"
+        f"{emoji['available']} **{{name}}** is now available to participate in the challenge {{available_count}} *<@&{roles['available']}>*"
     ],
     "unavailable": [
         f"{emoji['unavailable']} **{{name}}** is no longer available {{available_count}}"
     ],
     "unavailable_ping": [
-        f"{emoji['unavailable']} **{{name}}** is no longer available {{available_count}} <@&{roles['available']}>*"
+        f"{emoji['unavailable']} **{{name}}** is no longer available {{available_count}} *<@&{roles['available']}>*"
     ],
     "unavailable_auto": [
         f"{emoji['unavailable']} **{{name}}** was inactive for too long, so they're marked as unavailable {{available_count}}"
