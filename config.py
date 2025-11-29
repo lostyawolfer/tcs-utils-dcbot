@@ -16,7 +16,7 @@ if not TOKEN:
 
 
 
-ROLES = {
+roles = {
     "admins": [
         1427016174444613804, # the man behind the challenge
         1433828741548740781  # moderator
@@ -44,7 +44,7 @@ ROLES = {
     "mod": 1433828741548740781
 }
 
-CHANNELS = {
+channels = {
     "vc": 1426972811293098015,
     "vc2": 1444027467290513448,
     "chat": 1426972811293098014,
@@ -56,7 +56,7 @@ CHANNELS = {
 }
 
 
-EMOJI = {
+emoji = {
     "join": "<:join:1436503008924926052>",
     "leave": "<:leave:1436503027937841173>",
     "ban": "<:ban:1438882547588141118>",
@@ -82,76 +82,79 @@ EMOJI = {
     "nn": "<:neverending_night:1443768885097529394>", # ON THE SERVER
 }
 
-_MESSAGES = {
+_messages = {
     "join": [
-        f"{EMOJI['join']} Is {{mention}} really ready for this? After all, not many people have the patience to wait for 8 players to join.",
-        f"{EMOJI['join']} {{mention}} should now prepare to die in the backdoor a hundred times as part of join process.",
-        f"{EMOJI['join']} Don't worry {{mention}}, the lights flicker only *most* of the time.",
-        f"{EMOJI['join']} It's time for {{mention}} to acknowledge the possibility of pain and seizure.",
-        f"{EMOJI['join']} {{mention}} just joined! Quick, everyone look like we know what we're doing!",
-        f"{EMOJI['join']} Uhh, hey, {{mention}}, you have any sanity? We're running low, could we please borrow some?",
-        f"{EMOJI['join']} Let's hope {{mention}} has it all Figured out."
+        f"{emoji['join']} Is {{mention}} really ready for this? After all, not many people have the patience to wait for 8 players to join.",
+        f"{emoji['join']} {{mention}} should now prepare to die in the backdoor a hundred times as part of join process.",
+        f"{emoji['join']} Don't worry {{mention}}, the lights flicker only *most* of the time.",
+        f"{emoji['join']} It's time for {{mention}} to acknowledge the possibility of pain and seizure.",
+        f"{emoji['join']} {{mention}} just joined! Quick, everyone look like we know what we're doing!",
+        f"{emoji['join']} Uhh, hey, {{mention}}, you have any sanity? We're running low, could we please borrow some?",
+        f"{emoji['join']} Let's hope {{mention}} has it all Figured out."
     ],
     "join_bot": [
-        f"{EMOJI['app_join']} New digital entity alert! {{mention}} has manifested.",
-        f"{EMOJI['app_join']} Beep boop! {{mention}} just computed its way in.",
-        f"{EMOJI['app_join']} System update detected: Bot {{mention}} has joined the network."
+        f"{emoji['app_join']} New digital entity alert! {{mention}} has manifested.",
+        f"{emoji['app_join']} Beep boop! {{mention}} just computed its way in.",
+        f"{emoji['app_join']} System update detected: Bot {{mention}} has joined the network."
     ],
     "leave": [
-        f"{EMOJI['leave']} {{mention}} couldn't handle the Backdoor any longer...",
-        f"{EMOJI['leave']} {{mention}} disconnected. Please check your internet connection and try again. (Error Code: 277)",
-        f"{EMOJI['leave']} {{mention}} ran out of crucifixes, I guess...",
-        f"{EMOJI['leave']} Poof! {{mention}} is gone. Probably rage-quit after groundskeeper bugged on them or something.",
-        f"{EMOJI['leave']} {{mention}} saw the light. It was outside. Outside this challenge. They're happier now.",
-        f"{EMOJI['leave']} {{mention}} opened a Dupe door."
+        f"{emoji['leave']} {{mention}} couldn't handle the Backdoor any longer...",
+        f"{emoji['leave']} {{mention}} disconnected. Please check your internet connection and try again. (Error Code: 277)",
+        f"{emoji['leave']} {{mention}} ran out of crucifixes, I guess...",
+        f"{emoji['leave']} Poof! {{mention}} is gone. Probably rage-quit after groundskeeper bugged on them or something.",
+        f"{emoji['leave']} {{mention}} saw the light. It was outside. Outside this challenge. They're happier now.",
+        f"{emoji['leave']} {{mention}} opened a Dupe door."
     ],
     "kick": [
-        f"{EMOJI['kick']} {{mention}} got kicked. Perhaps sold too many runs...",
-        f"{EMOJI['kick']} {{mention}} slipped on a nanner peel and fell out of bounds! Oh? The nanner peel was placed by an admin? Ohhhh, ok, gotcha.",
-        f"{EMOJI['kick']} An admin's mighty foot sent {{mention}} flying. A reminder that you shouldn't fly during the challenge. That's cheating."
+        f"{emoji['kick']} {{mention}} got kicked. Perhaps sold too many runs...",
+        f"{emoji['kick']} {{mention}} slipped on a nanner peel and fell out of bounds! Oh? The nanner peel was placed by an admin? Ohhhh, ok, gotcha.",
+        f"{emoji['kick']} An admin's mighty foot sent {{mention}} flying. A reminder that you shouldn't fly during the challenge. That's cheating."
     ],
     "ban": [
-        f"{EMOJI['ban']} {{mention}} got electrocuted. Not by Surge, though.",
-        f"{EMOJI['ban']} {{mention}} is now trapped out of next rooms with a groundskeeper.",
-        f"{EMOJI['ban']} {{mention}} got figured out. By the admin."
+        f"{emoji['ban']} {{mention}} got electrocuted. Not by Surge, though.",
+        f"{emoji['ban']} {{mention}} is now trapped out of next rooms with a groundskeeper.",
+        f"{emoji['ban']} {{mention}} got figured out. By the admin."
     ],
     "kick_bot": [
-        f"{EMOJI['app_leave']} Digital termination detected: Bot {{mention}} was kicked",
-        f"{EMOJI['app_leave']} Error 403: Bot {{mention}} was forcibly removed.",
-        f"{EMOJI['app_leave']} {{mention}} was disconnected by administrator action."
+        f"{emoji['app_leave']} Digital termination detected: Bot {{mention}} was kicked",
+        f"{emoji['app_leave']} Error 403: Bot {{mention}} was forcibly removed.",
+        f"{emoji['app_leave']} {{mention}} was disconnected by administrator action."
     ],
     "available": [
-        f"{EMOJI['available']} **{{name}}** is now available to participate in the challenge *- {{available_count}}/8*"
+        f"{emoji['available']} **{{name}}** is now available to participate in the challenge {{available_count}}"
     ],
     "available_ping": [
-        f"-# we have 8 people! <@&{ROLES['available']}>, go to <#{CHANNELS['ps_link']}> before someone leaves again"
+        f"{emoji['available']} **{{name}}** is now available to participate in the challenge {{available_count}} <@&{roles['available']}>*"
     ],
     "unavailable": [
-        f"{EMOJI['unavailable']} **{{name}}** is no longer available *- {{available_count}}/8*"
+        f"{emoji['unavailable']} **{{name}}** is no longer available {{available_count}}"
+    ],
+    "unavailable_ping": [
+        f"{emoji['unavailable']} **{{name}}** is no longer available {{available_count}} <@&{roles['available']}>*"
     ],
     "unavailable_auto": [
-        f"{EMOJI['unavailable']} **{{name}}** was inactive for too long, so they're marked as unavailable *- {{available_count}}/8*"
+        f"{emoji['unavailable']} **{{name}}** was inactive for too long, so they're marked as unavailable {{available_count}}"
     ],
     "join_vc": [
-        f"{EMOJI['join_vc']} **{{name}}** joined the voice channel *- {{count}}*"
+        f"{emoji['join_vc']} **{{name}}** joined the voice channel {{count}}"
     ],
     "leave_vc": [
-        f"{EMOJI['leave_vc']} **{{name}}** left the voice channel *- {{count}}*"
+        f"{emoji['leave_vc']} **{{name}}** left the voice channel {{count}}"
     ],
     "join_vc_2": [
-        f"{EMOJI['join_vc_2']} **{{name}}** joined the second voice channel *- {{count}}*"
+        f"{emoji['join_vc_2']} **{{name}}** joined the second voice channel {{count}}"
     ],
     "leave_vc_2": [
-        f"{EMOJI['leave_vc_2']} **{{name}}** left the second voice channel *- {{count}}*"
+        f"{emoji['leave_vc_2']} **{{name}}** left the second voice channel {{count}}"
     ],
     "promotion": [
-        f"{EMOJI['promotion']} {{mention}} was promoted to **{{role}}**"
+        f"{emoji['promotion']} {{mention}} was promoted to **{{role}}**"
     ],
     "demotion": [
-        f"{EMOJI['demotion']} {{mention}} was demoted"
+        f"{emoji['demotion']} {{mention}} was demoted"
     ],
     "birthday": [
-        f"{EMOJI['birthday']} happy birthday, {{mention}}!!"
+        f"{emoji['birthday']} happy birthday, {{mention}}!!"
     ],
     "nuh_uh": [
         "https://cdn.discordapp.com/attachments/715528165132599337/1442162843452440777/nuh-uh-3d-thumbnail-url-7g84og.png?ex=69246e4f&is=69231ccf&hm=b1bf1bb44ee89017d8404d35a1b0812eef3c6dc29a870ef3a8fefaa96fc7353e&",
@@ -172,6 +175,6 @@ _MESSAGES = {
 
 def message(dict_key: str, **kwargs) -> str:
     import random
-    res = random.choice(_MESSAGES[dict_key])
+    res = random.choice(_messages[dict_key])
     res = res.format(**kwargs)
     return res
