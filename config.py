@@ -38,6 +38,7 @@ roles = {
     "not_in_vc_2": 1444027740352155688,
     "birthday": 1439339439762444552,
     "inactive": 1434659281822679232,
+    "newbie": 1433872100837425193,
     "warn_1": 1442596622013038704,
     "warn_2": 1442596750576717905,
     "warn_3": 1442623000452005948,
@@ -83,6 +84,8 @@ emoji = {
     "nn": "<:neverending_night:1443768885097529394>", # ON THE SERVER
     "edit": "<:edit:1444529076516688064>",
     "newbie": "<:upvote:1434612815062237195>", # ON THE SERVER
+    "inactive": "🛌",
+    "inactive_revoke": "🏆",
 
 
     '0': '<:0_:1444462399632445473>',
@@ -165,13 +168,13 @@ _messages = {
         f"{emoji['promotion']} {{mention}} is now a moderator!"
     ],
     "demotion": [
-        f"{emoji['demotion']} {{mention}} was demoted"
+        f"{emoji['demotion']} {{mention}} was demoted..."
     ],
     "new_leader": [
         f"{emoji['promotion']} {{mention}} is now a leader!"
     ],
     "leader_removed": [
-        f"{emoji['demotion']} {{mention}} is no longer a leader"
+        f"{emoji['demotion']} {{mention}} is no longer a leader..."
     ],
     "promotion_welcome": [
         f"{emoji['promotion']} welcome, {{mention}}. hope this chat is cozy!"
@@ -187,6 +190,12 @@ _messages = {
     ],
     "newbie": [
         f"{emoji['newbie']} {{mention}} is not a newbie anymore!! please applaud!!"
+    ],
+    "inactive": [
+        f"{emoji['inactive']} {{mention}} seemed to be inactive... hey, if you have reasons, tell us! just, if you keep the silence going without reason, you might as well leave..."
+    ],
+    "inactive_revoke": [
+        f"{emoji['inactive_revoke']} {{mention}} is no longer considered inactive!"
     ],
     "nuh_uh": [
         "https://cdn.discordapp.com/attachments/715528165132599337/1442162843452440777/nuh-uh-3d-thumbnail-url-7g84og.png?ex=69246e4f&is=69231ccf&hm=b1bf1bb44ee89017d8404d35a1b0812eef3c6dc29a870ef3a8fefaa96fc7353e&",

@@ -70,12 +70,18 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('promotion_welcome', mention=after.mention), 'mod_chat')
             if role.id == config.roles['leader']:
                 await general.send(bot, config.message('new_leader', mention=after.mention))
+            if role.id == config.roles['inactive']:
+                await general.send(bot, config.message('inactive', mention=after.mention))
         for role in removed_roles:
             if role.id == config.roles['mod']:
                 await general.send(bot, config.message('demotion', mention=after.mention))
                 await general.send(bot, config.message('demotion_goodbye', mention=after.mention), 'mod_chat')
             if role.id == config.roles['leader']:
                 await general.send(bot, config.message('leader_removed', mention=after.mention))
+            if role.id == config.roles['newbie']:
+                await general.send(bot, config.message('newbie', mention=after.mention))
+            if role.id == config.roles['inactive']:
+                await general.send(bot, config.message('inactive_revoke', mention=after.mention))
     if before.nick != after.nick:
         old = before.nick if before.nick else before.name
         new = after.nick if after.nick else after.name
