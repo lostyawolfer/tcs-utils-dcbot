@@ -33,8 +33,8 @@ roles = {
     "in_vc": 1427076261586669688,
     "in_vc_leader": 1427076452477702191,
     "not_in_vc": 1442132263071645779,
-    "in_vc_2": 1444027828898238605,
-    "in_vc_2_leader": 1444027810594295908,
+    "in_vc_2": 1444027810594295908,
+    "in_vc_2_leader": 1444027828898238605,
     "not_in_vc_2": 1444027740352155688,
     "birthday": 1439339439762444552,
     "inactive": 1434659281822679232,
@@ -82,6 +82,7 @@ emoji = {
     "pdo": "<:professional_door_opener:1443719522908504215>", # ON THE SERVER
     "nn": "<:neverending_night:1443768885097529394>", # ON THE SERVER
     "edit": "<:edit:1444529076516688064>",
+    "newbie": "<:upvote:1434612815062237195>", # ON THE SERVER
 
 
     '0': '<:0_:1444462399632445473>',
@@ -183,6 +184,9 @@ _messages = {
     ],
     "birthday": [
         f"{emoji['birthday']} happy birthday, {{mention}}!!"
+    ],
+    "newbie": [
+        f"{emoji['newbie']} {{mention}} is not a newbie anymore!! please applaud!!"
     ],
     "nuh_uh": [
         "https://cdn.discordapp.com/attachments/715528165132599337/1442162843452440777/nuh-uh-3d-thumbnail-url-7g84og.png?ex=69246e4f&is=69231ccf&hm=b1bf1bb44ee89017d8404d35a1b0812eef3c6dc29a870ef3a8fefaa96fc7353e&",
