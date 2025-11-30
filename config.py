@@ -81,7 +81,7 @@ emoji = {
     "gor": "<:group_of_rushers:1443250418418188402>", # ON THE SERVER
     "pdo": "<:professional_door_opener:1443719522908504215>", # ON THE SERVER
     "nn": "<:neverending_night:1443768885097529394>", # ON THE SERVER
-    "edit": "<:edit:1444467941860053113>",
+    "edit": "<:edit:1444529076516688064>",
 
 
     '0': '<:0_:1444462399632445473>',
