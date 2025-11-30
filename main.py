@@ -141,6 +141,11 @@ async def test(ctx):
     await ctx.send('test pass')
 
 @bot.command()
+@general.try_perm
+async def van(ctx, member: discord.Member):
+    await ctx.send(f'{member.mention} has been vanned :white_check_mark:')
+
+@bot.command()
 @general.has_perms('kick_members')
 @general.try_perm
 async def kick(ctx, member: discord.Member, *, reason: str = None):
