@@ -42,7 +42,16 @@ roles = {
     "warn_1": 1442596622013038704,
     "warn_2": 1442596750576717905,
     "warn_3": 1442623000452005948,
-    "mod": 1433828741548740781
+    "mod": 1433828741548740781,
+
+    "completion_tbs": 1427674706076635169,
+    "completion_ahp": 1445115775261081681,
+    "completion_star": 1439783495248384162,
+    "completion_dv": 1443264316236234862,
+    "completion_ch_tcs": 1440647536397385800,
+    "completion_ch_gor": 1443251279257407619,
+    "completion_ch_pdo": 1443251500481646784,
+    "completion_ch_nn": 1443767416579559618,
 }
 
 channels = {
@@ -211,7 +220,16 @@ _messages = {
     ],
     "channel_unlock": [
         "🔓 channel was unlocked"
-    ]
+    ],
+
+    "completion_tbs": ["🏅 {{mention}} got **this badge sucks**"],
+    "completion_ahp": ["🏅 {{mention}} got **a hard place**"],
+    "completion_star": ["🏅 {{mention}} got **the completionist star**"],
+    "completion_dv": ["⭐ {{mention}} beat **doorsverse**"],
+    "completion_ch_tcs": ["🏆 {{mention}} beat **this challenge sucks**"],
+    "completion_ch_gor": ["🏆 {{mention}} beat **group of rushers**"],
+    "completion_ch_pdo": ["🏆 {{mention}} beat **professional doors opener**"],
+    "completion_ch_nn": ["🏆 {{mention}} beat **neverending night**"]
 }
 
 def message(dict_key: str, **kwargs) -> str:

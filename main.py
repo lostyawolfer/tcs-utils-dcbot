@@ -72,6 +72,23 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('new_leader', mention=after.mention))
             if role.id == config.roles['inactive']:
                 await general.send(bot, config.message('inactive', mention=after.mention))
+
+            if role.id == config.roles['completion_tbs']:
+                await general.send(bot, config.message('completion_tbs', mention=after.mention))
+            if role.id == config.roles['completion_ahp']:
+                await general.send(bot, config.message('completion_ahp', mention=after.mention))
+            if role.id == config.roles['completion_star']:
+                await general.send(bot, config.message('completion_star', mention=after.mention))
+            if role.id == config.roles['completion_dv']:
+                await general.send(bot, config.message('completion_dv', mention=after.mention))
+            if role.id == config.roles['completion_ch_tcs']:
+                await general.send(bot, config.message('completion_ch_tcs', mention=after.mention))
+            if role.id == config.roles['completion_ch_gor']:
+                await general.send(bot, config.message('completion_ch_gor', mention=after.mention))
+            if role.id == config.roles['completion_ch_pdo']:
+                await general.send(bot, config.message('completion_ch_pdo', mention=after.mention))
+            if role.id == config.roles['completion_ch_nn']:
+                await general.send(bot, config.message('completion_ch_nn', mention=after.mention))
         for role in removed_roles:
             if role.id == config.roles['mod']:
                 await general.send(bot, config.message('demotion', mention=after.mention))
