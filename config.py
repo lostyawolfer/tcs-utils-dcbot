@@ -222,14 +222,14 @@ _messages = {
         "🔓 channel was unlocked"
     ],
 
-    "completion_tbs": ["🏅 {{mention}} got **this badge sucks**"],
-    "completion_ahp": ["🏅 {{mention}} got **a hard place**"],
-    "completion_star": ["🏅 {{mention}} got **the completionist star**"],
-    "completion_dv": ["⭐ {{mention}} beat **doorsverse**"],
-    "completion_ch_tcs": ["🏆 {{mention}} beat **this challenge sucks**"],
-    "completion_ch_gor": ["🏆 {{mention}} beat **group of rushers**"],
-    "completion_ch_pdo": ["🏆 {{mention}} beat **professional doors opener**"],
-    "completion_ch_nn": ["🏆 {{mention}} beat **neverending night**"]
+    "completion_tbs": [f"🏅 {{mention}} got **this badge sucks**"],
+    "completion_ahp": [f"🏅 {{mention}} got **a hard place**"],
+    "completion_star": [f"🏅 {{mention}} got **the completionist star**"],
+    "completion_dv": [f"⭐ {{mention}} beat **doorsverse**"],
+    "completion_ch_tcs": [f"🏆 {{mention}} beat **this challenge sucks**"],
+    "completion_ch_gor": [f"🏆 {{mention}} beat **group of rushers**"],
+    "completion_ch_pdo": [f"🏆 {{mention}} beat **professional doors opener**"],
+    "completion_ch_nn": [f"🏆 {{mention}} beat **neverending night**"]
 }
 
 def message(dict_key: str, **kwargs) -> str:
