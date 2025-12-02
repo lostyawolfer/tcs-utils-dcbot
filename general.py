@@ -106,6 +106,14 @@ def has_perms(required_perm):
         return wrapper
     return decorator
 
+def is_owner(func):
+    @functools.wraps(func)
+    async def wrapper(ctx, member: discord.Member, *args, **kwargs):
+        if ctx.author.id != ctx.guild.owner_id:
+            return await ctx.send(config.message("nuh_uh"))
+        return await func(ctx, member, *args, **kwargs)
+    return wrapper
+
 def try_perm(func):
     @functools.wraps(func)
     async def wrapper(ctx, member: discord.Member, *args, **kwargs):

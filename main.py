@@ -26,6 +26,18 @@ async def on_ready():
                 if not member.bot:
                     await availability_vc.pure_availability_check(bot, member)
                     await availability_vc.voice_check(bot, member)
+                    for role in config.roles['role_check']:
+                        await general.add_role(member, role)
+                    for role in member.roles:
+                        if role.id in config.roles['category:badges']['other']:
+                            await general.remove_role(member, config.roles['category:badges']['none'])
+                            break
+                        await general.add_role(member, config.roles['category:badges']['none'])
+                    for role in member.roles:
+                        if role.id in config.roles['category:misc']['other']:
+                            await general.remove_role(member, config.roles['category:misc']['none'])
+                            break
+                        await general.add_role(member, config.roles['category:misc']['none'])
             await bot.change_presence(status=discord.Status.online)
             await general.update_status(bot)
             break
@@ -89,6 +101,12 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('completion_ch_pdo', mention=after.mention))
             if role.id == config.roles['completion_ch_nn']:
                 await general.send(bot, config.message('completion_ch_nn', mention=after.mention))
+
+            if role.id in config.roles['category:badges']['other']:
+                await general.remove_role(after, config.roles['category:badges']['none'])
+            if role.id in config.roles['category:misc']['other']:
+                await general.remove_role(after, config.roles['category:misc']['none'])
+
         for role in removed_roles:
             if role.id == config.roles['mod']:
                 await general.send(bot, config.message('demotion', mention=after.mention))
@@ -99,6 +117,18 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('newbie', mention=after.mention))
             if role.id == config.roles['inactive']:
                 await general.send(bot, config.message('inactive_revoke', mention=after.mention))
+
+            if role.id in config.roles['category:badges']['other']:
+                for badge in after_roles:
+                    if badge.id in config.roles['category:badges']['other']:
+                        break
+                    await general.add_role(after, config.roles['category:badges']['none'])
+            if role.id in config.roles['category:misc']['other']:
+                for badge in after_roles:
+                    if badge.id in config.roles['category:misc']['other']:
+                        break
+                    await general.add_role(after, config.roles['category:misc']['none'])
+
     if before.nick != after.nick:
         old = before.nick if before.nick else before.name
         new = after.nick if after.nick else after.name
@@ -156,6 +186,32 @@ async def on_message(message):
 @bot.command()
 async def test(ctx):
     await ctx.send('test pass')
+
+@bot.command()
+@general.is_owner
+@general.try_perm
+async def check_members(ctx):
+    await ctx.send('aight')
+    await general.set_status(bot, 'checking members')
+    #member: discord.Member
+    for member in ctx.guild.members:
+        if not member.bot:
+            await availability_vc.pure_availability_check(bot, member)
+            await availability_vc.voice_check(bot, member)
+            for role in config.roles['role_check']:
+                await general.add_role(member, role)
+            for role in member.roles:
+                if role.id in config.roles['category:badges']['other']:
+                    await general.remove_role(member, config.roles['category:badges']['none'])
+                    break
+                await general.add_role(member, config.roles['category:badges']['none'])
+            for role in member.roles:
+                if role.id in config.roles['category:misc']['other']:
+                    await general.remove_role(member, config.roles['category:misc']['none'])
+                    break
+                await general.add_role(member, config.roles['category:misc']['none'])
+    await general.update_status(bot)
+    await ctx.send('checked :white_check_mark:')
 
 @bot.command()
 @general.try_perm
