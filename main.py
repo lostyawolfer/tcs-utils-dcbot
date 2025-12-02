@@ -1,3 +1,5 @@
+import datetime
+
 import discord
 from discord.ext import commands
 import moderation
@@ -229,6 +231,27 @@ async def kick(ctx, member: discord.Member, *, reason: str = None):
 @general.try_perm
 async def ban(ctx, member: discord.Member, *, reason: str = None):
     await member.ban(reason=reason, delete_message_days=0, delete_message_seconds=0)
+
+@bot.command()
+@general.has_perms('moderate_members')
+@general.try_perm
+async def check_newbies(ctx):
+    member: discord.Member
+    for member in ctx.guild.members:
+        if not member.bot:
+            if ctx.guild.get_role(config.roles['newbie']) in member.roles:
+                if member.joined_at:
+                    now = datetime.datetime.now(member.joined_at.tzinfo)
+                    time_since_join = now - member.joined_at
+                    days = time_since_join.days
+                    if days > 7:
+                        await general.remove_role(member, config.roles['newbie'])
+
+@bot.command()
+@general.has_perms('moderate_members')
+@general.try_perm
+async def check_inactive(ctx):
+    ...
 
 @bot.command()
 @general.has_perms('moderate_members')
