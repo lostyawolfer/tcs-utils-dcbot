@@ -24,11 +24,9 @@ async def status_updater_loop():
 
 @bot.event
 async def on_ready():
-    await general.set_status(bot, 'startup')
-    time = f'{datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M")}'
+    await general.set_status(bot, 'starting up...', status=discord.Status('idle'))
     for guild in bot.guilds:
         if config.check_guild(guild.id):
-            await bot.change_presence(status=discord.Status('idle'))
             await general.update_status_checking(bot, 0)
             total_members = guild.member_count
             member_n = 0
@@ -51,8 +49,8 @@ async def on_ready():
                             break
                         await general.add_role(member, config.roles['category:misc']['none'])
                 await general.update_status_checking(bot, percent)
-            await bot.change_presence(status=discord.Status('online'))
             await general.update_status(bot)
+            status_updater_loop.start()
             break
 
 @bot.event

@@ -33,8 +33,8 @@ async def count_in_vc(bot: commands.Bot, vc: str = 'vc') -> int:
 
 
 
-async def set_status(bot: commands.Bot, status: str) -> None:
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=status))
+async def set_status(bot: commands.Bot, text: str, *, status: discord.Status | None = discord.Status('online')) -> None:
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=text), status=status)
 
 async def update_status(bot: commands.Bot) -> None:
     time = f'{datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M")}'
@@ -56,13 +56,13 @@ async def update_status_checking(bot: commands.Bot, percent: int) -> None:
     vc_2_count = await count_in_vc(bot, 'vc2')
     available_count = await count_available(bot)
     if not vc_count and not vc_2_count:
-        await set_status(bot, f'[{time}] {percent}% / {available_count} available')
+        await set_status(bot, f'[{time}] {percent}% / {available_count} available', status=discord.Status('idle'))
     elif vc_count and not vc_2_count:
-        await set_status(bot, f'[{time}] {percent}% / {available_count} available / {vc_count} in vc 🟢')
+        await set_status(bot, f'[{time}] {percent}% / {available_count} available / {vc_count} in vc 🟢', status=discord.Status('idle'))
     elif not vc_count and vc_2_count:
-        await set_status(bot, f'[{time}] {percent}% / {available_count} available / {vc_2_count} in vc 🟣')
+        await set_status(bot, f'[{time}] {percent}% / {available_count} available / {vc_2_count} in vc 🟣', status=discord.Status('idle'))
     else:
-        await set_status(bot, f'[{time}] {percent}% / {available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣')
+        await set_status(bot, f'[{time}] {percent}% / {available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣', status=discord.Status('idle'))
 
 
 
