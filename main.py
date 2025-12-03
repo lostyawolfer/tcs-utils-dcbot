@@ -24,7 +24,7 @@ async def status_updater_loop():
 
 @bot.event
 async def on_ready():
-    await general.set_status(bot, 'starting up...', status=discord.Status('idle'))
+    await general.set_status(bot, 'starting up...', status=discord.Status.idle)
     for guild in bot.guilds:
         if config.check_guild(guild.id):
             await general.update_status_checking(bot, 0)

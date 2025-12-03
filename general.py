@@ -31,9 +31,7 @@ async def count_available(bot: commands.Bot) -> int:
 async def count_in_vc(bot: commands.Bot, vc: str = 'vc') -> int:
     return len(bot.get_channel(config.channels[vc]).members)
 
-
-
-async def set_status(bot: commands.Bot, text: str, *, status: discord.Status | None = discord.Status('online')) -> None:
+async def set_status(bot: commands.Bot, text: str, *, status: discord.Status = discord.Status.online) -> None:
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=text), status=status)
 
 async def update_status(bot: commands.Bot) -> None:
