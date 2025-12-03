@@ -50,6 +50,20 @@ async def update_status(bot: commands.Bot) -> None:
     else:
         await set_status(bot, f'[{time}] {available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣')
 
+async def update_status_checking(bot: commands.Bot, percent: int) -> None:
+    time = f'{datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M")}'
+    vc_count = await count_in_vc(bot, 'vc')
+    vc_2_count = await count_in_vc(bot, 'vc2')
+    available_count = await count_available(bot)
+    if not vc_count and not vc_2_count:
+        await set_status(bot, f'[{time}] {percent}% / {available_count} available')
+    elif vc_count and not vc_2_count:
+        await set_status(bot, f'[{time}] {percent}% / {available_count} available / {vc_count} in vc 🟢')
+    elif not vc_count and vc_2_count:
+        await set_status(bot, f'[{time}] {percent}% / {available_count} available / {vc_2_count} in vc 🟣')
+    else:
+        await set_status(bot, f'[{time}] {percent}% / {available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣')
+
 
 
 def has_role(member: discord.Member, role_id: int) -> bool:

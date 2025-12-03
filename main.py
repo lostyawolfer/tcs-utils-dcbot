@@ -25,13 +25,16 @@ async def status_updater_loop():
 @bot.event
 async def on_ready():
     await general.set_status(bot, 'startup')
+    time = f'{datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M")}'
     for guild in bot.guilds:
         if config.check_guild(guild.id):
-            await bot.change_presence(status=discord.Status.idle)
-            await general.set_status(bot, 'checking members')
-            #member_n = 0
+            await bot.change_presence(status=discord.Status('idle'))
+            await general.update_status_checking(bot, 0)
+            total_members = guild.member_count
+            member_n = 0
             for member in guild.members:
-                #member_n += 1
+                member_n += 1
+                percent = round(member_n * 100 / total_members)
                 if not member.bot:
                     await availability_vc.pure_availability_check(bot, member)
                     await availability_vc.voice_check(bot, member)
@@ -47,7 +50,8 @@ async def on_ready():
                             await general.remove_role(member, config.roles['category:misc']['none'])
                             break
                         await general.add_role(member, config.roles['category:misc']['none'])
-            await bot.change_presence(status=discord.Status.online)
+                await general.update_status_checking(bot, percent)
+            await bot.change_presence(status=discord.Status('online'))
             await general.update_status(bot)
             break
 
@@ -201,9 +205,13 @@ async def test(ctx):
 @general.try_perm
 async def check_members(ctx):
     await ctx.send('aight')
-    await general.set_status(bot, 'checking members')
-    #member: discord.Member
+    await bot.change_presence(status=discord.Status('idle'))
+    await general.update_status_checking(bot, 0)
+    total_members = ctx.guild.member_count
+    member_n = 0
     for member in ctx.guild.members:
+        member_n += 1
+        percent = round(member_n * 100 / total_members)
         if not member.bot:
             await availability_vc.pure_availability_check(bot, member)
             await availability_vc.voice_check(bot, member)
@@ -219,8 +227,9 @@ async def check_members(ctx):
                     await general.remove_role(member, config.roles['category:misc']['none'])
                     break
                 await general.add_role(member, config.roles['category:misc']['none'])
+        await general.update_status_checking(bot, percent)
+    await bot.change_presence(status=discord.Status('online'))
     await general.update_status(bot)
-    await ctx.send('checked :white_check_mark:')
 
 @bot.command()
 @general.try_perm
@@ -243,8 +252,13 @@ async def ban(ctx, member: discord.Member, *, reason: str = None):
 @general.has_perms('moderate_members')
 @general.try_perm
 async def check_newbies(ctx):
-    member: discord.Member
+    await bot.change_presence(status=discord.Status('idle'))
+    await general.update_status_checking(bot, 0)
+    total_members = ctx.guild.member_count
+    member_n = 0
     for member in ctx.guild.members:
+        member_n += 1
+        percent = round(member_n * 100 / total_members)
         if not member.bot:
             if ctx.guild.get_role(config.roles['newbie']) in member.roles:
                 if member.joined_at:
@@ -253,6 +267,9 @@ async def check_newbies(ctx):
                     days = time_since_join.days
                     if days > 7:
                         await general.remove_role(member, config.roles['newbie'])
+        await general.update_status_checking(bot, percent)
+    await bot.change_presence(status=discord.Status('online'))
+    await general.update_status(bot)
 
 @bot.command()
 @general.has_perms('moderate_members')
