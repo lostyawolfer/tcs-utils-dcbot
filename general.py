@@ -1,3 +1,5 @@
+import datetime
+
 import discord
 import config
 from discord.ext import commands
@@ -35,17 +37,18 @@ async def set_status(bot: commands.Bot, status: str) -> None:
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=status))
 
 async def update_status(bot: commands.Bot) -> None:
+    time = f'{datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M")}'
     vc_count = await count_in_vc(bot, 'vc')
     vc_2_count = await count_in_vc(bot, 'vc2')
     available_count = await count_available(bot)
     if not vc_count and not vc_2_count:
-        await set_status(bot, f'{available_count} available')
+        await set_status(bot, f'[{time}] {available_count} available')
     elif vc_count and not vc_2_count:
-        await set_status(bot, f'{available_count} available / {vc_count} in vc 🟢')
+        await set_status(bot, f'[{time}] {available_count} available / {vc_count} in vc 🟢')
     elif not vc_count and vc_2_count:
-        await set_status(bot, f'{available_count} available / {vc_2_count} in vc 🟣')
+        await set_status(bot, f'[{time}] {available_count} available / {vc_2_count} in vc 🟣')
     else:
-        await set_status(bot, f'{available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣')
+        await set_status(bot, f'[{time}] {available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣')
 
 
 
@@ -73,7 +76,7 @@ async def remove_role(member: discord.Member, role_id: int) -> None:
         await member.remove_roles(role)
 
 
-def subscript(text: str) -> str:
+def emojify(text: str) -> str:
     conversion_map = {
         '0': config.emoji['0'], '1': config.emoji['1'], '2': config.emoji['2'], '3': config.emoji['3'], '4': config.emoji['4'],
         '5': config.emoji['5'], '6': config.emoji['6'], '7': config.emoji['7'], '8': config.emoji['8'], '9': config.emoji['9'],

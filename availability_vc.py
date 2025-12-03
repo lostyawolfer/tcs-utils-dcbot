@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import config
 import general
-from general import has_role, send, add_role, remove_role, count_available, count_in_vc, subscript
+from general import has_role, send, add_role, remove_role, count_available, count_in_vc, emojify
 
 
 async def voice_check(bot: commands.Bot, member: discord.Member) -> None:
@@ -11,14 +11,14 @@ async def voice_check(bot: commands.Bot, member: discord.Member) -> None:
         members = await count_in_vc(bot, vc)
         if member.voice and member.voice.channel == channel:
             if not has_role(member, config.roles[role]):
-                await send(bot, config.message(join_msg_id, name=member.display_name, count=f'{subscript(f'({members})')}'))
+                await send(bot, config.message(join_msg_id, name=member.display_name, count=f'{emojify(f'({members})')}'))
             if has_role(member, config.roles['leader']):
                 await add_role(member, config.roles[leader_role])
             await add_role(member, config.roles[role])
             await remove_role(member, config.roles[reverse_role])
         else:
             if has_role(member, config.roles[role]):
-                await send(bot, config.message(leave_msg_id, name=member.display_name, count=f'{subscript(f'({members})')}'))
+                await send(bot, config.message(leave_msg_id, name=member.display_name, count=f'{emojify(f'({members})')}'))
             await remove_role(member, config.roles[role])
             await remove_role(member, config.roles[leader_role])
             await add_role(member, config.roles[reverse_role])
@@ -32,9 +32,9 @@ async def add_availability(bot: commands.Bot, member: discord.Member) -> None:
     available_people = await count_available(bot)
     if not has_role(member, config.roles['available']):
         if available_people >= 8:
-            await send(bot, config.message('available_ping', name=member.display_name, available_count=f'{subscript(f'({available_people})')}'))
+            await send(bot, config.message('available_ping', name=member.display_name, available_count=f'{emojify(f'({available_people})')}'))
         else:
-            await send(bot, config.message('available', name=member.display_name, available_count=f'{subscript(f'({available_people})')}'))
+            await send(bot, config.message('available', name=member.display_name, available_count=f'{emojify(f'({available_people})')}'))
 
     if has_role(member, config.roles['leader']):
         await add_role(member, config.roles['available_leader'])
@@ -50,9 +50,9 @@ async def remove_availability(bot: commands.Bot, member: discord.Member) -> None
     available_people = await count_available(bot)
     if has_role(member, config.roles['available']):
         if available_people >= 8:
-            await send(bot, config.message('unavailable_ping', name=member.display_name, available_count=f'{subscript(f'({available_people})')}'))
+            await send(bot, config.message('unavailable_ping', name=member.display_name, available_count=f'{emojify(f'({available_people})')}'))
         else:
-            await send(bot, config.message('unavailable', name=member.display_name, available_count=f'{subscript(f'({available_people})')}'))
+            await send(bot, config.message('unavailable', name=member.display_name, available_count=f'{emojify(f'({available_people})')}'))
 
     await remove_role(member, config.roles['available'])
     await remove_role(member, config.roles['available_leader'])

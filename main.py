@@ -1,7 +1,7 @@
 import datetime
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import moderation
 import availability_vc
 import general
@@ -14,6 +14,13 @@ intents.reactions = True
 intents.guilds = True
 intents.message_content = True
 bot = commands.Bot(command_prefix='.', intents=intents)
+
+
+@tasks.loop(seconds=1)
+async def status_updater_loop():
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    if 2 <= now_utc.second <= 3:
+        await general.update_status(bot)
 
 @bot.event
 async def on_ready():
@@ -312,105 +319,108 @@ async def unlock(ctx):
 
 
 
-
-
-
 @bot.command()
-async def br(ctx, *args):
-    # if not ctx.guild.get_role(ROLES['mod']) not in ctx.author.roles:
-    #     return await ctx.send(message("nuh_uh"))
-    parsed_args = list(args)
-    if len(parsed_args) == 0:
-        return await ctx.send(
-            'usage `.br <challenge> [best?] <route> <death-floor> <death-door> [flag][participants] -- <reason>`\n'
-            'format `.br <tcs/gor/pdo> [b] bh[ro]m[-l] <b/h/r/o/m> (int) [-l @leader] [-d @dead_member] [-x @disconnected_member] [@normal_member] ... -- (str)`\n'
-            'death-door argument can also represent death meters in outdoors if death-floor is \'o\'\n'
-            '-l at the end of route means long rooms and only works if r is included. long rooms means up to a-1000, short rooms means up to a-200'
-        )
+async def br(ctx):
+    await ctx.reply('sry fam ts command no workie and im too lazy to fix it so its cancelled for now')
 
-    run_type = parsed_args.pop(0).lower()
-    if run_type not in config.emoji:
-        return await ctx.send(
-            f'invalid challenge `{run_type}`'
-        )
 
-    new_best = False
-    if len(parsed_args) >= 1 and parsed_args[0] == 'b':
-        new_best = True
-        parsed_args.pop(0)
 
-    if len(parsed_args) < 3:  # minimum route, death-floor, death-door
-        return await ctx.send('wrong usage :wilted_rose:')
-
-    route = parsed_args[0]
-    death_floor = parsed_args[1]
-    try:
-        death_time = int(parsed_args[2])
-    except ValueError:
-        await ctx.send(
-            'wrong death door it has to be an integer :wilted_rose:'
-        )
-        return None
-
-    death_point = (death_floor, death_time)
-
-    # Find the separator for reason
-    try:
-        reason_separator_index = parsed_args.index('--', 3)
-    except ValueError:
-        return await ctx.send(
-            'pls tell me the run failure reason after `--`'
-        )
-
-    # Extract participant arguments and reason
-    participant_args = parsed_args[3:reason_separator_index]
-    reason = ' '.join(parsed_args[reason_separator_index + 1 :])
-
-    if not reason:
-        return await ctx.send('how tf did u fail? tell me! after `--` at the end of the command')
-
-    from best_runs import RunMember, RunDetails
-    participants: list[RunMember] = []
-
-    # Helper to create a RunMember from a discord.Member
-    async def create_run_member(member: discord.Member):
-        return RunMember(
-            member=member,
-            is_leader=current_member_flags['is_leader'],
-            is_dead=current_member_flags['is_dead'],
-            is_disconnected=current_member_flags['is_disconnected'],
-        )
-
-    current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
-    # Process participant arguments
-    for arg in participant_args:
-        if arg == '-l':
-            current_member_flags['is_leader'] = True
-        if arg == '-d':
-            current_member_flags['is_dead'] = True
-        if arg == '-x':
-            current_member_flags['is_disconnected'] = True
-        if arg not in ['-x', '-d', '-l']:
-            try:
-                # Resolve member from mention (e.g., <@123456789>)
-                member = await commands.MemberConverter().convert(ctx, arg)
-                participants.append(await create_run_member(member))
-                current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
-            except commands.MemberNotFound:
-                await ctx.send(f'Could not find member: `{arg}`')
-            finally:
-                # Reset flags after adding a member or if it's not a flag
-                current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
-
-    run_details = RunDetails(
-        run_type=run_type,
-        route=route,
-        death_point=death_point,
-        reason=reason,
-        participants=participants,
-        is_new_best=new_best,
-    )
-    return await ctx.send(run_details.message_text)
+# @bot.command()
+# async def br(ctx, *args):
+#     # if not ctx.guild.get_role(ROLES['mod']) not in ctx.author.roles:
+#     #     return await ctx.send(message("nuh_uh"))
+#     parsed_args = list(args)
+#     if len(parsed_args) == 0:
+#         return await ctx.send(
+#             'usage `.br <challenge> [best?] <route> <death-floor> <death-door> [flag][participants] -- <reason>`\n'
+#             'format `.br <tcs/gor/pdo> [b] bh[ro]m[-l] <b/h/r/o/m> (int) [-l @leader] [-d @dead_member] [-x @disconnected_member] [@normal_member] ... -- (str)`\n'
+#             'death-door argument can also represent death meters in outdoors if death-floor is \'o\'\n'
+#             '-l at the end of route means long rooms and only works if r is included. long rooms means up to a-1000, short rooms means up to a-200'
+#         )
+#
+#     run_type = parsed_args.pop(0).lower()
+#     if run_type not in config.emoji:
+#         return await ctx.send(
+#             f'invalid challenge `{run_type}`'
+#         )
+#
+#     new_best = False
+#     if len(parsed_args) >= 1 and parsed_args[0] == 'b':
+#         new_best = True
+#         parsed_args.pop(0)
+#
+#     if len(parsed_args) < 3:  # minimum route, death-floor, death-door
+#         return await ctx.send('wrong usage :wilted_rose:')
+#
+#     route = parsed_args[0]
+#     death_floor = parsed_args[1]
+#     try:
+#         death_time = int(parsed_args[2])
+#     except ValueError:
+#         await ctx.send(
+#             'wrong death door it has to be an integer :wilted_rose:'
+#         )
+#         return None
+#
+#     death_point = (death_floor, death_time)
+#
+#     # Find the separator for reason
+#     try:
+#         reason_separator_index = parsed_args.index('--', 3)
+#     except ValueError:
+#         return await ctx.send(
+#             'pls tell me the run failure reason after `--`'
+#         )
+#
+#     # Extract participant arguments and reason
+#     participant_args = parsed_args[3:reason_separator_index]
+#     reason = ' '.join(parsed_args[reason_separator_index + 1 :])
+#
+#     if not reason:
+#         return await ctx.send('how tf did u fail? tell me! after `--` at the end of the command')
+#
+#     from best_runs import RunMember, RunDetails
+#     participants: list[RunMember] = []
+#
+#     # Helper to create a RunMember from a discord.Member
+#     async def create_run_member(member: discord.Member):
+#         return RunMember(
+#             member=member,
+#             is_leader=current_member_flags['is_leader'],
+#             is_dead=current_member_flags['is_dead'],
+#             is_disconnected=current_member_flags['is_disconnected'],
+#         )
+#
+#     current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
+#     # Process participant arguments
+#     for arg in participant_args:
+#         if arg == '-l':
+#             current_member_flags['is_leader'] = True
+#         if arg == '-d':
+#             current_member_flags['is_dead'] = True
+#         if arg == '-x':
+#             current_member_flags['is_disconnected'] = True
+#         if arg not in ['-x', '-d', '-l']:
+#             try:
+#                 # Resolve member from mention (e.g., <@123456789>)
+#                 member = await commands.MemberConverter().convert(ctx, arg)
+#                 participants.append(await create_run_member(member))
+#                 current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
+#             except commands.MemberNotFound:
+#                 await ctx.send(f'Could not find member: `{arg}`')
+#             finally:
+#                 # Reset flags after adding a member or if it's not a flag
+#                 current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
+#
+#     run_details = RunDetails(
+#         run_type=run_type,
+#         route=route,
+#         death_point=death_point,
+#         reason=reason,
+#         participants=participants,
+#         is_new_best=new_best,
+#     )
+#     return await ctx.send(run_details.message_text)
 
 
 if __name__ == '__main__':
