@@ -247,9 +247,11 @@ async def ban(ctx, member: discord.Member, *, reason: str = None):
     await member.ban(reason=reason, delete_message_days=0, delete_message_seconds=0)
 
 @bot.command()
-@general.has_perms('moderate_members')
 @general.try_perm
 async def check_newbies(ctx):
+    author_perms = ctx.author.guild_permissions
+    if not getattr(author_perms, 'moderate_members', False):
+        return await ctx.send(config.message("nuh_uh"))
     await bot.change_presence(status=discord.Status('idle'))
     await general.update_status_checking(bot, 0)
     total_members = ctx.guild.member_count
@@ -267,13 +269,14 @@ async def check_newbies(ctx):
                         await general.remove_role(member, config.roles['newbie'])
         await general.update_status_checking(bot, percent)
     await bot.change_presence(status=discord.Status('online'))
-    await general.update_status(bot)
+    return await general.update_status(bot)
 
 @bot.command()
-@general.has_perms('moderate_members')
 @general.try_perm
 async def check_inactive(ctx):
-    ...
+    author_perms = ctx.author.guild_permissions
+    if not getattr(author_perms, 'moderate_members', False):
+        ...
 
 @bot.command()
 @general.has_perms('moderate_members')
