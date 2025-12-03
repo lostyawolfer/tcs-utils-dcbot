@@ -131,13 +131,12 @@ def is_owner(func):
 
 def try_perm(func):
     @functools.wraps(func)
-    async def wrapper(ctx, member: discord.Member, *args, **kwargs):
+    async def wrapper(ctx, *args, **kwargs):
         try:
-            await func(ctx, member, *args, **kwargs)
+            await func(ctx, *args, **kwargs)
         except discord.Forbidden:
             await ctx.send(config.message("bot_doesnt_have_perms"))
-            print(f"bot lacks permissions to moderate {member.display_name} (id {member.id})")
         except Exception as e:
             await ctx.send(config.message("bot_doesnt_have_perms"))
-            print(f"error moderating {member.display_name} (id: {member.id}): {e}")
+            print(f"error in try_perm: {e}")
     return wrapper
