@@ -231,8 +231,11 @@ async def check_members(ctx):
 
 @bot.command()
 @general.try_perm
-async def van(ctx, member: discord.Member):
-    await ctx.send(f'{member.mention} has been vanned :white_check_mark:')
+async def van(ctx, member: discord.Member, *, reason: str = None):
+    msg = f'{member.mention} has been vanned :white_check_mark:'
+    if reason:
+        msg += f'\nreason: {reason}'
+    await ctx.send(msg)
 
 @bot.command()
 @general.has_perms('kick_members')
@@ -244,7 +247,7 @@ async def kick(ctx, member: discord.Member, *, reason: str = None):
 @general.has_perms('ban_members')
 @general.try_perm
 async def ban(ctx, member: discord.Member, *, reason: str = None):
-    await member.ban(reason=reason, delete_message_days=0, delete_message_seconds=0)
+    await member.ban(reason=reason, delete_message_seconds=0)
 
 @bot.command()
 @general.try_perm
@@ -319,14 +322,14 @@ async def clear_warns(ctx, member: discord.Member):
     await ctx.send(f"cleared all warns :white_check_mark:")
 
 @bot.command()
-@general.has_perms('manage_channels')
+@general.is_owner
 @general.try_perm
 async def lock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
     await ctx.send(config.message("channel_lock"))
 
 @bot.command()
-@general.has_perms('manage_channels')
+@general.is_owner
 @general.try_perm
 async def unlock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=None)
