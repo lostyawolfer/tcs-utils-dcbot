@@ -187,7 +187,8 @@ async def on_member_remove(member):
 
 
 @bot.event
-async def on_message(message):
+async def on_message(message: discord.Message):
+    print(f'#{message.channel.name} | @{message.author.display_name} >> {message.content}')
     if message.author == bot.user:
         return
     if '<#1426974154556702720>' in message.content:
