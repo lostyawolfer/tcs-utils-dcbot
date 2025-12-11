@@ -184,13 +184,13 @@ async def on_member_remove(member):
         await general.send(bot, config.message('leave', mention=member.mention))
 
 
-
+import re
 @bot.event
 async def on_message(message: discord.Message):
     print(f'#{message.channel.name} | @{message.author.display_name} >> {message.content}')
     if message.author == bot.user:
         return
-    if '<#1426974154556702720>' in message.content or 'ps' in message.content.lower():
+    if '<#1426974154556702720>' in message.content or 'ps' in re.findall(r"\b\w+\b", message.content.lower()):
         await message.channel.send(f'link: **https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server**', suppress_embeds=True)
     if 'nigga' in message.content.lower() or 'nigger' in message.content.lower():
         await message.channel.send(f'[[<@534097411048603648>]] i will personally fix ur fucking skin color if you say that word again')
