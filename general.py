@@ -25,7 +25,7 @@ async def count_available(bot: commands.Bot) -> int:
     res = 0
     if found_reaction:
         res = found_reaction.count
-    if found_reaction.me:
+    if found_reaction and found_reaction.me:
         res -= 1
     return res
 

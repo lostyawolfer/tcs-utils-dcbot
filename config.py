@@ -185,7 +185,7 @@ _messages = {
         f"{emoji['unavailable']} **{{name}}** is no longer available {{available_count}} *(we still have 8 tho)*"
     ],
     "unavailable_auto": [
-        f"{emoji['unavailable']} **{{name}}** was inactive for too long, so they're marked as unavailable {{available_count}}"
+        f"{emoji['unavailable']} **{{name}}** seemed inactive, so they were marked unavailable by mods {{available_count}}"
     ],
     "join_vc": [
         f"{emoji['join_vc']} **{{name}}** joined the voice channel {{count}}"
