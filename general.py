@@ -1,8 +1,8 @@
 import datetime
-
 import discord
 import config
 from discord.ext import commands
+
 
 async def send(bot: commands.Bot, msg: str, where: str = 'chat') -> None:
     channel = bot.get_channel(config.channels[where])
@@ -11,14 +11,13 @@ async def send(bot: commands.Bot, msg: str, where: str = 'chat') -> None:
     await update_status(bot)
 
 
-
 async def count_available(bot: commands.Bot) -> int:
     channel = bot.get_channel(config.channels['availability'])
     try:
         msg = await channel.fetch_message(config.channels['availability_message'])
     except discord.NotFound | discord.Forbidden:
         return 0
-    found_reaction = None
+    found_reaction: discord.Reaction | None = None
     for reaction in msg.reactions:
         if reaction.emoji.id == config.channels['availability_reaction']:
             found_reaction = reaction
@@ -26,6 +25,8 @@ async def count_available(bot: commands.Bot) -> int:
     res = 0
     if found_reaction:
         res = found_reaction.count
+    if found_reaction.me:
+        res -= 1
     return res
 
 async def count_in_vc(bot: commands.Bot, vc: str = 'vc') -> int:
@@ -40,13 +41,13 @@ async def update_status(bot: commands.Bot) -> None:
     vc_2_count = await count_in_vc(bot, 'vc2')
     available_count = await count_available(bot)
     if not vc_count and not vc_2_count:
-        await set_status(bot, f'[{time}] {available_count} available')
+        await set_status(bot, f'{available_count} available') # [{time}]
     elif vc_count and not vc_2_count:
-        await set_status(bot, f'[{time}] {available_count} available / {vc_count} in vc 🟢')
+        await set_status(bot, f'{available_count} available / {vc_count} in vc 🟢') # [{time}]
     elif not vc_count and vc_2_count:
-        await set_status(bot, f'[{time}] {available_count} available / {vc_2_count} in vc 🟣')
+        await set_status(bot, f'{available_count} available / {vc_2_count} in vc 🟣') # [{time}]
     else:
-        await set_status(bot, f'[{time}] {available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣')
+        await set_status(bot, f'{available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣') # [{time}]
 
 async def update_status_checking(bot: commands.Bot, percent: int) -> None:
     time = f'{datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M")}'
@@ -54,13 +55,13 @@ async def update_status_checking(bot: commands.Bot, percent: int) -> None:
     vc_2_count = await count_in_vc(bot, 'vc2')
     available_count = await count_available(bot)
     if not vc_count and not vc_2_count:
-        await set_status(bot, f'[{time}] {percent}% / {available_count} available', status=discord.Status('idle'))
+        await set_status(bot, f'{percent}% / {available_count} available', status=discord.Status('idle')) # [{time}]
     elif vc_count and not vc_2_count:
-        await set_status(bot, f'[{time}] {percent}% / {available_count} available / {vc_count} in vc 🟢', status=discord.Status('idle'))
+        await set_status(bot, f'{percent}% / {available_count} available / {vc_count} in vc 🟢', status=discord.Status('idle')) # [{time}]
     elif not vc_count and vc_2_count:
-        await set_status(bot, f'[{time}] {percent}% / {available_count} available / {vc_2_count} in vc 🟣', status=discord.Status('idle'))
+        await set_status(bot, f'{percent}% / {available_count} available / {vc_2_count} in vc 🟣', status=discord.Status('idle')) # [{time}]
     else:
-        await set_status(bot, f'[{time}] {percent}% / {available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣', status=discord.Status('idle'))
+        await set_status(bot, f'{percent}% / {available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣', status=discord.Status('idle')) # [{time}]
 
 
 

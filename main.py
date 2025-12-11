@@ -1,5 +1,4 @@
 import datetime
-
 import discord
 from discord.ext import commands, tasks
 import moderation
@@ -191,8 +190,10 @@ async def on_message(message: discord.Message):
     print(f'#{message.channel.name} | @{message.author.display_name} >> {message.content}')
     if message.author == bot.user:
         return
-    if '<#1426974154556702720>' in message.content:
+    if '<#1426974154556702720>' in message.content or 'ps' in message.content.lower:
         await message.channel.send(f'link: **https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server**', suppress_embeds=True)
+    if 'nigga' in message.content.lower or 'nigger' in message.content.lower:
+        await message.channel.send(f'[[<@534097411048603648>]] i will personally fix ur fucking skin color if you say that word again')
     await bot.process_commands(message)
 
 @bot.command()
@@ -337,7 +338,64 @@ async def unlock(ctx):
     await ctx.send(config.message("channel_unlock"))
 
 
+@general.is_owner
+@general.try_perm
+@bot.command()
+async def r(
+    ctx,
+    start_id: int,
+    end_id: int
+):
+    channel = ctx.channel
 
+    await ctx.message.delete()  # Delete the command invocation message
+
+    try:
+        start_message = await channel.fetch_message(start_id)
+        end_message = await channel.fetch_message(end_id)
+    except discord.NotFound:
+        return await ctx.send(
+            "One or both of the message IDs were not found.",
+            delete_after=5
+        )
+    except discord.HTTPException as e:
+        return await ctx.send(
+            f"An error occurred while fetching messages: {e}",
+            delete_after=5
+        )
+
+    # Ensure start_message is chronologically before or at the same time as end_message
+    if start_message.created_at > end_message.created_at:
+        start_message, end_message = end_message, start_message
+
+    messages_to_delete = []
+    async for message in channel.history(
+        limit=None,
+        before=end_message.created_at,
+        after=start_message.created_at,
+    ):
+        messages_to_delete.append(message)
+
+    # Add the start and end messages themselves if they weren't caught by before/after
+    if start_message not in messages_to_delete:
+        messages_to_delete.append(start_message)
+    if end_message not in messages_to_delete:
+        messages_to_delete.append(end_message)
+
+    # Sort messages by creation time to ensure consistent deletion order
+    messages_to_delete.sort(key=lambda m: m.created_at)
+
+    if not messages_to_delete:
+        return await ctx.send(
+            "there are no messages between those ids",
+            delete_after=5
+        )
+
+    await channel.delete_messages(messages_to_delete)
+    return await ctx.send(
+        f"{len(messages_to_delete)} messages deleted :white_check_mark:",
+        delete_after=5
+    )
 
 
 

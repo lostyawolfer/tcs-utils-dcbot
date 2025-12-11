@@ -1,30 +1,30 @@
 import discord
 from discord.ext import commands
 import config
-import general
 from general import has_role, send, add_role, remove_role, count_available, count_in_vc, emojify
 
 
 async def voice_check(bot: commands.Bot, member: discord.Member) -> None:
-    async def check(vc: str, role: str, leader_role: str, reverse_role: str, join_msg_id: str, leave_msg_id: str):
+    async def check(vc: str, vc_role: str, vc_leader_role: str, reverse_role: str, join_msg_id: str, leave_msg_id: str):
         channel = member.guild.get_channel(config.channels[vc])
         members = await count_in_vc(bot, vc)
         if member.voice and member.voice.channel == channel:
-            if not has_role(member, config.roles[role]):
+            if not has_role(member, config.roles[vc_role]):
                 await send(bot, config.message(join_msg_id, name=member.display_name, count=f'{emojify(f'({members})')}'))
             if has_role(member, config.roles['leader']):
-                await add_role(member, config.roles[leader_role])
-            await add_role(member, config.roles[role])
+                await add_role(member, config.roles[vc_leader_role])
+            await add_role(member, config.roles[vc_role])
             await remove_role(member, config.roles[reverse_role])
         else:
-            if has_role(member, config.roles[role]):
+            if has_role(member, config.roles[vc_role]):
                 await send(bot, config.message(leave_msg_id, name=member.display_name, count=f'{emojify(f'({members})')}'))
-            await remove_role(member, config.roles[role])
-            await remove_role(member, config.roles[leader_role])
-            await add_role(member, config.roles[reverse_role])
+            await remove_role(member, config.roles[vc_role])
+            await remove_role(member, config.roles[vc_leader_role])
+            if has_role(member, config.roles['available']):
+                await add_role(member, config.roles[reverse_role])
 
-    await check('vc', 'in_vc', 'in_vc_leader', 'not_in_vc', 'join_vc', 'leave_vc')
-    await check('vc2', 'in_vc_2', 'in_vc_2_leader', 'not_in_vc_2', 'join_vc_2', 'leave_vc_2')
+    await check('vc', 'in_vc', 'in_vc_leader', 'available_not_in_vc', 'join_vc', 'leave_vc')
+    await check('vc2', 'in_vc_2', 'in_vc_2_leader', 'available_not_in_vc_2', 'join_vc_2', 'leave_vc_2')
 
 
 
@@ -38,13 +38,23 @@ async def add_availability(bot: commands.Bot, member: discord.Member) -> None:
 
     if has_role(member, config.roles['leader']):
         await add_role(member, config.roles['available_leader'])
+
+    if has_role(member, config.roles['in_vc']):
+        await remove_role(member, config.roles['available_not_in_vc'])
+    else:
+        await add_role(member, config.roles['available_not_in_vc'])
+
+    if has_role(member, config.roles['in_vc_2']):
+        await remove_role(member, config.roles['available_not_in_vc_2'])
+    else:
+        await add_role(member, config.roles['available_not_in_vc_2'])
+
     await add_role(member, config.roles['available'])
     await remove_role(member, config.roles['not_available'])
 
-
-
     msg = await member.guild.get_channel(config.channels['availability']).fetch_message(config.channels['availability_message'])
     await msg.remove_reaction(discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), member.guild.me)
+
 
 async def remove_availability(bot: commands.Bot, member: discord.Member) -> None:
     available_people = await count_available(bot)
@@ -57,6 +67,8 @@ async def remove_availability(bot: commands.Bot, member: discord.Member) -> None
     await remove_role(member, config.roles['available'])
     await remove_role(member, config.roles['available_leader'])
     await add_role(member, config.roles['not_available'])
+    await remove_role(member, config.roles['available_not_in_vc'])
+    await remove_role(member, config.roles['available_not_in_vc_2'])
 
 
     if available_people == 0:
