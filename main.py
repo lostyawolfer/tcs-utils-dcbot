@@ -359,20 +359,19 @@ async def r(
     end_id: int
 ):
     channel = ctx.channel
-
-    await ctx.message.delete()  # Delete the command invocation message
-
+    msg: discord.Message = ctx.message
+    await msg.add_reaction('✅')
     try:
         start_message = await channel.fetch_message(start_id)
         end_message = await channel.fetch_message(end_id)
     except discord.NotFound:
         return await ctx.send(
-            "One or both of the message IDs were not found.",
+            "one of the message ids wasn't found, make sure u doin the right thing",
             delete_after=5
         )
     except discord.HTTPException as e:
         return await ctx.send(
-            f"An error occurred while fetching messages: {e}",
+            f"unable to fetch msgs: {e}",
             delete_after=5
         )
 
@@ -404,9 +403,9 @@ async def r(
         )
 
     await channel.delete_messages(messages_to_delete)
+    await ctx.message.delete()
     return await ctx.send(
-        f"{len(messages_to_delete)} messages deleted :white_check_mark:",
-        delete_after=5
+        f"{len(messages_to_delete)} messages deleted :white_check_mark:"
     )
 
 

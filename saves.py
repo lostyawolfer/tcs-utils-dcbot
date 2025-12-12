@@ -9,7 +9,7 @@ SAVE_COOLDOWN = {}  # {user_id: datetime.datetime of last save}
 
 SAVE_CATEGORY_NAME = "──╱ saves ╱───────"
 SAVE_CHANNEL_TEMPLATE = "💾┃save-{num}"
-SAVE_ROLE_TEMPLATE = "save {num}"
+SAVE_ROLE_TEMPLATE = "💾 save {num}"
 
 async def create_save(ctx, members: list[discord.Member]):
     guild = ctx.guild
@@ -101,7 +101,7 @@ async def disband_save(ctx):
         return await ctx.send("this command only works inside save channels")
 
     # find related role
-    role_name = channel.name.replace("💾┃save-", "save ")
+    role_name = channel.name.replace("💾┃save-", "💾 save ")
     role = discord.utils.get(guild.roles, name=role_name)
     if not role:
         return await ctx.send("couldn't find corresponding role for this save, deleting channel anyway")
