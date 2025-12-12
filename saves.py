@@ -29,13 +29,13 @@ async def create_save(ctx, members: list[discord.Member]):
     SAVE_COOLDOWN[user_id] = now
 
     # ensure "saves" category exists
-    save_category = discord.utils.get(guild.categories, name=SAVE_CATEGORY_NAME)
+    save_category: discord.CategoryChannel = discord.utils.get(guild.categories, name=SAVE_CATEGORY_NAME)
     if not save_category:
         save_category = await guild.create_category(
             SAVE_CATEGORY_NAME,
             reason="automatically created for save channels",
         )
-        await save_category.edit(position=1)
+        await save_category.move(position=2)
 
     # find next save number
     existing_saves = [

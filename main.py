@@ -16,11 +16,11 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='.', intents=intents)
 
 
-@tasks.loop(seconds=1)
-async def status_updater_loop():
-    now_utc = datetime.datetime.now(datetime.timezone.utc)
-    if 2 <= now_utc.second <= 3:
-        await general.update_status(bot)
+# @tasks.loop(seconds=1)
+# async def status_updater_loop():
+#     now_utc = datetime.datetime.now(datetime.timezone.utc)
+#     if 2 <= now_utc.second <= 3:
+#         await general.update_status(bot)
 
 @bot.event
 async def on_ready():
@@ -50,7 +50,7 @@ async def on_ready():
                         await general.add_role(member, config.roles['category:misc']['none'])
                 await general.update_status_checking(bot, percent)
             await general.update_status(bot)
-            status_updater_loop.start()
+            # status_updater_loop.start()
             break
 
 @bot.event
