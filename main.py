@@ -5,6 +5,7 @@ import moderation
 import availability_vc
 import general
 import config
+from saves import create_save, disband_save
 
 intents = discord.Intents.default()
 intents.members = True
@@ -199,6 +200,17 @@ async def on_message(message: discord.Message):
 @bot.command()
 async def test(ctx):
     await ctx.send('test pass')
+
+@general.try_perm
+@bot.command()
+async def save(ctx, *members: discord.Member):
+    if not members:
+        return await ctx.send("usage: `.save @member1 @member2 ...`")
+    return await create_save(ctx, list(members))
+
+@bot.command()
+async def disband(ctx):
+    await disband_save(ctx)
 
 @bot.command()
 @general.is_owner
