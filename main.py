@@ -156,7 +156,11 @@ async def on_member_join(member):
         await general.add_role(member, config.roles['bot'])
     else:
         await general.send(bot, config.message('join', mention=member.mention))
-        await general.send(bot, '-# hey there! check out <#1426974985402187776> <#1432401559672848507> <#1434653852367585300>')
+        await general.send(bot, msg='-# just a quick tour around!\n'
+                                    '-# channels you really should check out: <#1442604555798974485> <#1426974985402187776> <#1432401559672848507>\n'
+                                    '-# grab <#1434653852367585300> when you are ready to play! (don\'t forget to remove it when you stop being available!)\n'
+                                    '-# join <#1426974154556702720> at any time!'
+                                    '-# please respect others and remain active! random long inactivity is something very frowned upon here')
         for role in config.roles['new_people']:
             await general.add_role(member, role)
 
