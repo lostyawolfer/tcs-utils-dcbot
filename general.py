@@ -89,15 +89,10 @@ async def remove_role(member: discord.Member, role_id: int) -> None:
         await member.remove_roles(role)
 
 
-def emojify(text: str) -> str:
-    conversion_map = {
-        '0': config.emoji['0'], '1': config.emoji['1'], '2': config.emoji['2'], '3': config.emoji['3'], '4': config.emoji['4'],
-        '5': config.emoji['5'], '6': config.emoji['6'], '7': config.emoji['7'], '8': config.emoji['8'], '9': config.emoji['9'],
-        '/': '/', '(': '', ')': ''
-    }
-    converted_text = []
+def emojify(text: str, color: str = '') -> str:
+    converted_text = ''
     for char in text:
-        converted_text.append(conversion_map.get(char, char))
+        converted_text += config.emoji[f'{char}{color}']
     return "".join(converted_text)
 
 
