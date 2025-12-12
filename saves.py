@@ -31,16 +31,11 @@ async def create_save(ctx, members: list[discord.Member]):
     # ensure "saves" category exists
     save_category = discord.utils.get(guild.categories, name=SAVE_CATEGORY_NAME)
     if not save_category:
-        server_cat = ctx.guild.get_channel(1431062414656405534)
-        yapping_cat = ctx.guild.get_channel(1426974932893700188)
-        position = server_cat.position if server_cat else 0
-        if yapping_cat:
-            position = yapping_cat.position - 1
         save_category = await guild.create_category(
             SAVE_CATEGORY_NAME,
             reason="automatically created for save channels",
         )
-        await save_category.edit(position=position)
+        await save_category.edit(position=1)
 
     # find next save number
     existing_saves = [
@@ -80,10 +75,11 @@ async def create_save(ctx, members: list[discord.Member]):
     )
 
     pinned_msg = await text_channel.send(
-        f"# hi save group `{save_role.name}`\n"
+        f"# hi save group {new_num}\n"
         f"saved run with members {' '.join([m.mention for m in members])}\n"
         f"use this to coordinate or discuss your latest run!\n"
         f"**careful**: this channel is temporary and should be deleted when you are done with the run\n"
+        f"additionally pls know that the owner has access to this channel at all times regardless of permissions, it's just a discord thing\n"
         f"**to remove this save, use `.disband` in this channel**\n"
     )
     await pinned_msg.pin()
@@ -102,6 +98,7 @@ async def disband_save(ctx):
 
     # find related role
     role_name = channel.name.replace("💾┃save-", "💾 save ")
+    number = channel.name.replace("💾┃save-", "")
     role = discord.utils.get(guild.roles, name=role_name)
     if not role:
         return await ctx.send("couldn't find corresponding role for this save, deleting channel anyway")
@@ -130,4 +127,4 @@ async def disband_save(ctx):
     if not channel.category.channels:
         await channel.category.delete(reason="no saves left")
 
-    return await send(ctx.bot, f"{ctx.author.mention} disbanded a save channel.")
+    return await send(ctx.bot, f"{ctx.author.mention} disbanded the save number {number}")
