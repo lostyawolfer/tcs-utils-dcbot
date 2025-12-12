@@ -35,7 +35,7 @@ async def create_save(ctx, members: list[discord.Member]):
             SAVE_CATEGORY_NAME,
             reason="automatically created for save channels",
         )
-        await save_category.move(position=2)
+        await save_category.move(position=1)
 
     # find next save number
     existing_saves = [
