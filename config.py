@@ -228,7 +228,7 @@ _messages = {
         f"{emoji['join_vc_2']} **{{name}}** joined the second voice channel {{count}}"
     ],
     "leave_vc_2": [
-        f"{emoji['leave_vc_2']} **{{name}}** left the second voice channel {{count}}"
+        f"{emoji['leave_vc']} **{{name}}** left the second voice channel {{count}}"
     ],
     "promotion": [
         f"{emoji['promotion']} {{mention}} is now a moderator!"
