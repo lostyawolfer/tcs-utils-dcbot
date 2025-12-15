@@ -4,11 +4,12 @@ from discord.ext import commands
 from modules import config
 
 
-async def send(bot: commands.Bot, msg: str, where: str = 'chat') -> None:
+async def send(bot: commands.Bot, msg: str, where: str = 'chat') -> discord.Message:
     channel = bot.get_channel(config.channels[where])
     if channel:
-        await channel.send(msg)
+        msg = await channel.send(msg)
     await update_status(bot)
+    return msg
 
 
 async def count_available(bot: commands.Bot) -> int:

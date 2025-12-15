@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from modules import config
+from modules import config, general
 from modules.general import has_role, send, add_role, remove_role, count_available, count_in_vc, emojify
 
 
@@ -133,3 +133,21 @@ async def full_check_member(bot: commands.Bot, member: discord.Member) -> None:
     await check_role_category(member, 'misc')
 
     await check_member_join_date(bot, member)
+
+
+async def check_all_members(bot: commands.Bot) -> None:
+    msg = await general.send(bot, '-# checking members...')
+    server = bot.get_guild(config.TARGET_GUILD)
+    await server.chunk()
+    await general.update_status_checking(bot, 0)
+    total_members = server.member_count
+    member_n = 0
+    members = server.members
+    for member in members:
+        member_n += 1
+        percent = round(member_n * 100 / total_members, 1)
+        if not member.bot:
+            await full_check_member(bot, member)
+        await general.update_status_checking(bot, percent)
+    await general.update_status(bot, status=discord.Status('online'))
+    await msg.delete()

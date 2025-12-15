@@ -1,6 +1,6 @@
 import datetime
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from modules import config, availability_vc, moderation, general
 from modules.saves import create_save, disband_save
 
@@ -13,37 +13,28 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='.', intents=intents)
 
 
-# @tasks.loop(seconds=1)
-# async def status_updater_loop():
-#     now_utc = datetime.datetime.now(datetime.timezone.utc)
-#     if 2 <= now_utc.second <= 3:
-#         await general.update_status(bot)
+@tasks.loop(hours=3)
+async def status_updater_loop():
+    await availability_vc.check_all_members(bot)
 
 @bot.event
 async def on_ready():
     await general.set_status(bot, 'starting up...', status=discord.Status('idle'))
     await bot.wait_until_ready()
+    await availability_vc.check_all_members(bot)
 
-    server = bot.get_guild(config.TARGET_GUILD)
-    await server.chunk()
-    await general.update_status_checking(bot, 0)
-    total_members = server.member_count
-    member_n = 0
-    members = server.members
-    for member in members:
-        member_n += 1
-        percent = round(member_n * 100 / total_members, 1)
-        if not member.bot:
-            await availability_vc.full_check_member(bot, member)
-        await general.update_status_checking(bot, percent)
-
-    await general.update_status(bot, status=discord.Status('online'))
+@bot.command()
+@general.has_perms('owner')
+@general.try_bot_perms
+async def check_members(ctx):
+    await availability_vc.check_all_members(bot)
 
 @bot.event
 async def on_voice_state_update(member, before, after):
     if not config.check_guild(member.guild.id) or (member and member.bot):
         return
     await availability_vc.voice_check(bot, member)
+
 
 @bot.event
 async def on_raw_reaction_add(payload):
@@ -55,6 +46,7 @@ async def on_raw_reaction_add(payload):
         if emoji_id == config.channels['availability_reaction']:
             await availability_vc.add_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
 
+
 @bot.event
 async def on_raw_reaction_remove(payload):
     member = bot.get_guild(payload.guild_id).get_member(payload.user_id)
@@ -64,6 +56,7 @@ async def on_raw_reaction_remove(payload):
         emoji_id = payload.emoji.id
         if emoji_id == config.channels['availability_reaction']:
             await availability_vc.remove_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
+
 
 @bot.event
 async def on_member_update(before, after):
@@ -124,6 +117,7 @@ async def on_member_update(before, after):
         new = after.nick if after.nick else after.display_name
         await general.send(bot, config.message('name_change', mention=after.mention, old_name=old, new_name=new))
 
+
 @bot.event
 async def on_member_join(member):
     guild = member.guild
@@ -142,6 +136,7 @@ async def on_member_join(member):
                                     '-# please respect others and remain active! random long inactivity is something very frowned upon here')
         for role in config.roles['new_people']:
             await general.add_role(member, role)
+
 
 @bot.event
 async def on_member_remove(member):
@@ -180,9 +175,11 @@ async def on_message(message: discord.Message):
         await message.channel.send(f'[[<@534097411048603648>]] i will personally fix ur fucking skin color if you say that word again')
     await bot.process_commands(message)
 
+
 @bot.command()
 async def test(ctx):
     await ctx.send('test pass')
+
 
 @general.try_bot_perms
 @bot.command()
@@ -191,37 +188,11 @@ async def save(ctx, *members: discord.Member):
         return await ctx.send("usage: `.save @member1 @member2 ...`")
     return await create_save(ctx, list(members))
 
+
 @bot.command()
 async def disband(ctx):
     await disband_save(ctx)
 
-@bot.command()
-@general.has_perms('owner')
-@general.try_bot_perms
-async def check_members(ctx):
-    await ctx.send('aight')
-
-    server = bot.get_guild(config.TARGET_GUILD)
-    await server.chunk()
-    await general.update_status_checking(bot, 0)
-    total_members = server.member_count
-    member_n = 0
-    members = server.members
-    for member in members:
-        member_n += 1
-        percent = round(member_n * 100 / total_members, 1)
-        if not member.bot:
-            await availability_vc.full_check_member(bot, member)
-        await general.update_status_checking(bot, percent)
-
-    await general.update_status(bot, status=discord.Status('online'))
-    await ctx.send('checked members :white_check_mark:')
-
-@bot.command()
-@general.has_perms('moderate_members')
-@general.try_bot_perms
-async def check_newbies(ctx):
-    await ctx.send('deprecated, use .check_members\n-# (checking members now includes checking newbies too)')
 
 @bot.command()
 @general.try_bot_perms
