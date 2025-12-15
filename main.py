@@ -22,11 +22,7 @@ version = 'v2.6'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- added `.help` command to list every single available command in the bot
-- `.mute` command now has a default duration of 5 minutes because ppl seemed to always forget duration was a thing to include
-- added a new `.van` ahh command
-- added a reminder in mod chat to set ppl's names to their roblox ones when they join
-- if the bot encounters any errors during command execution it will ping the bot's maintainer
+- added a fancy countdown clock for `.r`'s delete success message
 """
 @bot.event
 async def on_ready():
@@ -363,6 +359,7 @@ async def unlock(ctx):
     await ctx.send(config.message("channel_unlock"))
 
 
+import asyncio
 @bot.command()
 @general.has_perms('owner')
 @general.try_bot_perms
@@ -417,9 +414,20 @@ async def r(
 
     await channel.delete_messages(messages_to_delete)
     await ctx.message.delete()
-    return await ctx.send(
-        f"{len(messages_to_delete)} messages deleted :white_check_mark:"
-    )
+    msg = await ctx.send(f':clock5: {len(messages_to_delete)} messages deleted')
+    await msg.edit(content=f':clock5: {len(messages_to_delete)} messages deleted')
+    await asyncio.sleep(1)
+    await msg.edit(content=f':clock4: {len(messages_to_delete)} messages deleted')
+    await asyncio.sleep(1)
+    await msg.edit(content=f':clock3: {len(messages_to_delete)} messages deleted')
+    await asyncio.sleep(1)
+    await msg.edit(content=f':clock2: {len(messages_to_delete)} messages deleted')
+    await asyncio.sleep(1)
+    await msg.edit(content=f':clock1: {len(messages_to_delete)} messages deleted')
+    await asyncio.sleep(1)
+    await msg.delete()
+
+    return None
 
 
 import subprocess
