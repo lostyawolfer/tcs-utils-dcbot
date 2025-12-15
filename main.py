@@ -18,12 +18,11 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.6.4'
+version = 'v2.6.5'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- im lwk tired of fixing things
-- also new command btw `.one_more` just sends the pic
+- i know it just looks like i'm incrementing the number but trust me i'm not i'm trying to fix some shit
 """
 @bot.event
 async def on_ready():
