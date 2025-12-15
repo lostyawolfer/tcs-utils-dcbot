@@ -1,11 +1,8 @@
 import datetime
 import discord
-from discord.ext import commands, tasks
-import moderation
-import availability_vc
-import general
-import config
-from saves import create_save, disband_save
+from discord.ext import commands
+from modules import config, availability_vc, moderation, general
+from modules.saves import create_save, disband_save
 
 intents = discord.Intents.default()
 intents.members = True
@@ -24,34 +21,23 @@ bot = commands.Bot(command_prefix='.', intents=intents)
 
 @bot.event
 async def on_ready():
-    await general.set_status(bot, 'starting up...', status=discord.Status.idle)
-    for guild in bot.guilds:
-        if config.check_guild(guild.id):
-            await general.update_status_checking(bot, 0)
-            total_members = guild.member_count
-            member_n = 0
-            for member in guild.members:
-                member_n += 1
-                percent = round(member_n * 100 / total_members)
-                if not member.bot:
-                    await availability_vc.pure_availability_check(bot, member)
-                    await availability_vc.voice_check(bot, member)
-                    for role in config.roles['role_check']:
-                        await general.add_role(member, role)
-                    for role in member.roles:
-                        if role.id in config.roles['category:badges']['other']:
-                            await general.remove_role(member, config.roles['category:badges']['none'])
-                            break
-                        await general.add_role(member, config.roles['category:badges']['none'])
-                    for role in member.roles:
-                        if role.id in config.roles['category:misc']['other']:
-                            await general.remove_role(member, config.roles['category:misc']['none'])
-                            break
-                        await general.add_role(member, config.roles['category:misc']['none'])
-                await general.update_status_checking(bot, percent)
-            await general.update_status(bot)
-            # status_updater_loop.start()
-            break
+    await general.set_status(bot, 'starting up...', status=discord.Status('idle'))
+    await bot.wait_until_ready()
+
+    server = bot.get_guild(config.TARGET_GUILD)
+    await server.chunk()
+    await general.update_status_checking(bot, 0)
+    total_members = server.member_count
+    member_n = 0
+    members = server.members
+    for member in members:
+        member_n += 1
+        percent = round(member_n * 100 / total_members, 1)
+        if not member.bot:
+            await availability_vc.full_check_member(bot, member)
+        await general.update_status_checking(bot, percent)
+
+    await general.update_status(bot)
 
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -68,7 +54,6 @@ async def on_raw_reaction_add(payload):
         emoji_id = payload.emoji.id
         if emoji_id == config.channels['availability_reaction']:
             await availability_vc.add_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
-
 
 @bot.event
 async def on_raw_reaction_remove(payload):
@@ -129,16 +114,10 @@ async def on_member_update(before, after):
             if role.id == config.roles['inactive']:
                 await general.send(bot, config.message('inactive_revoke', mention=after.mention))
 
-            if role.id in config.roles['category:badges']['other']:
-                for badge in after_roles:
-                    if badge.id in config.roles['category:badges']['other']:
-                        break
-                    await general.add_role(after, config.roles['category:badges']['none'])
-            if role.id in config.roles['category:misc']['other']:
-                for badge in after_roles:
-                    if badge.id in config.roles['category:misc']['other']:
-                        break
-                    await general.add_role(after, config.roles['category:misc']['none'])
+        if any(role.id in config.roles['category:badges']['other'] for role in removed_roles):
+            await availability_vc.check_role_category(after, 'badges')
+        if any(role.id in config.roles['category:misc']['other'] for role in removed_roles):
+            await availability_vc.check_role_category(after, 'misc')
 
     if before.nick != after.nick:
         old = before.nick if before.nick else before.display_name
@@ -205,7 +184,7 @@ async def on_message(message: discord.Message):
 async def test(ctx):
     await ctx.send('test pass')
 
-@general.try_perm
+@general.try_bot_perms
 @bot.command()
 async def save(ctx, *members: discord.Member):
     if not members:
@@ -217,67 +196,38 @@ async def disband(ctx):
     await disband_save(ctx)
 
 @bot.command()
-@general.is_owner
-@general.try_perm
+@general.has_perms('owner')
+@general.try_bot_perms
 async def check_members(ctx):
     await ctx.send('aight')
-    await bot.change_presence(status=discord.Status('idle'))
+
+    server = bot.get_guild(config.TARGET_GUILD)
+    await server.chunk()
     await general.update_status_checking(bot, 0)
-    total_members = ctx.guild.member_count
+    total_members = server.member_count
     member_n = 0
-    for member in ctx.guild.members:
+    members = server.members
+    for member in members:
         member_n += 1
-        percent = round(member_n * 100 / total_members)
+        percent = round(member_n * 100 / total_members, 1)
         if not member.bot:
-            await availability_vc.pure_availability_check(bot, member)
-            await availability_vc.voice_check(bot, member)
-            for role in config.roles['role_check']:
-                await general.add_role(member, role)
-            for role in member.roles:
-                if role.id in config.roles['category:badges']['other']:
-                    await general.remove_role(member, config.roles['category:badges']['none'])
-                    break
-                await general.add_role(member, config.roles['category:badges']['none'])
-            for role in member.roles:
-                if role.id in config.roles['category:misc']['other']:
-                    await general.remove_role(member, config.roles['category:misc']['none'])
-                    break
-                await general.add_role(member, config.roles['category:misc']['none'])
+            await availability_vc.full_check_member(bot, member)
         await general.update_status_checking(bot, percent)
-    await bot.change_presence(status=discord.Status('online'))
+
     await general.update_status(bot)
+    await ctx.send('checked members :white_check_mark:')
 
 @bot.command()
-@general.try_perm
-async def van(ctx, member: discord.Member, *, reason: str = None):
-    msg = f'{member.mention} has been vanned :white_check_mark:'
-    if reason:
-        msg += f'\nreason: {reason}'
-    await ctx.send(msg)
-
-@bot.command()
-@general.has_perms('kick_members')
-@general.try_perm
-async def kick(ctx, member: discord.Member, *, reason: str = None):
-    await member.kick(reason=reason)
-
-@bot.command()
-@general.has_perms('ban_members')
-@general.try_perm
-async def ban(ctx, member: discord.Member, *, reason: str = None):
-    await member.ban(reason=reason, delete_message_seconds=0)
-
-@bot.command()
-@general.try_perm
+@general.has_perms('moderate_members')
+@general.try_bot_perms
 async def check_newbies(ctx):
-    author_perms = ctx.author.guild_permissions
-    if not getattr(author_perms, 'moderate_members', False):
-        return await ctx.send(config.message("nuh_uh"))
-    await bot.change_presence(status=discord.Status('idle'))
+    await ctx.send('aight')
+
     await general.update_status_checking(bot, 0)
     total_members = ctx.guild.member_count
+    members = ctx.guild.members
     member_n = 0
-    for member in ctx.guild.members:
+    for member in members:
         member_n += 1
         percent = round(member_n * 100 / total_members)
         if not member.bot:
@@ -289,49 +239,73 @@ async def check_newbies(ctx):
                     if days > 7:
                         await general.remove_role(member, config.roles['newbie'])
         await general.update_status_checking(bot, percent)
-    await bot.change_presence(status=discord.Status('online'))
-    return await general.update_status(bot)
+
+    await general.update_status(bot)
+    await ctx.send('checked newbies :white_check_mark:')
 
 @bot.command()
-@general.try_perm
+@general.try_bot_perms
+async def van(ctx, member: discord.Member, *, reason: str = None):
+    msg = f'{member.mention} has been vanned :white_check_mark:'
+    if reason:
+        msg += f'\nreason: {reason}'
+    await ctx.send(msg)
+
+@bot.command()
+@general.has_perms('kick_members')
+@general.try_bot_perms
+async def kick(ctx, member: discord.Member, *, reason: str = None):
+    await member.kick(reason=reason)
+
+@bot.command()
+@general.has_perms('ban_members')
+@general.try_bot_perms
+async def ban(ctx, member: discord.Member, *, reason: str = None):
+    await member.ban(reason=reason, delete_message_seconds=0)
+
+@bot.command()
+@general.work_in_progress
+@general.has_perms('moderate_members')
+@general.try_bot_perms
 async def check_inactive(ctx):
-    author_perms = ctx.author.guild_permissions
-    if not getattr(author_perms, 'moderate_members', False):
-        ...
+    ...
 
 @bot.command()
 @general.has_perms('moderate_members')
-@general.try_perm
+@general.can_moderate_member
+@general.try_bot_perms
 async def mute(ctx, member: discord.Member, duration: str, *, reason: str = None):
     await moderation.mute(ctx, member, duration, reason)
 
 @bot.command()
 @general.has_perms('moderate_members')
-@general.try_perm
+@general.can_moderate_member
+@general.try_bot_perms
 async def unmute(ctx, member: discord.Member, *, reason: str = None):
     await moderation.unmute(ctx, member, reason)
 
 @bot.command()
 @general.has_perms('moderate_members')
-@general.try_perm
+@general.try_bot_perms
 async def warn(ctx, member: discord.Member, *, reason: str = None):
     await moderation.warn(ctx, member, reason)
 
 @bot.command()
-@general.try_perm
+@general.try_bot_perms
 async def warns(ctx, member: discord.Member):
     if member.guild.get_role(config.roles['warn_1']) in member.roles:
         await ctx.send(f"this guy has 1 warn :yellow_circle:")
     elif member.guild.get_role(config.roles['warn_2']) in member.roles:
         await ctx.send(f"this guy has 2 warns :orange_circle:")
     elif member.guild.get_role(config.roles['warn_3']) in member.roles:
-        await ctx.send(f"this guy has 3 warns :red_circle:\nnext warn will ban them btw")
+        await ctx.send(f"this guy has 3 warns :red_circle:\n-# next warn will ban them btw")
     else:
         await ctx.send(f"this guy doesn't have warns they're an outstanding citizen :white_check_mark:")
 
 @bot.command()
 @general.has_perms('moderate_members')
-@general.try_perm
+@general.can_moderate_member
+@general.try_bot_perms
 async def clear_warns(ctx, member: discord.Member):
     await member.timeout(None)
     await general.remove_role(member, general.config.roles['warn_1'])
@@ -340,23 +314,23 @@ async def clear_warns(ctx, member: discord.Member):
     await ctx.send(f"cleared all warns :white_check_mark:")
 
 @bot.command()
-@general.is_owner
-@general.try_perm
+@general.has_perms('owner')
+@general.try_bot_perms
 async def lock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
     await ctx.send(config.message("channel_lock"))
 
 @bot.command()
-@general.is_owner
-@general.try_perm
+@general.has_perms('owner')
+@general.try_bot_perms
 async def unlock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=None)
     await ctx.send(config.message("channel_unlock"))
 
 
-@general.is_owner
-@general.try_perm
 @bot.command()
+@general.has_perms('owner')
+@general.try_bot_perms
 async def r(
     ctx,
     start_id: int,
@@ -413,10 +387,33 @@ async def r(
     )
 
 
+import subprocess
+@bot.command()
+@general.has_perms('owner')
+async def update(ctx):
+    await ctx.send('pulling from git...')
+    try:
+        result = subprocess.run(
+            ['git', 'pull'],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        if result.returncode != 0:
+            return await ctx.send(f'git pull failed:\n```{result.stderr}```')
+        await ctx.send(f'```{result.stdout}```\nrestarting bot...')
+        subprocess.Popen(['systemctl', 'restart', '--user', 'tcs-utils-dcbot'])
+
+    except subprocess.TimeoutExpired:
+        await ctx.send('git pull timed out')
+    except Exception as e:
+        await ctx.send(f'error: ```{e}```')
+
 
 @bot.command()
+@general.work_in_progress
 async def br(ctx):
-    await ctx.reply('sry fam ts command no workie and im too lazy to fix it so its cancelled for now')
+    return await ctx.reply('sry fam ts command no workie and im too lazy to fix it so its cancelled for now')
 
 
 

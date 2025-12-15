@@ -1,7 +1,5 @@
 import discord
-import asyncio
 import datetime
-from discord.ext import commands
 import config
 from general import add_role, remove_role, send
 

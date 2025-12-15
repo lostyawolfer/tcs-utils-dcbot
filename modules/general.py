@@ -15,7 +15,7 @@ async def count_available(bot: commands.Bot) -> int:
     channel = bot.get_channel(config.channels['availability'])
     try:
         msg = await channel.fetch_message(config.channels['availability_message'])
-    except discord.NotFound | discord.Forbidden:
+    except (discord.NotFound, discord.Forbidden):
         return 0
     found_reaction: discord.Reaction | None = None
     for reaction in msg.reactions:
@@ -32,7 +32,7 @@ async def count_available(bot: commands.Bot) -> int:
 async def count_in_vc(bot: commands.Bot, vc: str = 'vc') -> int:
     return len(bot.get_channel(config.channels[vc]).members)
 
-async def set_status(bot: commands.Bot, text: str, *, status: discord.Status = discord.Status.online) -> None:
+async def set_status(bot: commands.Bot, text: str, *, status: discord.Status = discord.Status('online')) -> None:
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=text), status=status)
 
 async def update_status(bot: commands.Bot) -> None:
@@ -49,7 +49,7 @@ async def update_status(bot: commands.Bot) -> None:
     else:
         await set_status(bot, f'{available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣') # [{time}]
 
-async def update_status_checking(bot: commands.Bot, percent: int) -> None:
+async def update_status_checking(bot: commands.Bot, percent: float) -> None:
     time = f'{datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M")}'
     vc_count = await count_in_vc(bot, 'vc')
     vc_2_count = await count_in_vc(bot, 'vc2')
@@ -100,39 +100,56 @@ def emojify(text: str, color: str = '') -> str:
 
 import functools
 
-def has_perms(required_perm):
+def work_in_progress(func):
+    @functools.wraps(func)
+    async def wrapper(ctx, *args, **kwargs):
+        return await ctx.send(config.message("wip"))
+    return wrapper
+
+def has_perms(required_perm: str):
     def decorator(func):
         @functools.wraps(func)
-        async def wrapper(ctx, member: discord.Member, *args, **kwargs):
-            if member == ctx.author:
-                return await ctx.send(config.message("nuh_uh"))
-            if member == ctx.guild.me:
-                return await ctx.send(config.message("nuh_uh"))
-            if ctx.author.top_role <= member.top_role and ctx.author.id != ctx.guild.owner_id:
-                return await ctx.send(config.message("nuh_uh"))
-            author_perms = ctx.author.guild_permissions
-            if not getattr(author_perms, required_perm, False):
-                return await ctx.send(config.message("nuh_uh"))
-            return await func(ctx, member, *args, **kwargs)
+        async def wrapper(ctx, *args, **kwargs):
+            if required_perm == 'owner':
+                if ctx.author.id != ctx.guild.owner_id:
+                    return await ctx.send(config.message("nuh_uh"))
+
+            else:
+                author_perms = ctx.author.guild_permissions
+                if not getattr(author_perms, required_perm, False):
+                    return await ctx.send(config.message("nuh_uh"))
+
+            return await func(ctx, *args, **kwargs)
         return wrapper
     return decorator
 
-def is_owner(func):
+def can_moderate_member(func):
     @functools.wraps(func)
-    async def wrapper(ctx, member: discord.Member, *args, **kwargs):
-        if ctx.author.id != ctx.guild.owner_id:
+    async def wrapper(ctx, member: discord.Member = None, *args, **kwargs):
+        if not member:
+            await ctx.send(config.message("bot_doesnt_have_perms"))
+            return await ctx.send('<@534097411048603648> fix ur fucking bot\n'
+                                  'you added a @can_moderate_member decorator where you shouldn\'t have dumbass\n'
+                                  '-# [can_moderate_member expects a member in the command args, no member arg found]')
+        if member == ctx.author:
+            return await ctx.send(config.message("nuh_uh"))
+        if member == ctx.guild.me:
+            return await ctx.send(config.message("nuh_uh"))
+        if ctx.author.top_role <= member.top_role and ctx.author.id != ctx.guild.owner_id:
             return await ctx.send(config.message("nuh_uh"))
         return await func(ctx, member, *args, **kwargs)
     return wrapper
 
-def try_perm(func):
+def try_bot_perms(func):
     @functools.wraps(func)
     async def wrapper(ctx, *args, **kwargs):
         try:
             await func(ctx, *args, **kwargs)
-        except discord.Forbidden:
+        except discord.Forbidden as e:
             await ctx.send(config.message("bot_doesnt_have_perms"))
+            return await ctx.send(f'<@534097411048603648> fix ur fucking bot\n```{e}```')
         except Exception as e:
             await ctx.send(config.message("bot_doesnt_have_perms"))
             print(f"error in try_perm: {e}")
+            return await ctx.send(f'<@534097411048603648> fix ur fucking bot\n```{e}```')
     return wrapper

@@ -28,9 +28,11 @@ async def voice_check(bot: commands.Bot, member: discord.Member) -> None:
 
 
 
+
+
 async def add_availability(bot: commands.Bot, member: discord.Member) -> None:
-    available_people = await count_available(bot)
     if not has_role(member, config.roles['available']):
+        available_people = await count_available(bot)
         if available_people >= 8:
             await send(bot, config.message('available_ping', name=member.display_name, available_count=f'{emojify(f'{available_people}', 'b')}'))
         else:
@@ -52,7 +54,8 @@ async def add_availability(bot: commands.Bot, member: discord.Member) -> None:
     await add_role(member, config.roles['available'])
     await remove_role(member, config.roles['not_available'])
 
-    msg = await member.guild.get_channel(config.channels['availability']).fetch_message(config.channels['availability_message'])
+    msg = await member.guild.get_channel(config.channels['availability']).fetch_message(
+        config.channels['availability_message'])
     await msg.remove_reaction(discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), member.guild.me)
 
 
@@ -70,17 +73,17 @@ async def remove_availability(bot: commands.Bot, member: discord.Member) -> None
     await remove_role(member, config.roles['available_not_in_vc'])
     await remove_role(member, config.roles['available_not_in_vc_2'])
 
-
     if available_people == 0:
-        msg = await member.guild.get_channel(config.channels['availability']).fetch_message(config.channels['availability_message'])
+        msg = await member.guild.get_channel(config.channels['availability']).fetch_message(
+            config.channels['availability_message'])
         await msg.add_reaction(discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'))
 
 
-async def pure_availability_check(bot: commands.Bot, member: discord.Member) -> None:
-    channel = member.guild.get_channel(config.channels['availability'])
+async def availability_check(bot: commands.Bot, member: discord.Member) -> None:
+    channel = bot.get_channel(config.channels['availability'])
     try:
         msg = await channel.fetch_message(config.channels['availability_message'])
-    except discord.NotFound | discord.Forbidden:
+    except (discord.NotFound, discord.Forbidden):
         return
 
     found_reaction = None
@@ -96,3 +99,25 @@ async def pure_availability_check(bot: commands.Bot, member: discord.Member) -> 
                 return
         await remove_availability(bot, member)
 
+
+
+
+
+async def check_role_category(member: discord.Member, category_name: str) -> None:
+    for role in member.roles:
+        if role.id in config.roles[f'category:{category_name}']['other']:
+            await remove_role(member, config.roles[f'category:{category_name}']['none'])
+            break
+    else:
+        await add_role(member, config.roles[f'category:{category_name}']['none'])
+
+
+async def full_check_member(bot: commands.Bot, member: discord.Member) -> None:
+    await availability_check(bot, member)
+    await voice_check(bot, member)
+
+    for role in config.roles['role_check']:
+        await add_role(member, role)
+
+    await check_role_category(member, 'badges')
+    await check_role_category(member, 'misc')

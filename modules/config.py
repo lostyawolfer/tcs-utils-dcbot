@@ -8,7 +8,7 @@ def check_guild(guild_id: int) -> bool:
 
 
 from dotenv import dotenv_values
-TOKEN = dotenv_values('.env').get('TOKEN')
+TOKEN = dotenv_values('../.env').get('TOKEN')
 if not TOKEN:
     print('there\'s no token\n'
           'create a .env file in this directory and put in "TOKEN=..." and replace the "..." with ur bot token')
@@ -269,6 +269,9 @@ _messages = {
     ],
     "bot_doesnt_have_perms": [
         "https://cdn.discordapp.com/attachments/715528165132599337/1442288380766457977/artworks-000519533403-ovb003-t1080x1080.png?ex=6924e33a&is=692391ba&hm=1ce891ca81be59241658390d96198e442226d78d4b4c7e708a28f5355f6ac5bb&"
+    ],
+    "wip": [
+        "https://media.discordapp.net/attachments/715528165132599337/1450116115190513795/pug-dog-constructor-safety-helmet-yellow-black-work-progress-sign-wooden-pole-isolated-white-background-92995840.png?ex=69415d5f&is=69400bdf&hm=95a383c0b59ff99f483df65c5ab5d0b44e8628c786b847e75246b557447eb0fb&=&format=webp&quality=lossless"
     ],
     "channel_lock": [
         "🔒 channel was locked"
