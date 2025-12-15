@@ -19,7 +19,7 @@ async def status_updater_loop():
 
 @bot.event
 async def on_ready():
-    version = 'v2.5'
+    version = 'v2.5.1'
     await general.send(bot, f':radio_button: bot connected... {version}')
     await general.set_status(bot, 'starting up...', status=discord.Status('idle'))
     await bot.wait_until_ready()

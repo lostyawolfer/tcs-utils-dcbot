@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 from discord.ext import commands
 from modules import config, general
@@ -150,4 +152,15 @@ async def check_all_members(bot: commands.Bot) -> None:
             await full_check_member(bot, member)
         await general.update_status_checking(bot, percent)
     await general.update_status(bot, status=discord.Status('online'))
+    await asyncio.sleep(1)
+    await msg.edit(content=':clock5: members checked successfully - deleting in 5')
+    await asyncio.sleep(1)
+    await msg.edit(content=':clock4: members checked successfully - deleting in 5')
+    await asyncio.sleep(1)
+    await msg.edit(content=':clock3: members checked successfully - deleting in 5')
+    await asyncio.sleep(1)
+    await msg.edit(content=':clock2: members checked successfully - deleting in 5')
+    await asyncio.sleep(1)
+    await msg.edit(content=':clock1: members checked successfully - deleting in 5')
+    await asyncio.sleep(1)
     await msg.delete()
