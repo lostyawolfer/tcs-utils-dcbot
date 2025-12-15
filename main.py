@@ -18,7 +18,7 @@ async def status_updater_loop():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.6'
+version = 'v2.6.1'
 changelog = \
 f"""
 :tada: **{version} changelog**
