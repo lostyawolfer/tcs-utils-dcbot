@@ -3,7 +3,8 @@ import asyncio
 import discord
 from discord.ext import commands
 from modules import config, general
-from modules.general import has_role, send, add_role, remove_role, count_available, count_in_vc, emojify
+from modules.general import has_role, send, add_role, remove_role, count_available, count_in_vc, emojify, \
+    timed_delete_msg
 
 
 async def voice_check(bot: commands.Bot, member: discord.Member) -> None:
@@ -137,6 +138,8 @@ async def full_check_member(bot: commands.Bot, member: discord.Member) -> None:
     await check_member_join_date(bot, member)
 
 
+
+
 async def check_all_members(bot: commands.Bot) -> None:
     msg = await general.send(bot, ':busts_in_silhouette: checking members...')
     server = bot.get_guild(config.TARGET_GUILD)
@@ -152,15 +155,4 @@ async def check_all_members(bot: commands.Bot) -> None:
             await full_check_member(bot, member)
         await general.update_status_checking(bot, percent)
     await general.update_status(bot, status=discord.Status('online'))
-    await asyncio.sleep(1)
-    await msg.edit(content=':clock5: members checked successfully')
-    await asyncio.sleep(1)
-    await msg.edit(content=':clock4: members checked successfully')
-    await asyncio.sleep(1)
-    await msg.edit(content=':clock3: members checked successfully')
-    await asyncio.sleep(1)
-    await msg.edit(content=':clock2: members checked successfully')
-    await asyncio.sleep(1)
-    await msg.edit(content=':clock1: members checked successfully')
-    await asyncio.sleep(1)
-    await msg.delete()
+    await timed_delete_msg(msg, 'members checked successfully', 10)

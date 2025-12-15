@@ -2,6 +2,7 @@ import datetime
 import discord
 from discord.ext import commands, tasks
 from modules import config, availability_vc, moderation, general
+from modules.general import timed_delete_msg
 from modules.saves import create_save, disband_save
 
 intents = discord.Intents.default()
@@ -14,24 +15,29 @@ bot = commands.Bot(command_prefix='.', intents=intents, help_command=None)
 
 
 @tasks.loop(hours=3)
-async def status_updater_loop():
+async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.6.1'
+version = 'v2.6.2'
 changelog = \
 f"""
 :tada: **{version} changelog**
 - added a fancy countdown clock for `.r`'s delete success message
+  - updated that in .2
+- removed the need for the bot to actually check members on start; there's a 3h loop that takes care of that, if you need to you can explicitly use `.check_members`
+- actually fixed the 3h loop (it wasn't running before, now it does... at least should...)
+- deleted `.help` in favor of a manually updated channel <#1450238936277450823>
 """
 @bot.event
 async def on_ready():
     await general.send(bot, f':radio_button: bot connected... {version}')
     await general.set_status(bot, 'starting up...', status=discord.Status('idle'))
     await bot.wait_until_ready()
-    await availability_vc.check_all_members(bot)
+    # await availability_vc.check_all_members(bot)
     await general.send(bot, f':ballot_box_with_check: restart complete!')
     await general.send(bot, changelog)
+    member_checker.start()
 
 @bot.command()
 @general.has_perms('manage_roles')
@@ -44,66 +50,6 @@ async def check_members(ctx):
 async def test(ctx):
     await ctx.send(f'test pass\n-# {version}')
 
-
-
-help_text_intro = \
-"""
-# help center
--# `<``>` means required arg, `[``]` means optional arg
--# `*` permission means "everyone" or "no special permissions required"
--# you cannot moderate members same or higher in role hierarchy than you, yourself, the owner and the bot 
--# if the bot sends an image of jevil on a wheelchair saying "i can't do anything", this means the bot's code is garbage, and it ran into an error.
--# usually the bot will ping its maintainer on its own, but if for some reason it doesn't, do it yourself, please :3
-"""
-
-help_text_public = \
-"""
-## public commands
-- `.test` - test if the bot is alive; see current version
-- `.help` - see this list
-- `.save <@members...>` - creates a private channel and role for the mentioned members, useful for coordinating save continuations - perms: `*`
-- `.disband` - used in a save-type channel, deletes the save role and its channel - perms: `*`
-"""
-
-help_text_admin = \
-"""
-## admin commands
-- `.ban <@member> [reason]` - bans the member. reason is only for audit log - perms: `ban members`
-- `.kick <@member> [reason]` - kicks the member. reason is only for audit log - perms: `kick members`
-- `.warn <@member> [reason]` - upgrades the member's current warn role or gives them one, then mutes or bans them accordingly (read <#1442604555798974485>) - perms: `moderate members`
-- `.mute <@member> [duration]` - times the member out with native discord tools. time format: Ns, Nm, Nh or Nd with N being an integer. default duration is 5m. - perms: `moderate members`
-- `.unmute <@member>` - clears any timeouts the member has - perms: `moderate members`
-- `.clear_warns <@member>` - clears timeouts and all warn roles from a member - perms: `moderate members`
-- `.warns <@member>` - just sends the member's current top warn role - perms: `*`
-- `.check_members` - starts the usual member checking process that usually happens automatically every 3 hours or on bot startup. member checking includes fixing category roles, checking consistency of availability and in vc roles, and removing the newbie role from those who were on the server for more than 7 days. takes around 4 minutes on average to complete - perms: `manage roles`
-- ~~`.check_newbies`~~ - DEPRECATED - use `.check_members` instead
-- ~~`.br`~~ - UNAVAILABLE
-"""
-
-help_text_owner = \
-"""
-## owner only commands
-- `.update` - server-side, pulls source git updates from remote, and restarts the systemctl - perms: `owner`
-- `.lock` - locks down the channel it was written in, so no one can send messages in it - perms: `owner`
-- `.unlock` - unlocks the `.lock`ed channel - perms: `owner`
-- `.r <from_id> <to_id>` - clears up all the messages in the range of specified ids - perms: `owner`
-"""
-
-help_text_fun = \
-"""
-## fun stuff!
-- `.van <@member> [reason]` - joke. a misspelling of the command `.ban`. "vans" the member (does literally nothing except send a message about it). - perms: `*`
-- `.war <@member> [reason]` - joke. literally same as `.van` but a misspelling of `.warn` instead - perms: `*`
-"""
-
-@bot.command()
-@general.try_bot_perms
-async def help(ctx):
-    await ctx.send(help_text_intro)
-    await ctx.send(help_text_public)
-    await ctx.send(help_text_admin)
-    await ctx.send(help_text_owner)
-    await ctx.send(help_text_fun)
 
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -369,26 +315,22 @@ async def r(
     end_id: int
 ):
     channel = ctx.channel
-    msg: discord.Message = ctx.message
-    await msg.add_reaction('✅')
+    await ctx.message.delete()
+
+    res_msg = await ctx.send(f':brain: finding messages to delete')
     try:
         start_message = await channel.fetch_message(start_id)
         end_message = await channel.fetch_message(end_id)
     except discord.NotFound:
-        return await ctx.send(
-            "one of the message ids wasn't found, make sure u doin the right thing",
-            delete_after=5
-        )
+        return await timed_delete_msg(res_msg, 'one of the message ids wasn\'t found, make sure u doin the right thing', 10)
     except discord.HTTPException as e:
-        return await ctx.send(
-            f"unable to fetch msgs: {e}",
-            delete_after=5
-        )
+        return await timed_delete_msg(res_msg, f'unable to fetch msgs: {e}', 10)
 
     # Ensure start_message is chronologically before or at the same time as end_message
     if start_message.created_at > end_message.created_at:
         start_message, end_message = end_message, start_message
 
+    await res_msg.edit(content=':brain: selecting messages to delete')
     messages_to_delete = []
     async for message in channel.history(
         limit=None,
@@ -404,30 +346,15 @@ async def r(
         messages_to_delete.append(end_message)
 
     # Sort messages by creation time to ensure consistent deletion order
+    await res_msg.edit(content=':brain: sorting messages to delete')
     messages_to_delete.sort(key=lambda m: m.created_at)
 
     if not messages_to_delete:
-        return await ctx.send(
-            "there are no messages between those ids",
-            delete_after=5
-        )
+        return await timed_delete_msg(res_msg, f'there are no messages between those ids', 10)
 
+    await res_msg.edit(content=f':wastebasket: {len(messages_to_delete)} messages found, deleting')
     await channel.delete_messages(messages_to_delete)
-    await ctx.message.delete()
-    msg = await ctx.send(f':clock5: {len(messages_to_delete)} messages deleted')
-    await msg.edit(content=f':clock5: {len(messages_to_delete)} messages deleted')
-    await asyncio.sleep(1)
-    await msg.edit(content=f':clock4: {len(messages_to_delete)} messages deleted')
-    await asyncio.sleep(1)
-    await msg.edit(content=f':clock3: {len(messages_to_delete)} messages deleted')
-    await asyncio.sleep(1)
-    await msg.edit(content=f':clock2: {len(messages_to_delete)} messages deleted')
-    await asyncio.sleep(1)
-    await msg.edit(content=f':clock1: {len(messages_to_delete)} messages deleted')
-    await asyncio.sleep(1)
-    await msg.delete()
-
-    return None
+    return await timed_delete_msg(res_msg, f'deleted {len(messages_to_delete)} messages', 10)
 
 
 import subprocess

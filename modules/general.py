@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import datetime
 from discord.ext import commands
@@ -10,6 +11,16 @@ async def send(bot: commands.Bot, msg: str, where: str = 'chat') -> discord.Mess
         msg = await channel.send(msg)
     await update_status(bot)
     return msg
+
+async def timed_delete_msg(msg: discord.Message, text: str, duration: int = 5):
+    for i in range(1, duration):
+        if i <= 11:
+            await msg.edit(content=f':clock{i}: {text}')
+            await asyncio.sleep(1)
+        else:
+            await msg.edit(content=f':white_check_mark: {text}')
+            await asyncio.sleep(1)
+    await msg.delete()
 
 
 async def count_available(bot: commands.Bot) -> int:
