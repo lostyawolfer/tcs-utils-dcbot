@@ -136,7 +136,7 @@ async def full_check_member(bot: commands.Bot, member: discord.Member) -> None:
 
 
 async def check_all_members(bot: commands.Bot) -> None:
-    msg = await general.send(bot, '-# checking members...')
+    msg = await general.send(bot, ':busts_in_silhouette: checking members...')
     server = bot.get_guild(config.TARGET_GUILD)
     await server.chunk()
     await general.update_status_checking(bot, 0)
