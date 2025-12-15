@@ -20,13 +20,13 @@ async def status_updater_loop():
 @bot.event
 async def on_ready():
     version = 'v2.5'
-    await general.send(bot, f':radio_button: bot restarted... {version}')
+    await general.send(bot, f':radio_button: bot connected... {version}')
     await general.set_status(bot, 'starting up...', status=discord.Status('idle'))
     await bot.wait_until_ready()
     await availability_vc.check_all_members(bot)
     await general.send(bot, f':ballot_box_with_check: restart complete!')
     await general.send(bot, f":tada: {version} changelog\n"
-                            f"i didn't come up w/ one sry... :wilted_rose:")
+                            f"i didn't come up w/ one yet :wilted_rose:")
 
 @bot.command()
 @general.has_perms('manage_roles')
@@ -355,7 +355,7 @@ import subprocess
 @bot.command()
 @general.has_perms('owner')
 async def update(ctx):
-    git_msg = await ctx.send(':arrow_down: pulling from git...')
+    await ctx.send(':radio_button: pulling from git...')
     try:
         result = subprocess.run(
             ['git', 'pull'],
@@ -363,17 +363,16 @@ async def update(ctx):
             text=True,
             timeout=30
         )
-        await git_msg.delete()
         if result.returncode != 0:
-            return await ctx.send(f':warning: git pull failed:\n```{result.stderr}```')
+            return await ctx.send(f':warning: git pull failed\n```{result.stderr}```')
         await ctx.send(f'```{result.stdout}```')
         await ctx.send(f':radio_button: restarting bot...')
         subprocess.Popen(['systemctl', 'restart', '--user', 'tcs-utils-dcbot'])
 
     except subprocess.TimeoutExpired:
-        await ctx.send('git pull timed out')
+        await ctx.send(':x: git pull timed out')
     except Exception as e:
-        await ctx.send(f'error: ```{e}```')
+        await ctx.send(f':x: error: ```{e}```')
 
 
 @bot.command()
