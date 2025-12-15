@@ -1,3 +1,5 @@
+version = 'v2.4'
+
 import datetime
 import discord
 from discord.ext import commands, tasks
@@ -19,6 +21,7 @@ async def status_updater_loop():
 
 @bot.event
 async def on_ready():
+    await general.send(bot, f':tada: bot restarted! {version}')
     await general.set_status(bot, 'starting up...', status=discord.Status('idle'))
     await bot.wait_until_ready()
     await availability_vc.check_all_members(bot)
@@ -350,7 +353,7 @@ import subprocess
 @bot.command()
 @general.has_perms('owner')
 async def update(ctx):
-    await ctx.send('pulling from git...')
+    git_msg = await ctx.send(':arrow_down: pulling from git...')
     try:
         result = subprocess.run(
             ['git', 'pull'],
@@ -358,9 +361,11 @@ async def update(ctx):
             text=True,
             timeout=30
         )
+        await git_msg.delete()
         if result.returncode != 0:
-            return await ctx.send(f'git pull failed:\n```{result.stderr}```')
-        await ctx.send(f'```{result.stdout}```\nrestarting bot...')
+            return await ctx.send(f':warning: git pull failed:\n```{result.stderr}```')
+        await ctx.send(f'```{result.stdout}```')
+        await ctx.send(f':arrows_counterclockwise: restarting bot...')
         subprocess.Popen(['systemctl', 'restart', '--user', 'tcs-utils-dcbot'])
 
     except subprocess.TimeoutExpired:
