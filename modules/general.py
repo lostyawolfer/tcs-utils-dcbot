@@ -13,7 +13,7 @@ async def send(bot: commands.Bot, msg: str, where: str = 'chat') -> discord.Mess
     return msg
 
 async def timed_delete_msg(msg: discord.Message, text: str, duration: int = 5):
-    for i in range(1, duration):
+    for i in range(duration, 1):
         if i <= 11:
             await msg.edit(content=f':clock{i}: {text}')
             await asyncio.sleep(1)

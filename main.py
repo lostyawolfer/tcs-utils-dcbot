@@ -1,4 +1,3 @@
-import datetime
 import discord
 from discord.ext import commands, tasks
 from modules import config, availability_vc, moderation, general
@@ -19,15 +18,12 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.6.2'
+version = 'v2.6.3'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- added a fancy countdown clock for `.r`'s delete success message
-  - updated that in .2
-- removed the need for the bot to actually check members on start; there's a 3h loop that takes care of that, if you need to you can explicitly use `.check_members`
-- actually fixed the 3h loop (it wasn't running before, now it does... at least should...)
-- deleted `.help` in favor of a manually updated channel <#1450238936277450823>
+- fixed the fancy message deleting animation thing going the wrong way
+- made the member checker ACTUALLY not fire as soon as the bot restarts
 """
 @bot.event
 async def on_ready():
@@ -37,7 +33,7 @@ async def on_ready():
     # await availability_vc.check_all_members(bot)
     await general.send(bot, f':ballot_box_with_check: restart complete!')
     await general.send(bot, changelog)
-    member_checker.start()
+    member_checker.start(call_once=False)
 
 @bot.command()
 @general.has_perms('manage_roles')
@@ -305,7 +301,6 @@ async def unlock(ctx):
     await ctx.send(config.message("channel_unlock"))
 
 
-import asyncio
 @bot.command()
 @general.has_perms('owner')
 @general.try_bot_perms
@@ -354,6 +349,7 @@ async def r(
 
     await res_msg.edit(content=f':wastebasket: {len(messages_to_delete)} messages found, deleting')
     await channel.delete_messages(messages_to_delete)
+    await res_msg.edit(content=f':white_check_mark: deleted {len(messages_to_delete)}')
     return await timed_delete_msg(res_msg, f'deleted {len(messages_to_delete)} messages', 10)
 
 
