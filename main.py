@@ -18,12 +18,12 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.6.3'
+version = 'v2.6.4'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- fixed the fancy message deleting animation thing going the wrong way
-- made the member checker ACTUALLY not fire as soon as the bot restarts
+- im lwk tired of fixing things
+- also new command btw `.one_more` just sends the pic
 """
 @bot.event
 async def on_ready():
@@ -209,6 +209,10 @@ async def disband(ctx):
 
 
 @bot.command()
+async def one_more(ctx):
+    await ctx.send('https://cdn.discordapp.com/attachments/1426972811293098014/1438983499804708915/image.png?ex=6941bbd1&is=69406a51&hm=eb4a1cd864b53f8c9865afd49aec5dd6a54fed7c327bd262df17b69589bef0bb&')
+
+@bot.command()
 @general.try_bot_perms
 async def van(ctx, member: discord.Member, *, reason: str = None):
     msg = f'{member.mention} has been vanned :white_check_mark:'
@@ -349,7 +353,6 @@ async def r(
 
     await res_msg.edit(content=f':wastebasket: {len(messages_to_delete)} messages found, deleting')
     await channel.delete_messages(messages_to_delete)
-    await res_msg.edit(content=f':white_check_mark: deleted {len(messages_to_delete)}')
     return await timed_delete_msg(res_msg, f'deleted {len(messages_to_delete)} messages', 10)
 
 
