@@ -18,7 +18,16 @@ async def status_updater_loop():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.5.1'
+version = 'v2.6'
+changelog = \
+f"""
+:tada: **{version} changelog**
+- added `.help` command to list every single available command in the bot
+- `.mute` command now has a default duration of 5 minutes because ppl seemed to always forget duration was a thing to include
+- added a new `.van` ahh command
+- added a reminder in mod chat to set ppl's names to their roblox ones when they join
+- if the bot encounters any errors during command execution it will ping the bot's maintainer
+"""
 @bot.event
 async def on_ready():
     await general.send(bot, f':radio_button: bot connected... {version}')
@@ -26,14 +35,79 @@ async def on_ready():
     await bot.wait_until_ready()
     await availability_vc.check_all_members(bot)
     await general.send(bot, f':ballot_box_with_check: restart complete!')
-    await general.send(bot, f":tada: **{version} changelog**\n"
-                            f"i didn't come up w/ one yet :wilted_rose:")
+    await general.send(bot, changelog)
 
 @bot.command()
 @general.has_perms('manage_roles')
 @general.try_bot_perms
 async def check_members(ctx):
     await availability_vc.check_all_members(bot)
+
+@bot.command()
+@general.try_bot_perms
+async def test(ctx):
+    await ctx.send(f'test pass\n-# {version}')
+
+
+
+help_text_intro = \
+"""
+# help center
+-# `<``>` means required arg, `[``]` means optional arg
+-# `*` permission means "everyone" or "no special permissions required"
+-# you cannot moderate members same or higher in role hierarchy than you, yourself, the owner and the bot 
+-# if the bot sends an image of jevil on a wheelchair saying "i can't do anything", this means the bot's code is garbage, and it ran into an error.
+-# usually the bot will ping its maintainer on its own, but if for some reason it doesn't, do it yourself, please :3
+"""
+
+help_text_public = \
+"""
+## public commands
+- `.test` - test if the bot is alive; see current version
+- `.help` - see this list
+- `.save <@members...>` - creates a private channel and role for the mentioned members, useful for coordinating save continuations - perms: `*`
+- `.disband` - used in a save-type channel, deletes the save role and its channel - perms: `*`
+"""
+
+help_text_admin = \
+"""
+## admin commands
+- `.ban <@member> [reason]` - bans the member. reason is only for audit log - perms: `ban members`
+- `.kick <@member> [reason]` - kicks the member. reason is only for audit log - perms: `kick members`
+- `.warn <@member> [reason]` - upgrades the member's current warn role or gives them one, then mutes or bans them accordingly (read <#1442604555798974485>) - perms: `moderate members`
+- `.mute <@member> [duration]` - times the member out with native discord tools. time format: Ns, Nm, Nh or Nd with N being an integer. default duration is 5m. - perms: `moderate members`
+- `.unmute <@member>` - clears any timeouts the member has - perms: `moderate members`
+- `.clear_warns <@member>` - clears timeouts and all warn roles from a member - perms: `moderate members`
+- `.warns <@member>` - just sends the member's current top warn role - perms: `*`
+- `.check_members` - starts the usual member checking process that usually happens automatically every 3 hours or on bot startup. member checking includes fixing category roles, checking consistency of availability and in vc roles, and removing the newbie role from those who were on the server for more than 7 days. takes around 4 minutes on average to complete - perms: `manage roles`
+- ~~`.check_newbies`~~ - DEPRECATED - use `.check_members` instead
+- ~~`.br`~~ - UNAVAILABLE
+"""
+
+help_text_owner = \
+"""
+## owner only commands
+- `.update` - server-side, pulls source git updates from remote, and restarts the systemctl - perms: `owner`
+- `.lock` - locks down the channel it was written in, so no one can send messages in it - perms: `owner`
+- `.unlock` - unlocks the `.lock`ed channel - perms: `owner`
+- `.r <from_id> <to_id>` - clears up all the messages in the range of specified ids - perms: `owner`
+"""
+
+help_text_fun = \
+"""
+## fun stuff!
+- `.van <@member> [reason]` - joke. a misspelling of the command `.ban`. "vans" the member (does literally nothing except send a message about it). - perms: `*`
+- `.war <@member> [reason]` - joke. literally same as `.van` but a misspelling of `.warn` instead - perms: `*`
+"""
+
+@bot.command()
+@general.try_bot_perms
+async def help(ctx):
+    await ctx.send(help_text_intro)
+    await ctx.send(help_text_public)
+    await ctx.send(help_text_admin)
+    await ctx.send(help_text_owner)
+    await ctx.send(help_text_fun)
 
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -140,6 +214,7 @@ async def on_member_join(member):
                                     '-# grab <#1434653852367585300> when you are ready to play! (don\'t forget to remove it when you stop being available!)\n'
                                     '-# join <#1426974154556702720> at any time!\n'
                                     '-# please respect others and remain active! random long inactivity is something very frowned upon here')
+        await general.send(bot, f':new: <@&{config.roles['mod']}> hey, we got a new member in the server! nice work! a friendly reminder to set their nickname to their roblox display name :3', 'mod_chat')
         for role in config.roles['new_people']:
             await general.add_role(member, role)
 
@@ -180,11 +255,6 @@ async def on_message(message: discord.Message):
     if 'nigga' in message.content.lower() or 'nigger' in message.content.lower():
         await message.channel.send(f'[[<@534097411048603648>]] i will personally fix ur fucking skin color if you say that word again')
     await bot.process_commands(message)
-
-
-@bot.command()
-async def test(ctx):
-    await ctx.send(f'test pass\n-# {version}')
 
 
 @general.try_bot_perms
@@ -239,7 +309,7 @@ async def check_inactive(ctx):
 @general.has_perms('moderate_members')
 @general.can_moderate_member
 @general.try_bot_perms
-async def mute(ctx, member: discord.Member, duration: str, *, reason: str = None):
+async def mute(ctx, member: discord.Member, duration: str = None, *, reason: str = None):
     await moderation.mute(ctx, member, duration, reason)
 
 @bot.command()
