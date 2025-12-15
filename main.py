@@ -18,11 +18,11 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.6.5'
+version = 'v2.6.6'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- i know it just looks like i'm incrementing the number but trust me i'm not i'm trying to fix some shit
+- ok this one is final and i know for sure
 """
 @bot.event
 async def on_ready():
