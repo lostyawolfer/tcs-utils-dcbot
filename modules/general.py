@@ -1,7 +1,7 @@
-import datetime
 import discord
-import config
+import datetime
 from discord.ext import commands
+from modules import config
 
 
 async def send(bot: commands.Bot, msg: str, where: str = 'chat') -> None:
@@ -32,22 +32,22 @@ async def count_available(bot: commands.Bot) -> int:
 async def count_in_vc(bot: commands.Bot, vc: str = 'vc') -> int:
     return len(bot.get_channel(config.channels[vc]).members)
 
-async def set_status(bot: commands.Bot, text: str, *, status: discord.Status = discord.Status('online')) -> None:
+async def set_status(bot: commands.Bot, text: str, *, status: discord.Status = None) -> None:
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=text), status=status)
 
-async def update_status(bot: commands.Bot) -> None:
+async def update_status(bot: commands.Bot, status: discord.Status = None) -> None:
     time = f'{datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M")}'
     vc_count = await count_in_vc(bot, 'vc')
     vc_2_count = await count_in_vc(bot, 'vc2')
     available_count = await count_available(bot)
     if not vc_count and not vc_2_count:
-        await set_status(bot, f'{available_count} available') # [{time}]
+        await set_status(bot, f'{available_count} available', status=status) # [{time}]
     elif vc_count and not vc_2_count:
-        await set_status(bot, f'{available_count} available / {vc_count} in vc 🟢') # [{time}]
+        await set_status(bot, f'{available_count} available / {vc_count} in vc 🟢', status=status) # [{time}]
     elif not vc_count and vc_2_count:
-        await set_status(bot, f'{available_count} available / {vc_2_count} in vc 🟣') # [{time}]
+        await set_status(bot, f'{available_count} available / {vc_2_count} in vc 🟣', status=status) # [{time}]
     else:
-        await set_status(bot, f'{available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣') # [{time}]
+        await set_status(bot, f'{available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣', status=status) # [{time}]
 
 async def update_status_checking(bot: commands.Bot, percent: float) -> None:
     time = f'{datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M")}'

@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
-import config
-from general import has_role, send, add_role, remove_role, count_available, count_in_vc, emojify
+from modules import config
+from modules.general import has_role, send, add_role, remove_role, count_available, count_in_vc, emojify
 
 
 async def voice_check(bot: commands.Bot, member: discord.Member) -> None:

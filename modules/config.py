@@ -8,7 +8,7 @@ def check_guild(guild_id: int) -> bool:
 
 
 from dotenv import dotenv_values
-TOKEN = dotenv_values('../.env').get('TOKEN')
+TOKEN = dotenv_values('.env').get('TOKEN')
 if not TOKEN:
     print('there\'s no token\n'
           'create a .env file in this directory and put in "TOKEN=..." and replace the "..." with ur bot token')

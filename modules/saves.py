@@ -1,7 +1,7 @@
 import discord
 import datetime
-import config
-from general import add_role, remove_role, send
+from modules import config
+from modules.general import add_role, remove_role, send
 
 SAVE_COOLDOWN = {}  # {user_id: datetime.datetime of last save}
 

@@ -1,7 +1,7 @@
 import discord
-import config
 import datetime
-from general import add_role, remove_role
+from modules import config
+from modules.general import add_role, remove_role
 
 
 

@@ -37,7 +37,7 @@ async def on_ready():
             await availability_vc.full_check_member(bot, member)
         await general.update_status_checking(bot, percent)
 
-    await general.update_status(bot)
+    await general.update_status(bot, status=discord.Status('online'))
 
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -214,7 +214,7 @@ async def check_members(ctx):
             await availability_vc.full_check_member(bot, member)
         await general.update_status_checking(bot, percent)
 
-    await general.update_status(bot)
+    await general.update_status(bot, status=discord.Status('online'))
     await ctx.send('checked members :white_check_mark:')
 
 @bot.command()
@@ -247,6 +247,14 @@ async def check_newbies(ctx):
 @general.try_bot_perms
 async def van(ctx, member: discord.Member, *, reason: str = None):
     msg = f'{member.mention} has been vanned :white_check_mark:'
+    if reason:
+        msg += f'\nreason: {reason}'
+    await ctx.send(msg)
+
+@bot.command()
+@general.try_bot_perms
+async def war(ctx, member: discord.Member, *, reason: str = None):
+    msg = f'{member.mention} has been warred :white_check_mark:'
     if reason:
         msg += f'\nreason: {reason}'
     await ctx.send(msg)
