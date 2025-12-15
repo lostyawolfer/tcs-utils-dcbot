@@ -10,7 +10,7 @@ intents.presences = True
 intents.reactions = True
 intents.guilds = True
 intents.message_content = True
-bot = commands.Bot(command_prefix='.', intents=intents)
+bot = commands.Bot(command_prefix='.', intents=intents, help_command=None)
 
 
 @tasks.loop(hours=3)
