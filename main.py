@@ -27,7 +27,7 @@ async def on_ready():
     await availability_vc.check_all_members(bot)
 
 @bot.command()
-@general.has_perms('owner')
+@general.has_perms('manage_roles')
 @general.try_bot_perms
 async def check_members(ctx):
     await availability_vc.check_all_members(bot)
