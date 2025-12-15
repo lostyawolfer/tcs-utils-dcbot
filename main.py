@@ -17,15 +17,16 @@ bot = commands.Bot(command_prefix='.', intents=intents)
 async def status_updater_loop():
     await availability_vc.check_all_members(bot)
 
+
+version = 'v2.5.1'
 @bot.event
 async def on_ready():
-    version = 'v2.5.1'
     await general.send(bot, f':radio_button: bot connected... {version}')
     await general.set_status(bot, 'starting up...', status=discord.Status('idle'))
     await bot.wait_until_ready()
     await availability_vc.check_all_members(bot)
     await general.send(bot, f':ballot_box_with_check: restart complete!')
-    await general.send(bot, f":tada: {version} changelog\n"
+    await general.send(bot, f":tada: **{version} changelog**\n"
                             f"i didn't come up w/ one yet :wilted_rose:")
 
 @bot.command()
@@ -183,7 +184,7 @@ async def on_message(message: discord.Message):
 
 @bot.command()
 async def test(ctx):
-    await ctx.send('test pass')
+    await ctx.send(f'test pass\n-# {version}')
 
 
 @general.try_bot_perms
