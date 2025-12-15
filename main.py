@@ -221,27 +221,7 @@ async def check_members(ctx):
 @general.has_perms('moderate_members')
 @general.try_bot_perms
 async def check_newbies(ctx):
-    await ctx.send('aight')
-
-    await general.update_status_checking(bot, 0)
-    total_members = ctx.guild.member_count
-    members = ctx.guild.members
-    member_n = 0
-    for member in members:
-        member_n += 1
-        percent = round(member_n * 100 / total_members)
-        if not member.bot:
-            if ctx.guild.get_role(config.roles['newbie']) in member.roles:
-                if member.joined_at:
-                    now = datetime.datetime.now(member.joined_at.tzinfo)
-                    time_since_join = now - member.joined_at
-                    days = time_since_join.days
-                    if days > 7:
-                        await general.remove_role(member, config.roles['newbie'])
-        await general.update_status_checking(bot, percent)
-
-    await general.update_status(bot)
-    await ctx.send('checked newbies :white_check_mark:')
+    await ctx.send('deprecated, use .check_members\n-# (checking members now includes checking newbies too)')
 
 @bot.command()
 @general.try_bot_perms

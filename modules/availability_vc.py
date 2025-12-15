@@ -112,6 +112,16 @@ async def check_role_category(member: discord.Member, category_name: str) -> Non
         await add_role(member, config.roles[f'category:{category_name}']['none'])
 
 
+import datetime
+async def check_member_join_date(bot: commands.Bot, member: discord.Member) -> None:
+    if bot.get_guild(config.TARGET_GUILD).get_role(config.roles['newbie']) in member.roles:
+        if member.joined_at:
+            now = datetime.datetime.now(member.joined_at.tzinfo)
+            time_since_join = now - member.joined_at
+            days = time_since_join.days
+            if days > 7:
+                await remove_role(member, config.roles['newbie'])
+
 async def full_check_member(bot: commands.Bot, member: discord.Member) -> None:
     await availability_check(bot, member)
     await voice_check(bot, member)
@@ -121,3 +131,5 @@ async def full_check_member(bot: commands.Bot, member: discord.Member) -> None:
 
     await check_role_category(member, 'badges')
     await check_role_category(member, 'misc')
+
+    await check_member_join_date(bot, member)
