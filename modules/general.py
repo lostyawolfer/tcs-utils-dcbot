@@ -147,8 +147,10 @@ def can_moderate_member(func):
             return await ctx.send(config.message("nuh_uh"))
         if member == ctx.guild.me:
             return await ctx.send(config.message("nuh_uh"))
-        if ctx.author.top_role <= member.top_role and ctx.author.id != ctx.guild.owner_id:
+        if ctx.author.top_role <= member.top_role:
             return await ctx.send(config.message("nuh_uh"))
+        # if ctx.author.id == ctx.guild.owner_id:
+        #     return await ctx.send(config.message("nuh_uh"))
         return await func(ctx, member, *args, **kwargs)
     return wrapper
 

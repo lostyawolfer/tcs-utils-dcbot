@@ -20,11 +20,11 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.6.10'
+version = 'v2.6.10-fun'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- fix saves II
+- remove owner moderation safeguard
 """
 @bot.event
 async def on_ready():
