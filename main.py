@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 from discord.ext import commands, tasks
 from modules import config, availability_vc, moderation, general
@@ -353,8 +355,16 @@ async def r(
     if not messages_to_delete:
         return await timed_delete_msg(res_msg, f'there are no messages between those ids', 10)
 
-    await res_msg.edit(content=f':wastebasket: {len(messages_to_delete)} messages found, deleting')
-    await channel.delete_messages(messages_to_delete)
+    total_deleted = 0
+    message_chunks = [messages_to_delete[i:i + 100] for i in range(0, len(messages_to_delete), 100)]
+
+    for chunk in message_chunks:
+        await res_msg.edit(content=f':wastebasket: deleting {len(chunk)} messages (total so far: {total_deleted})')
+        await channel.delete_messages(chunk)
+        total_deleted += len(chunk)
+        # It's good practice to add a small delay between bulk deletes to avoid hitting rate limits too hard
+        await asyncio.sleep(1)
+
     return await timed_delete_msg(res_msg, f'deleted {len(messages_to_delete)} messages', 10)
 
 
