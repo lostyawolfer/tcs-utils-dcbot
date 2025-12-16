@@ -151,8 +151,7 @@ def can_moderate_member(func):
         #     return await ctx.send(config.message("nuh_uh"))
         # if ctx.author.id == ctx.guild.owner_id:
         #     return await ctx.send(config.message("nuh_uh"))
-        # return await func(ctx, member, *args, **kwargs)
-        ...
+        return await func(ctx, member, *args, **kwargs)
     return wrapper
 
 def try_bot_perms(func):
