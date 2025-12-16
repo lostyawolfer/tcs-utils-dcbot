@@ -20,11 +20,11 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.6.10-fun-2'
+version = 'v2.6.11'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- remove all moderation perm safeguards (temporarily)
+- revert safeguard removals from .10-fun-x
 """
 @bot.event
 async def on_ready():
