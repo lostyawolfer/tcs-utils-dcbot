@@ -138,20 +138,21 @@ def has_perms(required_perm: str):
 def can_moderate_member(func):
     @functools.wraps(func)
     async def wrapper(ctx, member: discord.Member = None, *args, **kwargs):
-        if not member:
-            await ctx.send(config.message("bot_doesnt_have_perms"))
-            return await ctx.send('<@534097411048603648> fix ur fucking bot\n'
-                                  'you added a @can_moderate_member decorator where you shouldn\'t have dumbass\n'
-                                  '-# [can_moderate_member expects a member in the command args, no member arg found]')
-        if member == ctx.author:
-            return await ctx.send(config.message("nuh_uh"))
-        if member == ctx.guild.me:
-            return await ctx.send(config.message("nuh_uh"))
-        if ctx.author.top_role <= member.top_role:
-            return await ctx.send(config.message("nuh_uh"))
+        # if not member:
+        #     await ctx.send(config.message("bot_doesnt_have_perms"))
+        #     return await ctx.send('<@534097411048603648> fix ur fucking bot\n'
+        #                           'you added a @can_moderate_member decorator where you shouldn\'t have dumbass\n'
+        #                           '-# [can_moderate_member expects a member in the command args, no member arg found]')
+        # if member == ctx.author:
+        #     return await ctx.send(config.message("nuh_uh"))
+        # if member == ctx.guild.me:
+        #     return await ctx.send(config.message("nuh_uh"))
+        # if ctx.author.top_role <= member.top_role:
+        #     return await ctx.send(config.message("nuh_uh"))
         # if ctx.author.id == ctx.guild.owner_id:
         #     return await ctx.send(config.message("nuh_uh"))
-        return await func(ctx, member, *args, **kwargs)
+        # return await func(ctx, member, *args, **kwargs)
+        ...
     return wrapper
 
 def try_bot_perms(func):
