@@ -40,9 +40,9 @@ async def create_save(ctx, members: list[discord.Member]):
         role for role in guild.roles if role.name.startswith("save ")
     ]
     existing_nums = [
-        int(role.name.split()[1])
+        int(role.name.split()[2])
         for role in existing_saves
-        if role.name.split()[1].isdigit()
+        if role.name.split()[2].isdigit()
     ]
     new_num = max(existing_nums, default=0) + 1
 
