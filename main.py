@@ -18,11 +18,11 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.6.6'
+version = 'v2.6.7'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- ok this one is final and i know for sure
+- hopefully fixed the permissions issue fucking fuck you stupid ginger
 """
 @bot.event
 async def on_ready():
@@ -229,12 +229,14 @@ async def war(ctx, member: discord.Member, *, reason: str = None):
 
 @bot.command()
 @general.has_perms('kick_members')
+@general.can_moderate_member
 @general.try_bot_perms
 async def kick(ctx, member: discord.Member, *, reason: str = None):
     await member.kick(reason=reason)
 
 @bot.command()
 @general.has_perms('ban_members')
+@general.can_moderate_member
 @general.try_bot_perms
 async def ban(ctx, member: discord.Member, *, reason: str = None):
     await member.ban(reason=reason, delete_message_seconds=0)
@@ -262,6 +264,7 @@ async def unmute(ctx, member: discord.Member, *, reason: str = None):
 
 @bot.command()
 @general.has_perms('moderate_members')
+@general.can_moderate_member
 @general.try_bot_perms
 async def warn(ctx, member: discord.Member, *, reason: str = None):
     await moderation.warn(ctx, member, reason)
