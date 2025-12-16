@@ -17,14 +17,15 @@ async def create_save(ctx, members: list[discord.Member]):
     user_id = ctx.author.id
     last_use = SAVE_COOLDOWN.get(user_id)
 
-    if last_use:
-        diff = (now - last_use).total_seconds()
-        if diff < 120:
-            if diff < 60:
-                return await ctx.send("nuh uh ur using ts too fast wait a bit")
-            else:
-                await send(ctx.bot, f"<@&{config.roles['mod']}> `{ctx.author.display_name}` is very sus they seem to abuse the save cmd")
-    SAVE_COOLDOWN[user_id] = now
+    if not ctx.author == ctx.guild.owner:
+        if last_use:
+            diff = (now - last_use).total_seconds()
+            if diff < 120:
+                if diff < 60:
+                    return await ctx.send("nuh uh ur using ts too fast wait a bit")
+                else:
+                    await send(ctx.bot, f"<@&{config.roles['mod']}> `{ctx.author.display_name}` is very sus they seem to abuse the save cmd")
+        SAVE_COOLDOWN[user_id] = now
 
     # ensure "saves" category exists
     save_category: discord.CategoryChannel = discord.utils.get(guild.categories, name=SAVE_CATEGORY_NAME)
@@ -37,7 +38,7 @@ async def create_save(ctx, members: list[discord.Member]):
 
     # find next save number
     existing_saves = [
-        role for role in guild.roles if role.name.startswith("save ")
+        role for role in guild.roles if role.name.startswith("💾 save ")
     ]
     existing_nums = [
         int(role.name.split()[2])
