@@ -222,7 +222,12 @@ async def disband(ctx):
 
 @bot.command()
 async def one_more(ctx):
+    await ctx.send('deprecated, use .onemore (single word)')
+
+@bot.command()
+async def onemore(ctx):
     await ctx.send('https://cdn.discordapp.com/attachments/1426972811293098014/1438983499804708915/image.png?ex=6941bbd1&is=69406a51&hm=eb4a1cd864b53f8c9865afd49aec5dd6a54fed7c327bd262df17b69589bef0bb&')
+
 
 @bot.command()
 @general.try_bot_perms
