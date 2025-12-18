@@ -279,13 +279,6 @@ async def ban(ctx, member: discord.Member = None, *, reason: str = None):
 @bot.command()
 @general.try_bot_perms
 @general.has_perms('moderate_members')
-@general.work_in_progress
-async def check_inactive(ctx):
-    ...
-
-@bot.command()
-@general.try_bot_perms
-@general.has_perms('moderate_members')
 #@general.inject_reply
 @general.can_moderate_member
 async def mute(ctx, member: discord.Member = None, duration: str = None, *, reason: str = None):
