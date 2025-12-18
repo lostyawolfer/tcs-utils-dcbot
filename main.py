@@ -20,15 +20,13 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.7.0'
+version = 'v2.7.1'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- add .r N command for owner to delete N last messages excluding the one just sent
-- add .pin command to those who have "manage messages" perms (and a reverse .unpin) which pins the message the author replied to
-~~- banning, kicking, warning, muting & other moderation commands now work when replying to people (ex. instead of `.ban @lostya too mean :<` you can reply to @lostya's message and say `.ban too mean :<` to ban @lostya for "too mean :<")~~ FUCKING CANCELLED BECAUSE DISCORD IS NOT BEHAVING LIKE A GOOD BOY.
-- `.check <@member>` command for those who have "manage roles" perms to instead of checking ALL members with `.check_members` check a single member if you know they bugged out or sum
-- the bot now shows the filtered total amount of members in its status (excludes bots and alts) 
+- added .check_inactive <@member> - checks activity over the past 5k messages
+- added .inactive <@member> - gives them inactive role
+- added .unavailable <@member> - removes their availability reaction
 """
 
 
@@ -494,6 +492,57 @@ async def br(ctx):
     return await ctx.reply('sry fam ts command no workie and im too lazy to fix it so its cancelled for now')
 
 
+@bot.command()
+@general.try_bot_perms
+@general.has_perms('manage_roles')
+async def check_inactive(ctx, member: discord.Member):
+    chat_channel = ctx.guild.get_channel(config.channels['chat'])
+    msg = await ctx.send('🤔 checking past activity...')
+
+    last_message = None
+    last_bot_mention = None
+
+    async for msg in chat_channel.history(limit=5000):  # reasonable search depth
+        if msg.author == member and not last_message:
+            last_message = msg
+        if msg.author == bot.user and member.display_name in msg.content and not last_bot_mention:
+            last_bot_mention = msg
+        if last_message and last_bot_mention:
+            break
+
+    response = f"✅ **{member.mention}'s activity over the past 5000 messages**\n"
+
+    if last_message:
+        response += f"- last message: <t:{int(last_message.created_at.timestamp())}:R> ([jump]({last_message.jump_url}))\n"
+    else:
+        response += "- didn't find any messages by them\n"
+
+    if last_bot_mention:
+        response += f"- last mention by bot (availability/vc changes): <t:{int(last_bot_mention.created_at.timestamp())}:R> ([jump]({last_bot_mention.jump_url}))"
+    else:
+        response += "- didn't find any bot mentions of them"
+
+    await msg.edit(response)
+
+
+@bot.command()
+@general.try_bot_perms
+@general.has_perms('manage_roles')
+async def inactive(ctx, member: discord.Member):
+    await general.add_role(member, config.roles['inactive'])
+
+
+@bot.command()
+@general.try_bot_perms
+@general.has_perms('manage_roles')
+async def unavailable(ctx, member: discord.Member):
+    channel = bot.get_channel(config.channels['availability'])
+    msg = await channel.fetch_message(config.channels['availability_message'])
+
+    await msg.remove_reaction(discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), member)
+
+    return await general.send(bot, config.message('unavailable_auto', name=member.display_name,
+                       available_count=f"{general.emojify(str(await availability_vc.count_available(bot)), 'b')}"))
 
 # @bot.command()
 # async def br(ctx, *args):
