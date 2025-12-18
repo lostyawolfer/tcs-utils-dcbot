@@ -490,12 +490,19 @@ async def br(ctx):
 @general.has_perms('manage_roles')
 async def check_inactive(ctx, member: discord.Member):
     chat_channel = ctx.guild.get_channel(config.channels['chat'])
-    msg = await ctx.send('🤔 checking past activity...')
+    bot_msg = await ctx.send('🤔 checking past activity...')
 
     last_message = None
     last_bot_mention = None
 
-    async for msg in chat_channel.history(limit=5000):  # reasonable search depth
+    checked_msg = 0
+    await bot_msg.edit(content='🤔 fetching 10000 messages from chat...')
+    async for msg in chat_channel.history(limit=10000):
+        checked_msg += 1
+        if (checked_msg % 250) == 0:
+            await bot_msg.edit(content=f'🤔 checking msg `{checked_msg}`/`10000`...'
+                                       f'{f'\n- last message: <t:{int(last_message.created_at.timestamp())}:R> ([jump]({last_message.jump_url}))' if last_message else '\n- last message: *searching*'}'
+                                       f'{f'\n- last mention by bot (availability/vc changes): <t:{int(last_bot_mention.created_at.timestamp())}:R> ([jump]({last_bot_mention.jump_url}))' if last_bot_mention else '\n- last mention by bot (availability/vc changes): *searching*'}')
         if msg.author == member and not last_message:
             last_message = msg
         if msg.author == bot.user and member.display_name in msg.content and not last_bot_mention:
@@ -503,19 +510,108 @@ async def check_inactive(ctx, member: discord.Member):
         if last_message and last_bot_mention:
             break
 
-    response = f"✅ **{member.mention}'s activity over the past 5000 messages**\n"
+    response = f"🔥 **{member.mention}'s activity over the past 10000 messages**\n"
 
     if last_message:
         response += f"- last message: <t:{int(last_message.created_at.timestamp())}:R> ([jump]({last_message.jump_url}))\n"
     else:
-        response += "- didn't find any messages by them\n"
+        response += "- last message: *none*\n"
 
     if last_bot_mention:
         response += f"- last mention by bot (availability/vc changes): <t:{int(last_bot_mention.created_at.timestamp())}:R> ([jump]({last_bot_mention.jump_url}))"
     else:
-        response += "- didn't find any bot mentions of them"
+        response += "- last mention by bot (availability/vc changes): *none*"
 
-    await msg.edit(response)
+    await bot_msg.edit(content=response)
+
+
+
+@bot.command()
+@general.try_bot_perms
+@general.has_perms('manage_roles')
+async def check_inactive_people(ctx):
+    chat_channel = ctx.guild.get_channel(config.channels['chat'])
+    bot_msg = await ctx.send('🤔 checking past activity for all members...')
+
+    await bot_msg.edit(content='🤔 fetching 20000 messages from chat...')
+    members_data = {
+        m: {'last_message': None, 'last_bot_mention': None}
+        for m in ctx.guild.members
+        if not m.bot
+    }
+
+    checked_msg = 0
+    async for msg in chat_channel.history(limit=20000):
+        checked_msg += 1
+
+        # update progress every 750 messages
+        if checked_msg % 750 == 0:
+            await bot_msg.edit(
+                content=f"🤔 checked `{checked_msg}`/`20000` messages..."
+            )
+
+        for member, data in members_data.items():
+            if not data['last_message'] and msg.author == member:
+                data['last_message'] = msg
+            if (
+                not data['last_bot_mention']
+                and msg.author == bot.user
+                and member.display_name in msg.content
+            ):
+                data['last_bot_mention'] = msg
+
+        # stop early if we've found everything
+        if all(v['last_message'] and v['last_bot_mention'] for v in members_data.values()):
+            break
+
+    now = discord.utils.utcnow()
+    five_days_ago = now.timestamp() - 7 * 24 * 60 * 60
+
+    inactive = []
+    for m, d in members_data.items():
+        last_msg_ts = (
+            d['last_message'].created_at.timestamp() if d['last_message'] else None
+        )
+        last_mention_ts = (
+            d['last_bot_mention'].created_at.timestamp()
+            if d['last_bot_mention']
+            else None
+        )
+
+        # if neither was found or both are older than 7 days
+        if (
+            not last_msg_ts
+            and not last_mention_ts
+        ) or (
+            (last_msg_ts and last_msg_ts < five_days_ago)
+            and (last_mention_ts and last_mention_ts < five_days_ago)
+        ):
+            inactive.append((m, d))
+
+    if not inactive:
+        response = "✅ everyone has been active in the past 7 days!"
+    else:
+        response = "🔥 **not found within 20 000 messages or 7 days:**\n"
+        lines = []
+        for m, d in inactive:
+            last_message_str = (
+                f"<t:{int(d['last_message'].created_at.timestamp())}:R>"
+                if d['last_message']
+                else "*none*"
+            )
+            last_mention_str = (
+                f"<t:{int(d['last_bot_mention'].created_at.timestamp())}:R>"
+                if d['last_bot_mention']
+                else "*none*"
+            )
+            lines.append(
+                f"- {m.mention}: last msg {last_message_str}, last bot mention {last_mention_str}"
+            )
+        response += "\n".join(lines[:25])  # avoid flooding chat
+        if len(lines) > 25:
+            response += f"\n...and {len(lines) - 25} more"
+
+    await bot_msg.edit(content=response)
 
 
 @bot.command()
