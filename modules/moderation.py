@@ -5,60 +5,52 @@ from modules.general import add_role, remove_role
 
 
 
-async def mute(ctx, member: discord.Member, duration: str = None, reason: str = None):
-    if not duration:
-        await ctx.send('u forgot to specify duration bro. i gotchu tho. default value is 5 min')
-        duration = '5m'
-
+def get_timeout_duration(duration: str) -> datetime.timedelta:
     timeout_duration: datetime.timedelta
-    try:
-        if duration.endswith('s'):
-            seconds = int(duration[:-1])
-            timeout_duration = datetime.timedelta(seconds=seconds)
-        elif duration.endswith('m'):
-            minutes = int(duration[:-1])
-            timeout_duration = datetime.timedelta(minutes=minutes)
-        elif duration.endswith('h'):
-            hours = int(duration[:-1])
-            timeout_duration = datetime.timedelta(hours=hours)
-        elif duration.endswith('d'):
-            days = int(duration[:-1])
-            timeout_duration = datetime.timedelta(days=days)
-        elif duration.endswith('w'):
-            weeks = int(duration[:-1])
-            timeout_duration = datetime.timedelta(weeks=weeks)
-        elif duration == 'max':
-            timeout_duration = datetime.timedelta(days=28)
-        else:
-            return await ctx.send("wrong duration format you moron")
+    if duration.endswith('s'):
+        seconds = int(duration[:-1])
+        timeout_duration = datetime.timedelta(seconds=seconds)
+    elif duration.endswith('m'):
+        minutes = int(duration[:-1])
+        timeout_duration = datetime.timedelta(minutes=minutes)
+    elif duration.endswith('h'):
+        hours = int(duration[:-1])
+        timeout_duration = datetime.timedelta(hours=hours)
+    elif duration.endswith('d'):
+        days = int(duration[:-1])
+        timeout_duration = datetime.timedelta(days=days)
+    elif duration.endswith('w'):
+        weeks = int(duration[:-1])
+        timeout_duration = datetime.timedelta(weeks=weeks)
+    elif duration == 'max':
+        timeout_duration = datetime.timedelta(days=28)
+    else:
+        raise ValueError("wrong duration format you moron")
 
-        if not timeout_duration:
-            return await ctx.send("wrong duration format you moron")
+    if not timeout_duration:
+        raise ValueError("wrong duration format you moron")
 
-        if timeout_duration > datetime.timedelta(days=28):
-            return await ctx.send("you can't mute for more than 28 days because discord is a moron sorry")
+    if timeout_duration > datetime.timedelta(days=28):
+        raise ValueError("you can't mute for more than 28 days because discord is a moron sorry")
 
-        await member.timeout(timeout_duration, reason=reason)
+    return timeout_duration
 
-        parts = []
-        if timeout_duration.days > 0:
-            parts.append(f"{timeout_duration.days} day{'s' if timeout_duration.days != 1 else ''}")
-        seconds_total = timeout_duration.seconds
-        hours, seconds_total = divmod(seconds_total, 3600)
-        minutes, seconds = divmod(seconds_total, 60)
-        if hours > 0:
-            parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
-        if minutes > 0:
-            parts.append(f"{minutes} min")
-        if seconds > 0:
-            parts.append(f"{seconds} sec")
+def format_timedelta(timedelta: datetime.timedelta) -> str:
+    parts = []
+    if timedelta.days > 0:
+        parts.append(f"{timedelta.days} day{'s' if timedelta.days != 1 else ''}")
+    seconds_total = timedelta.seconds
+    hours, seconds_total = divmod(seconds_total, 3600)
+    minutes, seconds = divmod(seconds_total, 60)
+    if hours > 0:
+        parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+    if minutes > 0:
+        parts.append(f"{minutes} min")
+    if seconds > 0:
+        parts.append(f"{seconds} sec")
 
-        formatted_duration = ", ".join(parts) if parts else "0 sec"
-
-        await ctx.send(f"muted the guy for {formatted_duration} :white_check_mark:")
-
-    except ValueError:
-        return await ctx.send("wrong duration format you moron")
+    formatted_timedelta = ", ".join(parts) if parts else "0 sec"
+    return formatted_timedelta
 
 
 async def unmute(ctx, member: discord.Member, reason: str = None):

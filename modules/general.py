@@ -1,6 +1,5 @@
 import asyncio
 import discord
-import datetime
 from discord.ext import commands
 from modules import config
 
@@ -12,7 +11,7 @@ async def send(bot: commands.Bot, msg: str, where: str = 'chat') -> discord.Mess
     await update_status(bot)
     return msg
 
-async def timed_delete_msg(msg: discord.Message, text: str, duration: int = 5):
+async def timed_delete_msg(msg: discord.Message, text: str, duration: int = 10):
     for i in range(1, duration):
         if i <= 11:
             await msg.edit(content=f':clock{duration-i}: {text}')
@@ -22,6 +21,35 @@ async def timed_delete_msg(msg: discord.Message, text: str, duration: int = 5):
             await asyncio.sleep(1)
     await msg.delete()
 
+async def send_timed_delete_msg(bot: commands.Bot, text: str, duration: int = 10, where: str = 'chat') -> None:
+    msg = await send(bot, text, where=where)
+    for i in range(1, duration):
+        if i <= 11:
+            await msg.edit(content=f':clock{duration-i}: {text}')
+            await asyncio.sleep(1)
+        else:
+            await msg.edit(content=f':white_check_mark: {text}')
+            await asyncio.sleep(1)
+    await msg.delete()
+
+
+
+async def count_filtered_members(bot: commands.Bot) -> int:
+    guild = bot.get_guild(config.TARGET_GUILD)
+    excluded_role_id = 1427013313837011175 # alts
+    excluded_role = guild.get_role(excluded_role_id)
+
+    if excluded_role is None:
+        print(f"warning: role id {excluded_role_id} not found")
+
+    member_count = 0
+    for member in guild.members:
+        if member.bot:
+            continue
+        if excluded_role and excluded_role in member.roles:
+            continue
+        member_count += 1
+    return member_count
 
 async def count_available(bot: commands.Bot) -> int:
     channel = bot.get_channel(config.channels['availability'])
@@ -47,34 +75,50 @@ async def count_in_vc(bot: commands.Bot, vc: str = 'vc') -> int:
 async def set_status(bot: commands.Bot, text: str, *, status: discord.Status = None) -> None:
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=text), status=status)
 
-async def update_status(bot: commands.Bot, status: discord.Status = None) -> None:
-    time = f'{datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M")}'
+
+async def get_status_text(bot: commands.Bot) -> str:
     vc_count = await count_in_vc(bot, 'vc')
     vc_2_count = await count_in_vc(bot, 'vc2')
     available_count = await count_available(bot)
+    members = await count_filtered_members(bot)
+
+    text_members_long = f'{members} members'
+    text_members_short = f'{members} 👥'
+
+    text_available_long = f'{available_count} available'
+    text_available_short = f'{available_count} avail.'
+
+    text_in_vc1 = f'{vc_count} in vc 🟢'
+    text_in_vc2 = f'{vc_2_count} in vc 🟣'
+    text_in_both_vc = f'vc - {vc_count} 🟢 - {vc_2_count} 🟣'
+
+    status = text_members_long
+
+    if available_count:
+        status = f'{text_members_short} // {text_available_long}'
+
     if not vc_count and not vc_2_count:
-        await set_status(bot, f'{available_count} available', status=status) # [{time}]
+        ...
+
     elif vc_count and not vc_2_count:
-        await set_status(bot, f'{available_count} available / {vc_count} in vc 🟢', status=status) # [{time}]
+        status = f'{status} / {text_in_vc1}'
     elif not vc_count and vc_2_count:
-        await set_status(bot, f'{available_count} available / {vc_2_count} in vc 🟣', status=status) # [{time}]
+        status = f'{status} / {text_in_vc2}'
+
     else:
-        await set_status(bot, f'{available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣', status=status) # [{time}]
+        status = f'{text_members_short} // {text_available_short} / {text_in_both_vc}'
+
+    return status
+
+
+async def update_status(bot: commands.Bot, status: discord.Status = None) -> None:
+    status_text = await get_status_text(bot)
+    await set_status(bot, status_text, status=status)
 
 async def update_status_checking(bot: commands.Bot, percent: float) -> None:
-    time = f'{datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M")}'
-    vc_count = await count_in_vc(bot, 'vc')
-    vc_2_count = await count_in_vc(bot, 'vc2')
-    available_count = await count_available(bot)
-    if not vc_count and not vc_2_count:
-        await set_status(bot, f'{percent}% / {available_count} available', status=discord.Status('idle')) # [{time}]
-    elif vc_count and not vc_2_count:
-        await set_status(bot, f'{percent}% / {available_count} available / {vc_count} in vc 🟢', status=discord.Status('idle')) # [{time}]
-    elif not vc_count and vc_2_count:
-        await set_status(bot, f'{percent}% / {available_count} available / {vc_2_count} in vc 🟣', status=discord.Status('idle')) # [{time}]
-    else:
-        await set_status(bot, f'{percent}% / {available_count} available / vc - {vc_count} 🟢 - {vc_2_count} 🟣', status=discord.Status('idle')) # [{time}]
-
+    status_text = await get_status_text(bot)
+    status_text = f'{percent}% // {status_text}'
+    await set_status(bot, status_text, status=discord.Status('idle'))
 
 
 def has_role(member: discord.Member, role_id: int) -> bool:
@@ -147,9 +191,7 @@ def can_moderate_member(func):
             return await ctx.send(config.message("nuh_uh"))
         if member == ctx.guild.me:
             return await ctx.send(config.message("nuh_uh"))
-        if ctx.author.top_role <= member.top_role:
-            return await ctx.send(config.message("nuh_uh"))
-        if ctx.author.id == ctx.guild.owner_id:
+        if ctx.author.top_role <= member.top_role and ctx.author.id != ctx.guild.owner_id:
             return await ctx.send(config.message("nuh_uh"))
         return await func(ctx, member, *args, **kwargs)
     return wrapper
@@ -166,4 +208,46 @@ def try_bot_perms(func):
             await ctx.send(config.message("bot_doesnt_have_perms"))
             print(f"error in try_perm: {e}")
             return await ctx.send(f'<@534097411048603648> fix ur fucking bot\n```{e}```')
+    return wrapper
+
+
+
+
+async def get_replied_message(ctx):
+    ref = ctx.message.reference
+    if not ref or not ref.message_id:
+        return None  # not a reply
+
+    msg = ref.resolved  # may already be cached and ready
+    if isinstance(msg, discord.Message):
+        return msg
+
+    # fallback: fetch from the API
+    try:
+        return await ctx.channel.fetch_message(ref.message_id)
+    except discord.NotFound:
+        return None
+    except discord.Forbidden:
+        return None
+    except discord.HTTPException:
+        return None
+
+def inject_reply(func):
+    @functools.wraps(func)
+    async def wrapper(ctx, *args, **kwargs):
+        if not args and ctx.message.reference:
+            ref = ctx.message.reference
+            msg = ref.resolved
+
+            if not isinstance(msg, discord.Message):
+                try:
+                    msg = await ctx.channel.fetch_message(ref.message_id)
+                except (discord.NotFound, discord.HTTPException, discord.Forbidden):
+                    msg = None
+
+            if msg and isinstance(msg.author, discord.Member):
+                return await func(ctx, msg.author, *args, **kwargs)
+
+        return await func(ctx, *args, **kwargs)
+
     return wrapper

@@ -3,7 +3,7 @@ import asyncio
 import discord
 from discord.ext import commands, tasks
 from modules import config, availability_vc, moderation, general
-from modules.general import timed_delete_msg
+from modules.general import timed_delete_msg, send_timed_delete_msg
 from modules.saves import create_save, disband_save
 
 intents = discord.Intents.default()
@@ -20,27 +20,40 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.6.11'
+version = 'v2.7.0'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- revert safeguard removals from .10-fun-x
+- add .r N command for owner to delete N last messages excluding the one just sent
+- add .pin command to those who have "manage messages" perms (and a reverse .unpin) which pins the message the author replied to
+~~- banning, kicking, warning, muting & other moderation commands now work when replying to people (ex. instead of `.ban @lostya too mean :<` you can reply to @lostya's message and say `.ban too mean :<` to ban @lostya for "too mean :<")~~ FUCKING CANCELLED BECAUSE DISCORD IS NOT BEHAVING LIKE A GOOD BOY.
+- `.check <@member>` command for those who have "manage roles" perms to instead of checking ALL members with `.check_members` check a single member if you know they bugged out or sum
+- the bot now shows the filtered total amount of members in its status (excludes bots and alts) 
 """
+
+
 @bot.event
 async def on_ready():
     await general.send(bot, f':radio_button: bot connected... {version}')
     await general.set_status(bot, 'starting up...', status=discord.Status('idle'))
     await bot.wait_until_ready()
-    # await availability_vc.check_all_members(bot)
     await general.send(bot, f':ballot_box_with_check: restart complete!')
     await general.send(bot, changelog)
     member_checker.start(call_once=False)
 
 @bot.command()
-@general.has_perms('manage_roles')
 @general.try_bot_perms
+@general.has_perms('manage_roles')
 async def check_members(ctx):
     await availability_vc.check_all_members(bot)
+
+@bot.command()
+@general.try_bot_perms
+#@general.inject_reply
+@general.has_perms('manage_roles')
+async def check(ctx, member: discord.Member = None):
+    await availability_vc.full_check_member(bot, member)
+    await send_timed_delete_msg(bot, f'checked {member.display_name}')
 
 @bot.command()
 @general.try_bot_perms
@@ -196,8 +209,8 @@ async def on_message(message: discord.Message):
     await bot.process_commands(message)
 
 
-@general.try_bot_perms
 @bot.command()
+@general.try_bot_perms
 async def save(ctx, *members: discord.Member):
     if not members:
         return await ctx.send("usage: `.save @member1 @member2 ...`")
@@ -215,7 +228,8 @@ async def one_more(ctx):
 
 @bot.command()
 @general.try_bot_perms
-async def van(ctx, member: discord.Member, *, reason: str = None):
+#@general.inject_reply
+async def van(ctx, member: discord.Member = None, *, reason: str = None):
     msg = f'{member.mention} has been vanned :white_check_mark:'
     if reason:
         msg += f'\nreason: {reason}'
@@ -223,57 +237,90 @@ async def van(ctx, member: discord.Member, *, reason: str = None):
 
 @bot.command()
 @general.try_bot_perms
-async def war(ctx, member: discord.Member, *, reason: str = None):
+#@general.inject_reply
+async def war(ctx, member: discord.Member = None, *, reason: str = None):
     msg = f'{member.mention} has been warred :white_check_mark:'
     if reason:
         msg += f'\nreason: {reason}'
     await ctx.send(msg)
 
 @bot.command()
-@general.has_perms('kick_members')
-@general.can_moderate_member
 @general.try_bot_perms
-async def kick(ctx, member: discord.Member, *, reason: str = None):
+@general.has_perms('manage_messages')
+async def pin(ctx):
+    if not ctx.message.reference or not ctx.message.reference.resolved:
+        return await ctx.send("you have to reply to a message to pin it")
+    msg = ctx.message.reference.resolved
+    return await msg.pin()
+
+@bot.command()
+@general.try_bot_perms
+@general.has_perms('manage_messages')
+async def unpin(ctx):
+    if not ctx.message.reference or not ctx.message.reference.resolved:
+        return await ctx.send("you have to reply to a message to unpin it")
+    msg = ctx.message.reference.resolved
+    return await msg.unpin()
+
+@bot.command()
+@general.try_bot_perms
+@general.has_perms('kick_members')
+#@general.inject_reply
+@general.can_moderate_member
+async def kick(ctx, member: discord.Member = None, *, reason: str = None):
     await member.kick(reason=reason)
 
 @bot.command()
-@general.has_perms('ban_members')
-@general.can_moderate_member
 @general.try_bot_perms
-async def ban(ctx, member: discord.Member, *, reason: str = None):
+@general.has_perms('ban_members')
+#@general.inject_reply
+@general.can_moderate_member
+async def ban(ctx, member: discord.Member = None, *, reason: str = None):
     await member.ban(reason=reason, delete_message_seconds=0)
 
 @bot.command()
-@general.work_in_progress
-@general.has_perms('moderate_members')
 @general.try_bot_perms
+@general.has_perms('moderate_members')
+@general.work_in_progress
 async def check_inactive(ctx):
     ...
 
 @bot.command()
-@general.has_perms('moderate_members')
-@general.can_moderate_member
 @general.try_bot_perms
-async def mute(ctx, member: discord.Member, duration: str = None, *, reason: str = None):
-    await moderation.mute(ctx, member, duration, reason)
+@general.has_perms('moderate_members')
+#@general.inject_reply
+@general.can_moderate_member
+async def mute(ctx, member: discord.Member = None, duration: str = None, *, reason: str = None):
+    if not duration:
+        await ctx.send('u forgot to specify duration bro. i gotchu tho. default value is 5 min')
+        duration = '5m'
+
+    timeout_duration = moderation.get_timeout_duration(duration)
+    await member.timeout(timeout_duration, reason=reason)
+
+    formatted_duration = moderation.format_timedelta(timeout_duration)
+    await ctx.send(f"muted the guy for {formatted_duration} :white_check_mark:")
 
 @bot.command()
-@general.has_perms('moderate_members')
-@general.can_moderate_member
 @general.try_bot_perms
-async def unmute(ctx, member: discord.Member, *, reason: str = None):
+@general.has_perms('moderate_members')
+#@general.inject_reply
+@general.can_moderate_member
+async def unmute(ctx, member: discord.Member = None, *, reason: str = None):
     await moderation.unmute(ctx, member, reason)
 
 @bot.command()
-@general.has_perms('moderate_members')
-@general.can_moderate_member
 @general.try_bot_perms
-async def warn(ctx, member: discord.Member, *, reason: str = None):
+@general.has_perms('moderate_members')
+#@general.inject_reply
+@general.can_moderate_member
+async def warn(ctx, member: discord.Member = None, *, reason: str = None):
     await moderation.warn(ctx, member, reason)
 
 @bot.command()
 @general.try_bot_perms
-async def warns(ctx, member: discord.Member):
+#@general.inject_reply
+async def warns(ctx, member: discord.Member = None):
     if member.guild.get_role(config.roles['warn_1']) in member.roles:
         await ctx.send(f"this guy has 1 warn :yellow_circle:")
     elif member.guild.get_role(config.roles['warn_2']) in member.roles:
@@ -284,10 +331,11 @@ async def warns(ctx, member: discord.Member):
         await ctx.send(f"this guy doesn't have warns they're an outstanding citizen :white_check_mark:")
 
 @bot.command()
-@general.has_perms('moderate_members')
-@general.can_moderate_member
 @general.try_bot_perms
-async def clear_warns(ctx, member: discord.Member):
+@general.has_perms('moderate_members')
+#@general.inject_reply
+@general.can_moderate_member
+async def clear_warns(ctx, member: discord.Member = None):
     await member.timeout(None)
     await general.remove_role(member, general.config.roles['warn_1'])
     await general.remove_role(member, general.config.roles['warn_2'])
@@ -295,81 +343,128 @@ async def clear_warns(ctx, member: discord.Member):
     await ctx.send(f"cleared all warns :white_check_mark:")
 
 @bot.command()
-@general.has_perms('owner')
 @general.try_bot_perms
+@general.has_perms('owner')
 async def lock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
     await ctx.send(config.message("channel_lock"))
 
 @bot.command()
-@general.has_perms('owner')
 @general.try_bot_perms
+@general.has_perms('owner')
 async def unlock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=None)
     await ctx.send(config.message("channel_unlock"))
 
 
+
+
+
+from discord.ui import View, button
+class ConfirmDeleteView(View):
+    def __init__(self, author: discord.User):
+        super().__init__(timeout=30)
+        self.author = author
+        self.result = None
+
+    async def interaction_check(self, interaction: discord.Interaction):
+        if interaction.user.id != self.author.id:
+            await interaction.response.defer(ephemeral=True) # type: ignore
+            await interaction.followup.send("this confirmation ain't for you pal", ephemeral=True)
+            return False
+        return True
+
+    @button(label="proceed", style=discord.ButtonStyle.danger) # type: ignore
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.result = True
+        await interaction.message.edit(content=":wastebasket: proceeding with deletion...", view=None)
+        self.stop()
+
+    @button(label="cancel", style=discord.ButtonStyle.secondary) # type: ignore
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.result = False
+        await interaction.message.edit(content="❌ deletion canceled", view=None)
+        self.stop()
+
 @bot.command()
 @general.has_perms('owner')
 @general.try_bot_perms
-async def r(
-    ctx,
-    start_id: int,
-    end_id: int
-):
+async def r(ctx, start_id: int, end_id: int = None):
     channel = ctx.channel
     await ctx.message.delete()
 
     res_msg = await ctx.send(f':brain: finding messages to delete')
-    try:
-        start_message = await channel.fetch_message(start_id)
-        end_message = await channel.fetch_message(end_id)
-    except discord.NotFound:
-        return await timed_delete_msg(res_msg, 'one of the message ids wasn\'t found, make sure u doin the right thing', 10)
-    except discord.HTTPException as e:
-        return await timed_delete_msg(res_msg, f'unable to fetch msgs: {e}', 10)
 
-    # Ensure start_message is chronologically before or at the same time as end_message
-    if start_message.created_at > end_message.created_at:
-        start_message, end_message = end_message, start_message
+    if end_id is None:
+        if start_id > 30:
+            return await general.timed_delete_msg(res_msg, 'u tried to delete >30 msgs, make sure u doin the right thing')
 
-    await res_msg.edit(content=':brain: selecting messages to delete')
-    messages_to_delete = []
-    async for message in channel.history(
-        limit=None,
-        before=end_message.created_at,
-        after=start_message.created_at,
-    ):
-        messages_to_delete.append(message)
+        messages = []
+        async for msg in channel.history(limit=start_id+1):  # +1 to skip the res_msg
+            if msg.id != res_msg.id:
+                messages.append(msg)
 
-    # Add the start and end messages themselves if they weren't caught by before/after
-    if start_message not in messages_to_delete:
-        messages_to_delete.append(start_message)
-    if end_message not in messages_to_delete:
-        messages_to_delete.append(end_message)
+        await channel.delete_messages(messages)
+        return await timed_delete_msg(res_msg, f'deleted {len(messages)} recent messages', 5)
 
-    # Sort messages by creation time to ensure consistent deletion order
-    await res_msg.edit(content=':brain: sorting messages to delete')
-    messages_to_delete.sort(key=lambda m: m.created_at)
+    else:
+        try:
+            start_message = await channel.fetch_message(start_id)
+            end_message = await channel.fetch_message(end_id)
+        except discord.NotFound:
+            return await timed_delete_msg(res_msg, 'one of the message ids wasn\'t found, make sure u doin the right thing', 10)
+        except discord.HTTPException as e:
+            return await timed_delete_msg(res_msg, f'unable to fetch msgs: {e}', 10)
 
-    if not messages_to_delete:
-        return await timed_delete_msg(res_msg, f'there are no messages between those ids', 10)
+        if start_message.created_at > end_message.created_at:
+            start_message, end_message = end_message, start_message
 
-    total_deleted = 0
-    message_chunks = [messages_to_delete[i:i + 100] for i in range(0, len(messages_to_delete), 100)]
+        await res_msg.edit(content=':brain: selecting messages to delete')
+        messages_to_delete = []
+        async for message in channel.history(
+            limit=None,
+            before=end_message.created_at,
+            after=start_message.created_at,
+        ):
+            messages_to_delete.append(message)
 
-    for chunk in message_chunks:
-        await res_msg.edit(content=f':wastebasket: deleting {len(chunk)} messages (total so far: {total_deleted})')
-        await channel.delete_messages(chunk)
-        total_deleted += len(chunk)
-        # It's good practice to add a small delay between bulk deletes to avoid hitting rate limits too hard
-        await asyncio.sleep(1)
+        if start_message not in messages_to_delete:
+            messages_to_delete.append(start_message)
+        if end_message not in messages_to_delete:
+            messages_to_delete.append(end_message)
 
-    return await timed_delete_msg(res_msg, f'deleted {len(messages_to_delete)} messages', 10)
+        await res_msg.edit(content=':brain: sorting messages to delete')
+        messages_to_delete.sort(key=lambda m: m.created_at)
+
+        if not messages_to_delete:
+            return await timed_delete_msg(res_msg, f'there are no messages between those ids', 10)
+
+
+        total_to_delete = len(messages_to_delete)
+        if total_to_delete > 50:
+            view = ConfirmDeleteView(ctx.author)
+            await res_msg.edit(content=f'⚠️ ur about to delete **{total_to_delete} messages**. u sure?', view=view)
+            await view.wait()
+
+            if view.result is None or not view.result:
+                return await timed_delete_msg(res_msg, 'deletion cancelled', 10)
+
+
+        total_deleted = 0
+        message_chunks = [messages_to_delete[i:i + 100] for i in range(0, len(messages_to_delete), 100)]
+
+        for chunk in message_chunks:
+            await res_msg.edit(content=f':wastebasket: deleting {len(chunk)} messages (total so far: {total_deleted}) (total to delete: {len(messages_to_delete)})')
+            await channel.delete_messages(chunk)
+            total_deleted += len(chunk)
+            await asyncio.sleep(1)
+
+        return await timed_delete_msg(res_msg, f'deleted {total_deleted} messages', 10)
 
 
 import subprocess
 @bot.command()
+@general.try_bot_perms
 @general.has_perms('owner')
 async def update(ctx):
     await ctx.send(':radio_button: pulling from git...')
@@ -393,6 +488,7 @@ async def update(ctx):
 
 
 @bot.command()
+@general.try_bot_perms
 @general.work_in_progress
 async def br(ctx):
     return await ctx.reply('sry fam ts command no workie and im too lazy to fix it so its cancelled for now')
