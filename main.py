@@ -65,26 +65,50 @@ async def on_voice_state_update(member, before, after):
     await availability_vc.voice_check(bot, member)
 
 
+
+
+# Reaction Roles - easy hot-swap
+REACTION_ROLES = {
+    1451676590558937221: {  # message_id
+        "⚠️": 1451675068114669740,  # emoji: role_id
+    }
+}
+
 @bot.event
 async def on_raw_reaction_add(payload):
     member = bot.get_guild(payload.guild_id).get_member(payload.user_id)
     if not config.check_guild(payload.guild_id) or (member and member.bot):
         return
+
     if payload.message_id == config.channels['availability_message']:
         emoji_id = payload.emoji.id
         if emoji_id == config.channels['availability_reaction']:
             await availability_vc.add_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
 
+    # Reaction roles
+    if payload.message_id in REACTION_ROLES:
+        emoji_str = str(payload.emoji)
+        if emoji_str in REACTION_ROLES[payload.message_id]:
+            role_id = REACTION_ROLES[payload.message_id][emoji_str]
+            await general.add_role(member, role_id)
 
 @bot.event
 async def on_raw_reaction_remove(payload):
     member = bot.get_guild(payload.guild_id).get_member(payload.user_id)
     if not config.check_guild(payload.guild_id) or (member and member.bot):
         return
+
     if payload.message_id == config.channels['availability_message']:
         emoji_id = payload.emoji.id
         if emoji_id == config.channels['availability_reaction']:
             await availability_vc.remove_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
+
+    # Reaction roles
+    if payload.message_id in REACTION_ROLES:
+        emoji_str = str(payload.emoji)
+        if emoji_str in REACTION_ROLES[payload.message_id]:
+            role_id = REACTION_ROLES[payload.message_id][emoji_str]
+            await general.remove_role(member, role_id)
 
 
 @bot.event
