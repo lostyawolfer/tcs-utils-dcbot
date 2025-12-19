@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands, tasks
 from modules import config, availability_vc, moderation, general
 from modules.general import timed_delete_msg, send_timed_delete_msg
-from modules.saves import create_save, disband_save
+from modules.saves import create_save, disband_save, rename_save
 
 intents = discord.Intents.default()
 intents.members = True
@@ -20,13 +20,12 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.7.1'
+version = 'v2.7.2'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- added .check_inactive <@member> - checks activity over the past 5k messages
-- added .inactive <@member> - gives them inactive role
-- added .unavailable <@member> - removes their availability reaction
+- `.save` now supports optionally naming them - new usage `.save [name] <@members...>`
+- added `.rename` - used inside save channels - usage `.rename [name]` - leaving name empty will remove the save's name
 """
 
 
@@ -209,10 +208,35 @@ async def on_message(message: discord.Message):
 
 @bot.command()
 @general.try_bot_perms
-async def save(ctx, *members: discord.Member):
+async def save(ctx, *args):
+    if not args:
+        return await ctx.send("usage: `.save [name] @member1 @member2 ...`")
+
+    # Parse arguments - check if first arg is a member or a name
+    save_name = None
+    members = []
+
+    for i, arg in enumerate(args):
+        try:
+            member = await commands.MemberConverter().convert(ctx, arg)
+            members.append(member)
+        except commands.MemberNotFound:
+            # If it's the first argument, and we have no members yet, treat as name
+            if i == 0 and not members:
+                save_name = arg
+            else:
+                return await ctx.send(f"couldn't find member: `{arg}`")
+
     if not members:
-        return await ctx.send("usage: `.save @member1 @member2 ...`")
-    return await create_save(ctx, list(members))
+        return await ctx.send("usage: `.save [name] @member1 @member2 ...`")
+
+    return await create_save(ctx, members, save_name)
+
+
+@bot.command()
+@general.try_bot_perms
+async def rename(ctx, name: str = None):
+    await rename_save(ctx, name)
 
 
 @bot.command()
@@ -575,15 +599,15 @@ async def check_inactive_people(ctx):
     inactive = []
     for m, d in members_data.items():
         last_msg_ts = (
-            d['last_message'].created_at.timestamp() if d['last_message'] else None
+            d['last_message'].created_at.timestamp() if d['last_message'] else None     # type: ignore
         )
         last_mention_ts = (
-            d['last_bot_mention'].created_at.timestamp()
+            d['last_bot_mention'].created_at.timestamp()     # type: ignore
             if d['last_bot_mention']
             else None
         )
 
-        # if neither was found or both are older than 7 days
+        # if neither was found nor both are older than 7 days
         if (
             not last_msg_ts
             and not last_mention_ts

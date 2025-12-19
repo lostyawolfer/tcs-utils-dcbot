@@ -1,5 +1,4 @@
 import discord
-import datetime
 from modules import config
 from modules.general import add_role, remove_role, send
 
@@ -9,11 +8,13 @@ SAVE_CATEGORY_NAME = "──╱ saves ╱───────"
 SAVE_CHANNEL_TEMPLATE = "💾┃save-{num}"
 SAVE_ROLE_TEMPLATE = "💾 save {num}"
 
-async def create_save(ctx, members: list[discord.Member]):
+
+async def create_save(ctx, members: list[discord.Member], save_name: str = None):
     guild = ctx.guild
 
     # cooldown abuse protection
-    now = datetime.datetime.utcnow()
+    import datetime
+    now = datetime.datetime.now(datetime.UTC)
     user_id = ctx.author.id
     last_use = SAVE_COOLDOWN.get(user_id)
 
@@ -24,7 +25,8 @@ async def create_save(ctx, members: list[discord.Member]):
                 if diff < 60:
                     return await ctx.send("nuh uh ur using ts too fast wait a bit")
                 else:
-                    await send(ctx.bot, f"<@&{config.roles['mod']}> `{ctx.author.display_name}` is very sus they seem to abuse the save cmd")
+                    await send(ctx.bot,
+                               f"<@&{config.roles['mod']}> `{ctx.author.display_name}` is very sus they seem to abuse the save cmd")
         SAVE_COOLDOWN[user_id] = now
 
     # ensure "saves" category exists
@@ -61,13 +63,19 @@ async def create_save(ctx, members: list[discord.Member]):
         if misc_none in m.roles:
             await remove_role(m, misc_none.id)
 
+    # create channel name
+    if save_name:
+        channel_name = f"💾┃save-{new_num}┃{save_name}"
+    else:
+        channel_name = SAVE_CHANNEL_TEMPLATE.format(num=new_num)
+
     # create text channel
     overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
         save_role: discord.PermissionOverwrite(read_messages=True),
     }
     text_channel = await guild.create_text_channel(
-        SAVE_CHANNEL_TEMPLATE.format(num=new_num),
+        channel_name,
         category=save_category,
         overwrites=overwrites,
         reason="private save channel",
@@ -80,6 +88,7 @@ async def create_save(ctx, members: list[discord.Member]):
         f"**careful**: this channel is temporary and should be deleted when you are done with the run\n"
         f"additionally pls know that the owner has access to this channel at all times regardless of permissions, it's just a discord thing\n"
         f"**to remove this save, use `.disband` in this channel**\n"
+        f"**to rename this save, use `.rename [name]` in this channel**\n"
     )
     await pinned_msg.pin()
 
@@ -95,9 +104,14 @@ async def disband_save(ctx):
     if not channel.category or channel.category.name != SAVE_CATEGORY_NAME:
         return await ctx.send("this command only works inside save channels")
 
-    # find related role
-    role_name = channel.name.replace("💾┃save-", "💾 save ")
-    number = channel.name.replace("💾┃save-", "")
+    # Extract save number from channel name
+    parts = channel.name.split("┃")
+    if len(parts) < 2 or not parts[1].startswith("save-"):
+        return await ctx.send("couldn't parse save number, deleting channel anyway")
+
+    number = parts[1].replace("save-", "")
+    role_name = f"💾 save {number}"
+
     role = discord.utils.get(guild.roles, name=role_name)
     if not role:
         return await ctx.send("couldn't find corresponding role for this save, deleting channel anyway")
@@ -128,3 +142,34 @@ async def disband_save(ctx):
         await channel.category.delete(reason="no saves left")
 
     return None
+
+
+async def rename_save(ctx, name: str = None):
+    channel = ctx.channel
+
+    if not channel.category or channel.category.name != SAVE_CATEGORY_NAME:
+        return await ctx.send("this command only works inside save channels")
+
+    # Extract save number from current channel name
+    parts = channel.name.split("┃")
+    if len(parts) < 2 or not parts[1].startswith("save-"):
+        return await ctx.send("couldn't parse the save number from this channel")
+
+    save_num = parts[1].replace("save-", "")
+
+    # Create new channel name
+    if name:
+        new_name = f"💾┃save-{save_num}┃{name}"
+    else:
+        new_name = f"💾┃save-{save_num}"
+
+    try:
+        await channel.edit(name=new_name)
+        if name:
+            await ctx.send(f"renamed save to `{name}` :white_check_mark:")
+        else:
+            await ctx.send(f"removed custom name :white_check_mark:")
+    except discord.Forbidden:
+        await ctx.send("i don't have permissions to rename this channel")
+    except discord.HTTPException as e:
+        await ctx.send(f"failed to rename: {e}")
