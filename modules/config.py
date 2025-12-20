@@ -120,6 +120,16 @@ emoji = {
     "inactive": "🛌",
     "inactive_revoke": "🏆",
 
+    "knife": "🔪",
+    "hug": "🤗",
+    "kiss": "💋",
+    "high_five": "✋",
+    "handshake": "🤝",
+    "fire": "🔥",
+    "punch": "👊",
+    "slap": "👋",
+    "pat": "🫳",
+    "touch": "👉",
 
     '0': '<:0_:1444462399632445473>',
     '1': '<:1_:1444462401075548353>',
@@ -287,7 +297,18 @@ _messages = {
     "completion_ch_tcs": [f"🏆 {{mention}} beat **this challenge sucks**"],
     "completion_ch_gor": [f"🏆 {{mention}} beat **group of rushers**"],
     "completion_ch_pdo": [f"🏆 {{mention}} beat **professional doors opener**"],
-    "completion_ch_nn": [f"🏆 {{mention}} beat **neverending night**"]
+    "completion_ch_nn": [f"🏆 {{mention}} beat **neverending night**"],
+
+    "rp_kill": [f"{emoji['knife']} {{author}} brutally murdered {{target}}"],
+    "rp_hug": [f"{emoji['hug']} {{author}} hugged {{target}}"],
+    "rp_kiss": [f"{emoji['kiss']} {{author}} kissed {{target}}"],
+    "rp_high_five": [f"{emoji['high_five']} {{author}} gave a high five to {{target}}"],
+    "rp_handshake": [f"{emoji['handshake']} {{author}} shook hands with {{target}}"],
+    "rp_burn": [f"{emoji['fire']} {{author}} set {{target}} on fire"],
+    "rp_punch": [f"{emoji['punch']} {{author}} punched {{target}}"],
+    "rp_slap": [f"{emoji['slap']} {{author}} slapped {{target}}"],
+    "rp_pat": [f"{emoji['pat']} {{author}} patted {{target}} on the head"],
+    "rp_touch": [f"{emoji['touch']} {{author}} touched {{target}}"],
 }
 
 def message(dict_key: str, **kwargs) -> str:

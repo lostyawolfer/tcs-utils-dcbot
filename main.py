@@ -20,12 +20,11 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.7.2'
+version = 'v2.7.4'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- `.save` now supports optionally naming them - new usage `.save [name] <@members...>`
-- added `.rename` - used inside save channels - usage `.rename [name]` - leaving name empty will remove the save's name
+- add rp messages
 """
 
 
@@ -218,15 +217,72 @@ async def on_member_remove(member):
 
 
 import re
+
+
 @bot.event
 async def on_message(message: discord.Message):
     print(f'#{message.channel.name} | @{message.author.display_name} >> {message.content}')
     if message.author == bot.user:
         return
+
+    # ps link
     if '<#1426974154556702720>' in message.content or 'ps' in re.findall(r"\b\w+\b", message.content.lower()):
-        await message.channel.send(f'link: **https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server**', suppress_embeds=True)
+        await message.channel.send(
+            f'link: **https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server**',
+            suppress_embeds=True)
+
+    # slur check
     if 'nigga' in message.content.lower() or 'nigger' in message.content.lower():
-        await message.channel.send(f'[[<@534097411048603648>]] i will personally fix ur fucking skin color if you say that word again')
+        await message.channel.send(
+            f'[[<@534097411048603648>]] i will personally fix ur fucking skin color if you say that word again')
+
+    # roleplay actions
+    rp_actions = {
+        'kill': 'rp_kill',
+        'hug': 'rp_hug',
+        'kiss': 'rp_kiss',
+        'high five': 'rp_high_five',
+        'highfive': 'rp_high_five',
+        'shake hands': 'rp_handshake',
+        'handshake': 'rp_handshake',
+        'burn': 'rp_burn',
+        'punch': 'rp_punch',
+        'slap': 'rp_slap',
+        'pat': 'rp_pat',
+        'bonk': 'rp_bonk',
+    }
+
+    content_lower = message.content.lower().strip()
+    target = None
+    action = None
+
+    # check if replying with just the action word
+    if message.reference and message.reference.resolved:
+        replied_msg = message.reference.resolved
+        if isinstance(replied_msg.author, discord.Member):
+            for action_word, action_key in rp_actions.items():
+                if content_lower == action_word:
+                    action = action_key
+                    target = replied_msg.author
+                    break
+
+    # check for "action @member" pattern
+    if not action:
+        for action_word, action_key in rp_actions.items():
+            pattern = rf'^{re.escape(action_word)}\s+<@!?(\d+)>$'
+            match = re.match(pattern, content_lower)
+            if match:
+                member_id = int(match.group(1))
+                member = message.guild.get_member(member_id)
+                if member:
+                    action = action_key
+                    target = member
+                    break
+
+    if action and target:
+        response = config.message(action, author=message.author.mention, target=target.mention)
+        await message.channel.send(response)
+
     await bot.process_commands(message)
 
 
