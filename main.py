@@ -249,7 +249,7 @@ async def on_message(message: discord.Message):
         'punch': 'rp_punch',
         'slap': 'rp_slap',
         'pat': 'rp_pat',
-        'bonk': 'rp_bonk',
+        'touch': 'rp_touch',
     }
 
     content_lower = message.content.lower().strip()
