@@ -233,18 +233,16 @@ async def log_message(bot: commands.Bot, message: discord.Message):
         content = "*[no visible content]*"
 
     log_message = (
-        f'{message.channel.mention} **{message.author.display_name}** — {timestamp}\n'
-        f'{content}'
+        f'### **{message.author.mention}** — {timestamp} —— @ {message.channel.mention}\n'
+        f'{content}\n'
     )
 
     attachment_urls = [attachment.url for attachment in message.attachments]
     if attachment_urls:
         log_message += "\n" + "\n".join(attachment_urls)
-    if message.stickers:
-        for sticker in message.stickers:
-            log_message += f"\n:sticker: {sticker.name} ({sticker.url})"
 
-    await channel.send(log_message, allowed_mentions=discord.AllowedMentions.none())
+    await channel.send(log_message, allowed_mentions=discord.AllowedMentions.none(), silent=True,
+                       stickers=message.stickers)
 
 @bot.event
 async def on_message(message: discord.Message):
