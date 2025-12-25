@@ -20,12 +20,11 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.7.5'
+version = 'v2.7.6'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- add logs for mods
-- fix saves category
+- idk
 """
 
 
@@ -220,11 +219,36 @@ async def on_member_remove(member):
 import re
 
 
+async def log_message(bot: commands.Bot, message: discord.Message):
+    if message.channel.id == config.channels['logs_channel']:
+        return
+
+    print(f'#{message.channel.name} | @{message.author.display_name} >> {message.content}')
+
+    channel = bot.get_channel(config.channels['logs_channel'])
+    timestamp = f"<t:{int(message.created_at.timestamp())}:f>"
+    content = message.content
+
+    if not content.strip() and not message.attachments and not message.stickers:
+        content = "*[no visible content]*"
+
+    log_message = (
+        f'{message.channel.mention} **{message.author.display_name}** — {timestamp}\n'
+        f'{content}'
+    )
+
+    attachment_urls = [attachment.url for attachment in message.attachments]
+    if attachment_urls:
+        log_message += "\n" + "\n".join(attachment_urls)
+    if message.stickers:
+        for sticker in message.stickers:
+            log_message += f"\n:sticker: {sticker.name} ({sticker.url})"
+
+    await channel.send(log_message, allowed_mentions=discord.AllowedMentions.none())
+
 @bot.event
 async def on_message(message: discord.Message):
-    print(f'#{message.channel.name} | @{message.author.display_name} >> {message.content}')
-    if message.channel.id != config.channels['logs_channel']:
-        await general.send(bot, f'{message.channel.mention} | {message.author.display_name} >> {message.content}', where='logs_channel')
+    await log_message(bot, message)
     if message.author == bot.user:
         return
 
