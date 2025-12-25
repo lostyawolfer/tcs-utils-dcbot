@@ -233,7 +233,7 @@ async def log_message(bot: commands.Bot, message: discord.Message):
         content = "*[no visible content]*"
 
     log_message = (
-        f'### **{message.author.mention}** — {timestamp} —— @ {message.channel.mention}\n'
+        f'### {message.channel.mention} >> {message.author.mention} — {timestamp}\n'
         f'{content}\n'
     )
 
