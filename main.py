@@ -223,7 +223,8 @@ import re
 @bot.event
 async def on_message(message: discord.Message):
     print(f'#{message.channel.name} | @{message.author.display_name} >> {message.content}')
-    await general.send(bot, f'{message.channel.mention} | {message.author.display_name} >> {message.content}', where='logs_channel')
+    if message.channel.id != config.channels['logs_channel']:
+        await general.send(bot, f'{message.channel.mention} | {message.author.display_name} >> {message.content}', where='logs_channel')
     if message.author == bot.user:
         return
 
