@@ -20,11 +20,12 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.7.4'
+version = 'v2.7.5'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- add rp messages
+- add logs for mods
+- fix saves category
 """
 
 
