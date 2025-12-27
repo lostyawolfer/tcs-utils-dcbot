@@ -20,11 +20,12 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.7.6'
+version = 'v2.7.7'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- idk
+- locking and unlocking is now available to mods
+- also mods can now use .r command yay
 """
 
 
@@ -469,14 +470,14 @@ async def clear_warns(ctx, member: discord.Member = None):
 
 @bot.command()
 @general.try_bot_perms
-@general.has_perms('owner')
+@general.has_perms('manage_channels')
 async def lock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
     await ctx.send(config.message("channel_lock"))
 
 @bot.command()
 @general.try_bot_perms
-@general.has_perms('owner')
+@general.has_perms('manage_channels')
 async def unlock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=None)
     await ctx.send(config.message("channel_unlock"))
@@ -512,7 +513,7 @@ class ConfirmDeleteView(View):
         self.stop()
 
 @bot.command()
-@general.has_perms('owner')
+@general.has_perms('manage_messages')
 @general.try_bot_perms
 async def r(ctx, start_id: int, end_id: int = None):
     channel = ctx.channel
@@ -522,7 +523,7 @@ async def r(ctx, start_id: int, end_id: int = None):
 
     if end_id is None:
         if start_id > 30:
-            return await general.timed_delete_msg(res_msg, 'u tried to delete >30 msgs, make sure u doin the right thing')
+            return await general.timed_delete_msg(res_msg, 'u tried to delete >30 msgs with recent deletion, make sure u doin the right thing. to delete more than 30 use message ids')
 
         messages = []
         async for msg in channel.history(limit=start_id+1):  # +1 to skip the res_msg
