@@ -3,7 +3,7 @@ import asyncio
 import discord
 from discord.ext import commands, tasks
 from modules import config, availability_vc, moderation, general
-from modules.general import timed_delete_msg, send_timed_delete_msg
+from modules.general import timed_delete_msg, send_timed_delete_msg, add_role
 from modules.saves import create_save, disband_save, rename_save
 
 intents = discord.Intents.default()
@@ -20,12 +20,11 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.7.7'
+version = 'v2.7.8'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- locking and unlocking is now available to mods
-- also mods can now use .r command yay
+- .check_inactive_people update
 """
 
 
@@ -631,10 +630,10 @@ async def check_inactive(ctx, member: discord.Member):
     last_bot_mention = None
 
     checked_msg = 0
-    await bot_msg.edit(content='🤔 fetching 10000 messages from chat...')
-    async for msg in chat_channel.history(limit=10000):
+    await bot_msg.edit(content='🤔 fetching 15000 messages from chat...')
+    async for msg in chat_channel.history(limit=15000):
         checked_msg += 1
-        if (checked_msg % 250) == 0:
+        if (checked_msg % 750) == 0:
             await bot_msg.edit(content=f'🤔 checking msg `{checked_msg}`/`10000`...'
                                        f'{f'\n- last message: <t:{int(last_message.created_at.timestamp())}:R> ([jump]({last_message.jump_url}))' if last_message else '\n- last message: *searching*'}'
                                        f'{f'\n- last mention by bot (availability/vc changes): <t:{int(last_bot_mention.created_at.timestamp())}:R> ([jump]({last_bot_mention.jump_url}))' if last_bot_mention else '\n- last mention by bot (availability/vc changes): *searching*'}')
@@ -676,13 +675,13 @@ async def check_inactive_people(ctx):
     }
 
     checked_msg = 0
-    async for msg in chat_channel.history(limit=20000):
+    async for msg in chat_channel.history(limit=30000):
         checked_msg += 1
 
         # update progress every 750 messages
-        if checked_msg % 750 == 0:
+        if checked_msg % 1750 == 0:
             await bot_msg.edit(
-                content=f"🤔 checked `{checked_msg}`/`20000` messages..."
+                content=f"🤔 checked `{checked_msg}`/`30000` messages..."
             )
 
         for member, data in members_data.items():
@@ -726,7 +725,7 @@ async def check_inactive_people(ctx):
     if not inactive:
         response = "✅ everyone has been active in the past 7 days!"
     else:
-        response = "🔥 **not found within 20 000 messages or 7 days:**\n"
+        response = "🔥 **not found within 30 000 messages or 7 days:**\n"
         lines = []
         for m, d in inactive:
             last_message_str = (
@@ -742,11 +741,14 @@ async def check_inactive_people(ctx):
             lines.append(
                 f"- {m.mention}: last msg {last_message_str}, last bot mention {last_mention_str}"
             )
-        response += "\n".join(lines[:25])  # avoid flooding chat
-        if len(lines) > 25:
-            response += f"\n...and {len(lines) - 25} more"
+        # response += "\n".join(lines[:25])  # avoid flooding chat
+        # if len(lines) > 25:
+        #     response += f"\n...and {len(lines) - 25} more"
+        response += "\n".join(lines)
 
     await bot_msg.edit(content=response)
+    for m, d in inactive:
+        await add_role(m, config.roles['inactive'])
 
 
 @bot.command()
