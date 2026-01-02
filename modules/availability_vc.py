@@ -141,7 +141,7 @@ async def full_check_member(bot: commands.Bot, member: discord.Member) -> None:
 
 
 async def check_all_members(bot: commands.Bot) -> None:
-    msg = await general.send(bot, ':busts_in_silhouette: checking members...')
+    #msg = await general.send(bot, ':busts_in_silhouette: checking members...')
     server = bot.get_guild(config.TARGET_GUILD)
     await server.chunk()
     await general.update_status_checking(bot, 0)
@@ -153,6 +153,6 @@ async def check_all_members(bot: commands.Bot) -> None:
         percent = round(member_n * 100 / total_members, 1)
         if not member.bot:
             await full_check_member(bot, member)
-        await general.update_status_checking(bot, percent)
+        await general.update_status_checking(bot, '💠', percent)
     await general.update_status(bot, status=discord.Status('online'))
-    await timed_delete_msg(msg, 'members checked successfully', 10)
+    #await timed_delete_msg(msg, 'members checked successfully', 10)

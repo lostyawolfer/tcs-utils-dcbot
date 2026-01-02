@@ -76,7 +76,7 @@ async def set_status(bot: commands.Bot, text: str, *, status: discord.Status = N
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=text), status=status)
 
 
-async def get_status_text(bot: commands.Bot) -> str:
+async def get_status_text(bot: commands.Bot, short: bool = False) -> str:
     vc_count = await count_in_vc(bot, 'vc')
     vc_2_count = await count_in_vc(bot, 'vc2')
     available_count = await count_available(bot)
@@ -94,8 +94,10 @@ async def get_status_text(bot: commands.Bot) -> str:
 
     status = text_members_long
 
-    if available_count:
+    if available_count and not short:
         status = f'{text_members_short} // {text_available_long}'
+    elif available_count and short:
+        status = f'{text_members_short} // {text_available_short}'
 
     if not vc_count and not vc_2_count:
         ...
@@ -115,9 +117,9 @@ async def update_status(bot: commands.Bot, status: discord.Status = None) -> Non
     status_text = await get_status_text(bot)
     await set_status(bot, status_text, status=status)
 
-async def update_status_checking(bot: commands.Bot, percent: float) -> None:
-    status_text = await get_status_text(bot)
-    status_text = f'{percent}% // {status_text}'
+async def update_status_checking(bot: commands.Bot, check_type: str, percent: float) -> None:
+    status_text = await get_status_text(bot, True)
+    status_text = f'{check_type} {percent}% // {status_text}'
     await set_status(bot, status_text, status=discord.Status('idle'))
 
 

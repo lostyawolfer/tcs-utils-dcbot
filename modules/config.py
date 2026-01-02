@@ -68,14 +68,31 @@ roles = {
     "warn_3": 1442623000452005948,
     "mod": 1433828741548740781,
 
+    "spoiler": 1451675068114669740,
+
+
+    "completion_server_star_star": 1454594165857063004,
+    "completion_server_base_star": 1453450000297365576,
+
+    "completion_tcs+": 1454596340930838751,
+    "completion_tcs": 1440647536397385800,
+    "completion_has++": 1454596424120402061,
+    "completion_has+": 1454596427077652671,
+    "completion_has": 1454596429782847772,
+    "completion_nn++": 1454595271056035861,
+    "completion_nn+": 1454595144841171164,
+    "completion_nn": 1443767416579559618,
+    "completion_gor+": 1453876081294573729,
+    "completion_gor": 1443251279257407619,
+    "completion_nnd+": 1454594591360811068,
+    "completion_nnd": 1454594411483758592,
+    "completion_rmt": 1454812063435194490,
+    "completion_pdo+": 1443264316236234862,
+    "completion_pdo": 1443251500481646784,
+
     "completion_tbs": 1427674706076635169,
     "completion_ahp": 1445115775261081681,
     "completion_star": 1439783495248384162,
-    "completion_dv": 1443264316236234862,
-    "completion_ch_tcs": 1440647536397385800,
-    "completion_ch_gor": 1443251279257407619,
-    "completion_ch_pdo": 1443251500481646784,
-    "completion_ch_nn": 1443767416579559618,
 }
 
 channels = {
@@ -89,7 +106,8 @@ channels = {
     "best_runs": 1427066908812906526,
     "mod_chat": 1442499917728976917,
     "leader_chat": 1453699078977224876,
-    "logs_channel": 1453370470584815697
+    "logs_channel": 1453370470584815697,
+    "spoilers": 1451673464359358465
 }
 
 
@@ -213,6 +231,8 @@ _messages = {
         f"{emoji['app_leave']} error 403: bot {{mention}} was forcibly removed",
         f"{emoji['app_leave']} {{mention}} was disconnected by administrator action"
     ],
+    "spoiler_add": [f"{emoji['join']} {{mention}} joined the spoilers channel"],
+    "spoiler_remove": [f"{emoji['kick']} {{mention}} is no longer in the spoilers channel"],
     "available": [
         f"{emoji['available']} **{{name}}** is now available {{available_count}}"
     ],

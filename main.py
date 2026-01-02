@@ -35,7 +35,6 @@ async def on_ready():
     await bot.wait_until_ready()
     await general.send(bot, f':ballot_box_with_check: restart complete!')
     await general.send(bot, changelog)
-    member_checker.start(call_once=False)
 
 @bot.command()
 @general.try_bot_perms
@@ -126,21 +125,24 @@ async def on_member_update(before, after):
             if role.id == config.roles['inactive']:
                 await general.send(bot, config.message('inactive', mention=after.mention))
 
+            if role.id == config.roles['spoiler']:
+                await general.send(bot, config.message('spoiler_add', mention=after.mention), 'spoiler')
+
             if role.id == config.roles['completion_tbs']:
                 await general.send(bot, config.message('completion_tbs', mention=after.mention))
             if role.id == config.roles['completion_ahp']:
                 await general.send(bot, config.message('completion_ahp', mention=after.mention))
             if role.id == config.roles['completion_star']:
                 await general.send(bot, config.message('completion_star', mention=after.mention))
-            if role.id == config.roles['completion_dv']:
+            if role.id == config.roles['completion_pdo+']:
                 await general.send(bot, config.message('completion_dv', mention=after.mention))
-            if role.id == config.roles['completion_ch_tcs']:
+            if role.id == config.roles['completion_tcs']:
                 await general.send(bot, config.message('completion_ch_tcs', mention=after.mention))
-            if role.id == config.roles['completion_ch_gor']:
+            if role.id == config.roles['completion_gor']:
                 await general.send(bot, config.message('completion_ch_gor', mention=after.mention))
-            if role.id == config.roles['completion_ch_pdo']:
+            if role.id == config.roles['completion_pdo']:
                 await general.send(bot, config.message('completion_ch_pdo', mention=after.mention))
-            if role.id == config.roles['completion_ch_nn']:
+            if role.id == config.roles['completion_nn']:
                 await general.send(bot, config.message('completion_ch_nn', mention=after.mention))
 
             if role.id in config.roles['category:badges']['other']:
@@ -158,6 +160,9 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('newbie', mention=after.mention))
             if role.id == config.roles['inactive']:
                 await general.send(bot, config.message('inactive_revoke', mention=after.mention))
+
+            if role.id == config.roles['spoiler']:
+                await general.send(bot, config.message('spoiler_remove', mention=after.mention), 'spoiler')
 
         if any(role.id in config.roles['category:badges']['other'] for role in removed_roles):
             await availability_vc.check_role_category(after, 'badges')
@@ -185,7 +190,7 @@ async def on_member_join(member):
                                     '-# channels you really should check out: <#1442604555798974485> <#1426974985402187776> <#1432401559672848507>\n'
                                     '-# grab <#1434653852367585300> when you are ready to play! (don\'t forget to remove it when you stop being available!)\n'
                                     '-# join <#1426974154556702720> at any time!\n'
-                                    '-# please respect others and remain active! random long inactivity is something very frowned upon here')
+                                    '-# please respect others and remain active! unexplained long inactivity is something very frowned upon here')
         await general.send(bot, f':new: <@&{config.roles['mod']}> hey, we got a new member in the server! nice work! a friendly reminder to set their nickname to their roblox display name :3', 'mod_chat')
         for role in config.roles['new_people']:
             await general.add_role(member, role)
@@ -511,6 +516,16 @@ class ConfirmDeleteView(View):
         await interaction.message.edit(content="❌ deletion canceled", view=None)
         self.stop()
 
+
+
+@bot.command()
+@general.try_bot_perms
+@general.has_perms('owner')
+async def start_loop(ctx):
+    await ctx.message.delete()
+    await send_timed_delete_msg(bot, 'got it', 3)
+    member_checker.start()
+
 @bot.command()
 @general.has_perms('manage_messages')
 @general.try_bot_perms
@@ -585,6 +600,7 @@ async def r(ctx, start_id: int, end_id: int = None):
             await asyncio.sleep(1)
 
         return await timed_delete_msg(res_msg, f'deleted {total_deleted} messages', 10)
+
 
 
 import subprocess
@@ -665,9 +681,7 @@ async def check_inactive(ctx, member: discord.Member):
 @general.has_perms('manage_roles')
 async def check_inactive_people(ctx):
     chat_channel = ctx.guild.get_channel(config.channels['chat'])
-    bot_msg = await ctx.send('🤔 checking past activity for all members...')
 
-    await bot_msg.edit(content='🤔 fetching 20000 messages from chat...')
     members_data = {
         m: {'last_message': None, 'last_bot_mention': None}
         for m in ctx.guild.members
@@ -680,9 +694,7 @@ async def check_inactive_people(ctx):
 
         # update progress every 750 messages
         if checked_msg % 1750 == 0:
-            await bot_msg.edit(
-                content=f"🤔 checked `{checked_msg}`/`30000` messages..."
-            )
+            await general.update_status_checking(bot, '🛌', round(checked_msg/30000*100, 1))
 
         for member, data in members_data.items():
             if not data['last_message'] and msg.author == member:
@@ -701,7 +713,6 @@ async def check_inactive_people(ctx):
     now = discord.utils.utcnow()
     five_days_ago = now.timestamp() - 7 * 24 * 60 * 60
 
-    inactive = []
     for m, d in members_data.items():
         last_msg_ts = (
             d['last_message'].created_at.timestamp() if d['last_message'] else None     # type: ignore
@@ -720,35 +731,7 @@ async def check_inactive_people(ctx):
             (last_msg_ts and last_msg_ts < five_days_ago)
             and (last_mention_ts and last_mention_ts < five_days_ago)
         ):
-            inactive.append((m, d))
-
-    if not inactive:
-        response = "✅ everyone has been active in the past 7 days!"
-    else:
-        response = "🔥 **not found within 30 000 messages or 7 days:**\n"
-        lines = []
-        for m, d in inactive:
-            last_message_str = (
-                f"<t:{int(d['last_message'].created_at.timestamp())}:R>"
-                if d['last_message']
-                else "*none*"
-            )
-            last_mention_str = (
-                f"<t:{int(d['last_bot_mention'].created_at.timestamp())}:R>"
-                if d['last_bot_mention']
-                else "*none*"
-            )
-            lines.append(
-                f"- {m.mention}: last msg {last_message_str}, last bot mention {last_mention_str}"
-            )
-        # response += "\n".join(lines[:25])  # avoid flooding chat
-        # if len(lines) > 25:
-        #     response += f"\n...and {len(lines) - 25} more"
-        response += "\n".join(lines)
-
-    await bot_msg.edit(content=response)
-    for m, d in inactive:
-        await add_role(m, config.roles['inactive'])
+            await add_role(m, config.roles['inactive'])
 
 
 @bot.command()
