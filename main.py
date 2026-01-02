@@ -20,11 +20,11 @@ async def member_checker():
     await availability_vc.check_all_members(bot)
 
 
-version = 'v2.7.8'
+version = 'v2.7.9'
 changelog = \
 f"""
 :tada: **{version} changelog**
-- .check_inactive_people update
+- added welcome msg to spoiler channel 
 """
 
 
