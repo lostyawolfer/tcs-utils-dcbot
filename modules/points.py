@@ -67,28 +67,18 @@ def get_ranked_leaderboard(guild: discord.Guild) -> List[Tuple[int, int, List[di
     leaderboard = get_leaderboard(guild)
 
     ranked_entries: List[Tuple[int, int, List[discord.Member]]] = []
+    current_rank_value = 0  # This will track the actual rank number to assign
+    previous_points = -1  # Sentinel value, assuming points are non-negative
 
-    if not leaderboard:
-        return []
-
-    current_rank = 1
-    previous_points = leaderboard[0][1]  # Start with the points of the very first member
-
-    # Process the first member
-    ranked_entries.append((current_rank, previous_points, [leaderboard[0][0]]))
-
-    # Process the rest of the members
-    for i in range(1, len(leaderboard)):
-        member, points = leaderboard[i]
-
-        if points < previous_points:
-            # Points decreased, so increment rank for a new unique score
-            current_rank = i + 1
-            ranked_entries.append((current_rank, points, [member]))
-        else:  # Tie with the previous entry's points
+    for i, (member, points) in enumerate(leaderboard):
+        # Determine the rank for the current points
+        if points < previous_points or previous_points == -1:
+            current_rank_value = i + 1  # New rank
+            # Ensure it's appended as a new entry with its own list of members
+            ranked_entries.append((current_rank_value, points, [member]))
+        else:  # Tie with the previous entry
             # Append member to the last entry's list of members
             ranked_entries[-1][2].append(member)
-
         previous_points = points
 
     return ranked_entries
@@ -104,36 +94,27 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
 
     ranked_leaderboard = get_ranked_leaderboard(guild)
 
-    lines = ['# THE LEADERBOARD', '** **']  # Title and empty line
+    lines = ['# THE LEADERBOARD']
 
-    # Iterate through the ranked leaderboard
-    # Use an explicit counter for unique ranks displayed
-    unique_ranks_displayed = 0
-    for rank_entry in ranked_leaderboard:
-        if unique_ranks_displayed >= 10:  # Limit to top 10 unique ranks
+    # Iterate through the top 5 unique ranks
+    for rank_idx, (rank, points, members) in enumerate(ranked_leaderboard):
+        if rank_idx >= 10:  # Limit to top 5 unique ranks
             break
-
-        rank, points, members = rank_entry
 
         # Sort members in a tie alphabetically for consistent display
         members.sort(key=lambda m: m.display_name.lower())
 
-        members_mentions = ' '.join([m.mention for m in members])
-        pts_str = f' {points}' if points < 10 else str(points)
+        start_fmt = '# ' if rank_idx == 1 else ('## ' if rank_idx == 2 else ('### ' if rank_idx == 3 else ''))
+        for i, member in enumerate(members):
+            pts_str = f' {points}' if points < 10 else str(points)
 
-        # Apply special formatting for top 3
-        if rank == 1:
-            lines.append(f'# {rank}. `{pts_str} pts` {members_mentions}')
-        elif rank == 2:
-            lines.append(f'## {rank}. `{pts_str} pts` {members_mentions}')
-        elif rank == 3:
-            lines.append(f'### {rank}. `{pts_str} pts` {members_mentions}')
-        else:
-            lines.append(f'{rank}. `{pts_str} pts` {members_mentions}')
+            lines.append(f'{start_fmt}{rank}. `{pts_str} pts` {member.mention}')
+            if i == 0:  # First member in a tie gets the rank number
+                lines.append(f'{start_fmt}{rank}. `{pts_str} pts` {member.mention}')
+            else:  # Subsequent members in a tie are indented
+                lines[-1] += f' {member.mention}'
 
-        unique_ranks_displayed += 1  # Only increment for a new unique rank
-
-    if len(lines) <= 2:  # If only title and empty line, means no one on leaderboard
+    if not lines:
         lines.append('no one on the leaderboard yet!')
 
     message_text = '\n'.join(lines)
