@@ -20,7 +20,8 @@ changelog = \
     f"""
 :tada: **{version} changelog**
 - member checking and inactivity checking is now happening automatically every 6 hours
-- inactivity checking also removes the available role if someone hasn't chatted in 2 hours
+- inactivity checking also removes the available role if someone hasn't chatted in 1 hour
+  - it also happens separately every hour too
 """
 
 ################################################################
@@ -101,7 +102,7 @@ async def member_checker():
 
 @tasks.loop(hours=1)
 async def availability_checker():
-    await asyncio.sleep(300)
+    await asyncio.sleep(600)
     await check_availability(bot)
 
 
