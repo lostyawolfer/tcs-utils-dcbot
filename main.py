@@ -13,7 +13,7 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 ################################################################
 
-version = 'v3.0.6'
+version = 'v3.0.7'
 
 changelog = \
     f"""
@@ -22,6 +22,7 @@ changelog = \
 - fully implemented a very secret system that is yet to be released for everyone
   - and also fixed a thing there in .1
   - also fixed the fact that im an absolute idiot in .2 (im still an idiot just not an absolute one)
+  - the amount of minor patches i made is starting to become a bit embarrassing
 - fixed member checker bug
 - idk what to write anymore anything i will write here will be a spoiler
 """

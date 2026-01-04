@@ -1,6 +1,6 @@
 import re
 import discord
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict
 from collections import defaultdict
 
 
@@ -94,33 +94,30 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
 
     ranked_leaderboard = get_ranked_leaderboard(guild)
 
-    lines = ['# THE LEADERBOARD', '** **']  # Updated heading
+    lines = ['# THE LEADERBOARD', '** **']  # Title and empty line
 
     # Iterate through the top 10 unique ranks
     for rank_idx, (rank, points, members) in enumerate(ranked_leaderboard):
         if rank_idx >= 10:  # Limit to top 10 unique ranks
             break
 
-        # Sort members in a tie alphabetically by display name for consistent display
+        # Sort members in a tie alphabetically for consistent display
         members.sort(key=lambda m: m.display_name.lower())
 
-        # Combine all tied members into a single string for this rank
-        member_mentions = ' '.join([m.mention for m in members])
-        pts_str = f' {points}' if points < 10 else str(points)  # Add space for single digit
+        members_mentions = ' '.join([m.mention for m in members])
+        pts_str = f' {points}' if points < 10 else str(points)
 
-        # Apply heading markdown based on rank
+        # Apply special formatting for top 3
         if rank == 1:
-            lines.append(f'# {rank}. `{pts_str} pts` {member_mentions}')
+            lines.append(f'# {rank}. `{pts_str} pts` {members_mentions}')
         elif rank == 2:
-            lines.append(f'## {rank}. `{pts_str} pts` {member_mentions}')
+            lines.append(f'## {rank}. `{pts_str} pts` {members_mentions}')
         elif rank == 3:
-            lines.append(f'### {rank}. `{pts_str} pts` {member_mentions}')
+            lines.append(f'### {rank}. `{pts_str} pts` {members_mentions}')
         else:
-            lines.append(f'{rank}. `{pts_str} pts` {member_mentions}')
+            lines.append(f'{rank}. `{pts_str} pts` {members_mentions}')
 
-    if not lines:  # This condition might need adjustment if initial headings are always present
-        lines.append('no one on the leaderboard yet!')
-    elif len(lines) == 2 and not ranked_leaderboard:  # If only headers and no entries
+    if len(lines) <= 2:  # If only title and empty line, means no one on leaderboard
         lines.append('no one on the leaderboard yet!')
 
     message_text = '\n'.join(lines)
