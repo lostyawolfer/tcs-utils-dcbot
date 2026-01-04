@@ -13,7 +13,7 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 ################################################################
 
-version = 'v3.0.2'
+version = 'v3.0.3'
 
 changelog = \
     f"""
@@ -23,6 +23,7 @@ changelog = \
   - and also fixed a thing there in .1
   - also fixed the fact that im an absolute idiot in .2 (im still an idiot just not an absolute one)
 - fixed member checker bug
+- idk what to write anymore anything i will write here will be a spoiler
 """
 
 ################################################################
@@ -499,16 +500,16 @@ async def points(ctx, member: discord.Member = None):
     total_points, challenges = calculate_points(member)
     ranked_leaderboard = get_ranked_leaderboard(ctx.guild)  # Use the new ranked leaderboard
 
-    position_info = "unranked"
+    position_info = "*unranked*"
     for rank, points, members in ranked_leaderboard:
         if member in members:
             # If multiple members are tied at this rank, list them
-            tied_members_mentions = [m.mention for m in members]
+            tied_members_mentions = [m.mention for m in members if m.id != member.id]
             if len(tied_members_mentions) > 1:
                 # Format for display in .points command
-                position_info = f'#{rank} (tied with {", ".join(tied_members_mentions)})'
+                position_info = f'**#{rank}** (tied with {", ".join(tied_members_mentions)})'
             else:
-                position_info = f'#{rank}'
+                position_info = f'**#{rank}**'
             break
 
     challenge_list = '\n'.join([f'{i + 1}. <@&{role_id}>' for i, role_id in enumerate(challenges)])
@@ -517,7 +518,7 @@ async def points(ctx, member: discord.Member = None):
 
     response = (
         f'# {member.mention}\'s stats\n'
-        f'total points: {total_points}\n'
+        f'total life savings `{total_points} pts`\n'
         f'leaderboard position: {position_info}\n'  # Updated line
         f'## completed challenge list\n'
         f'{challenge_list}'
