@@ -1,6 +1,7 @@
 import re
 import discord
-from typing import Optional
+from typing import Optional, List, Tuple, Dict
+from collections import defaultdict
 
 
 def parse_challenge_role(role: discord.Role) -> Optional[dict]:
@@ -25,7 +26,7 @@ def parse_challenge_role(role: discord.Role) -> Optional[dict]:
     }
 
 
-def calculate_points(member: discord.Member) -> tuple[int, list[int]]:
+def calculate_points(member: discord.Member) -> tuple[int, List[int]]:
     """Calculate total points and return list of challenge role IDs."""
     total = 0
     challenge_roles = []
@@ -42,7 +43,7 @@ def calculate_points(member: discord.Member) -> tuple[int, list[int]]:
     return total, [role_id for _, role_id in challenge_roles]
 
 
-def get_leaderboard(guild: discord.Guild) -> list[tuple[discord.Member, int]]:
+def get_leaderboard(guild: discord.Guild) -> List[Tuple[discord.Member, int]]:
     """Get leaderboard sorted by points."""
     leaderboard = []
 
@@ -53,8 +54,31 @@ def get_leaderboard(guild: discord.Guild) -> list[tuple[discord.Member, int]]:
         if total_points > 0:
             leaderboard.append((member, total_points))
 
-    leaderboard.sort(reverse=True, key=lambda x: x[1])
+    # Sort primarily by points (descending), then by member ID for consistent tie-breaking
+    leaderboard.sort(key=lambda x: (-x[1], x[0].id))
     return leaderboard
+
+
+def get_ranked_leaderboard(guild: discord.Guild) -> List[Tuple[int, int, List[discord.Member]]]:
+    """
+    Get leaderboard with ranks, handling ties.
+    Returns: A list of tuples (rank, points, [members_with_these_points])
+    """
+    leaderboard = get_leaderboard(guild)
+
+    ranked_entries: List[Tuple[int, int, List[discord.Member]]] = []
+    current_rank = 0
+    previous_points = -1  # Sentinel value
+
+    for i, (member, points) in enumerate(leaderboard):
+        if points < previous_points or previous_points == -1:
+            current_rank = i + 1
+            ranked_entries.append((current_rank, points, [member]))
+        else:  # Tie
+            ranked_entries[-1][2].append(member)
+        previous_points = points
+
+    return ranked_entries
 
 
 async def update_leaderboard_message(bot, guild: discord.Guild):
@@ -65,14 +89,32 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
     if not channel:
         return
 
-    leaderboard = get_leaderboard(guild)
-    top_5 = leaderboard[:5]
+    ranked_leaderboard = get_ranked_leaderboard(guild)
 
     lines = ['# the point leaderboard']
-    for i, (member, points) in enumerate(top_5, 1):
-        # Add extra space for single digit points
-        pts_str = f' {points}' if points < 10 else str(points)
-        lines.append(f'{i}. `{pts_str} pts` {member.mention}')
+
+    displayed_members_count = 0
+    for rank, points, members in ranked_leaderboard:
+        if displayed_members_count >= 5:  # Limit to top 5 ranked positions
+            break
+
+        # Sort members in a tie alphabetically for consistent display
+        members.sort(key=lambda m: m.display_name.lower())
+
+        for i, member in enumerate(members):
+            if displayed_members_count >= 5:  # Ensure we don't display more than 5 total members
+                break
+
+            pts_str = f' {points}' if points < 10 else str(points)
+
+            if i == 0:  # First member in a tie gets the rank number
+                lines.append(f'{rank}. `{pts_str} pts` {member.mention}')
+            else:  # Subsequent members in a tie are indented
+                lines.append(f'  - `{pts_str} pts` {member.mention}')
+            displayed_members_count += 1
+
+    if not lines:
+        lines.append('no one on the leaderboard yet!')
 
     message_text = '\n'.join(lines)
 

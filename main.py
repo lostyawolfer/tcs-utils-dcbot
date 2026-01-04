@@ -6,20 +6,21 @@ from datetime import datetime, timedelta, timezone
 import discord
 from discord.ext import commands, tasks
 from modules import config, availability_vc, moderation, general
-from modules.general import timed_delete_msg, send_timed_delete_msg, add_role, remove_role
+from modules.general import timed_delete_msg, send_timed_delete_msg, add_role
 from modules.saves import create_save, disband_save, rename_save
 from modules.points import calculate_points, get_leaderboard, update_leaderboard_message, parse_challenge_role
 
 
 ################################################################
 
-version = 'v3.0.0'
+version = 'v3.0.1'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
 - added spoiler season management
 - fully implemented a very secret system that is yet to be released for everyone
+  - and also fixed a thing there in .1
 - fixed member checker bug
 """
 
@@ -60,7 +61,7 @@ def save_spoiler_state():
 @tasks.loop(minutes=5)
 async def check_spoiler_season():
     if spoiler_state['active'] and spoiler_state['until']:
-        until_dt = datetime.fromisoformat(spoiler_state['until'])
+        until_dt = datetime.fromisoformat(spoiler_state['until']) # type: ignore
         if datetime.now(timezone.utc) >= until_dt:
             await end_spoiler_season()
 
@@ -453,7 +454,7 @@ async def spoiler(ctx, action: str = None, *args):
 
         # Update state
         spoiler_state['active'] = True
-        spoiler_state['until'] = until_dt.isoformat()
+        spoiler_state['until'] = until_dt.isoformat() # type: ignore
         spoiler_state['emoji'] = emoji
         spoiler_state['event_name'] = event_name
         spoiler_state['access_message_id'] = access_msg.id
@@ -495,9 +496,19 @@ async def points(ctx, member: discord.Member = None):
         member = ctx.author
 
     total_points, challenges = calculate_points(member)
-    leaderboard = get_leaderboard(ctx.guild)
+    ranked_leaderboard = get_ranked_leaderboard(ctx.guild)  # Use the new ranked leaderboard
 
-    position = next((i + 1 for i, (m, _) in enumerate(leaderboard) if m.id == member.id), None)
+    position_info = "unranked"
+    for rank, points, members in ranked_leaderboard:
+        if member in members:
+            # If multiple members are tied at this rank, list them
+            tied_members_mentions = [m.mention for m in members]
+            if len(tied_members_mentions) > 1:
+                # Format for display in .points command
+                position_info = f'#{rank} (tied with {", ".join(tied_members_mentions)})'
+            else:
+                position_info = f'#{rank}'
+            break
 
     challenge_list = '\n'.join([f'{i + 1}. <@&{role_id}>' for i, role_id in enumerate(challenges)])
     if not challenge_list:
@@ -506,7 +517,7 @@ async def points(ctx, member: discord.Member = None):
     response = (
         f'# {member.mention}\'s stats\n'
         f'total points: {total_points}\n'
-        f'leaderboard position: #{position if position else "unranked"}\n'
+        f'leaderboard position: {position_info}\n'  # Updated line
         f'## completed challenge list\n'
         f'{challenge_list}'
     )
