@@ -13,7 +13,7 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 ################################################################
 
-version = 'v3.1.0'
+version = 'v3.1.1'
 
 changelog = \
     f"""
@@ -524,37 +524,6 @@ async def stat_checker(ctx, member: discord.Member = None):
 
     await ctx.send(response, allowed_mentions=discord.AllowedMentions.none())
 
-    if not member:
-        member = ctx.author
-
-    total_points, challenges = calculate_points(member)
-    ranked_leaderboard = get_ranked_leaderboard(ctx.guild)  # Use the new ranked leaderboard
-
-    position_info = "*unranked*"
-    for rank, points, members in ranked_leaderboard:
-        if member in members:
-            # If multiple members are tied at this rank, list them
-            tied_members_mentions = [m.mention for m in members if m.id != member.id]
-            if len(tied_members_mentions) > 1:
-                # Format for display in .points command
-                position_info = f'**#{rank}** (tied with {", ".join(tied_members_mentions)})'
-            else:
-                position_info = f'**#{rank}**'
-            break
-
-    challenge_list = '\n'.join([f'{i + 1}. <@&{role_id}>' for i, role_id in enumerate(challenges)])
-    if not challenge_list:
-        challenge_list = '*none*'
-
-    response = (
-        f'# {member.mention}\'s stats\n'
-        f'total life savings `{total_points} pts`\n'
-        f'leaderboard position: {position_info}\n'  # Updated line
-        f'## completed challenge list\n'
-        f'{challenge_list}'
-    )
-
-    await ctx.send(response, allowed_mentions=discord.AllowedMentions.none())
 
 @bot.command()
 @general.try_bot_perms
