@@ -97,8 +97,8 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
     lines = ['# THE LEADERBOARD', '\n** **']
 
     # Iterate through the top 5 unique ranks
-    for rank_idx, (rank, points, members) in enumerate(ranked_leaderboard):
-        if rank_idx >= 5:  # Limit to top 5 unique ranks
+    for rank_idx, (actual_rank, points, members) in enumerate(ranked_leaderboard):
+        if rank_idx >= 10:  # Limit to top 5 unique ranks
             break
 
         # Sort members in a tie alphabetically for consistent display
@@ -107,15 +107,16 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
         # Construct the member mentions string
         member_mentions = ' '.join(member.mention for member in members)
 
-        # Use markdown for headings for the top 3 ranks
-        if rank == 1:
-            lines.append(f'# {rank}. `{points} pts` {member_mentions}')
-        elif rank == 2:
-            lines.append(f'## {rank}. `{points} pts` {member_mentions}')
-        elif rank == 3:
-            lines.append(f'### {rank}. `{points} pts` {member_mentions}')
+        # Use markdown for headings for the top 3 visible ranks (1st, 2nd, 3rd)
+        display_rank = rank_idx + 1
+        if display_rank == 1:
+            lines.append(f'# {display_rank}. `{points} pts` {member_mentions}')
+        elif display_rank == 2:
+            lines.append(f'## {display_rank}. `{points} pts` {member_mentions}')
+        elif display_rank == 3:
+            lines.append(f'### {display_rank}. `{points} pts` {member_mentions}')
         else:
-            lines.append(f'{rank}. `{points} pts` {member_mentions}')
+            lines.append(f'{display_rank}. `{points} pts` {member_mentions}')
 
     if not lines:
         lines.append('no one on the leaderboard yet!')
