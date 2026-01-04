@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 import discord
 from discord.ext import commands, tasks
-from modules import config, availability_vc, moderation, general
+from modules import config, activity, moderation, general
 from modules.general import timed_delete_msg, send_timed_delete_msg, add_role, remove_role
 from modules.saves import create_save, disband_save, rename_save
 from modules.points import calculate_points, get_ranked_leaderboard, update_leaderboard_message, parse_challenge_role
@@ -13,7 +13,7 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 ################################################################
 
-version = 'v3.1.1'
+version = 'v3.1.2'
 
 changelog = \
     f"""
@@ -95,8 +95,8 @@ async def end_spoiler_season():
 
 @tasks.loop(hours=6)
 async def member_checker():
-    await availability_vc.check_all_members(bot)
-    await availability_vc.check_inactivity(bot)
+    await activity.check_all_members(bot)
+    await activity.check_inactivity(bot)
 
 
 @bot.event
@@ -114,14 +114,14 @@ async def on_ready():
 @general.try_bot_perms
 @general.has_perms('manage_roles')
 async def check_members(ctx):
-    await availability_vc.check_all_members(bot)
+    await activity.check_all_members(bot)
 
 @bot.command()
 @general.try_bot_perms
 #@general.inject_reply
 @general.has_perms('manage_roles')
 async def check(ctx, member: discord.Member = None):
-    await availability_vc.full_check_member(bot, member)
+    await activity.full_check_member(bot, member)
     await send_timed_delete_msg(bot, f'checked {member.display_name}')
 
 @bot.command()
@@ -134,7 +134,7 @@ async def test(ctx):
 async def on_voice_state_update(member, before, after):
     if not config.check_guild(member.guild.id) or (member and member.bot):
         return
-    await availability_vc.voice_check(bot, member)
+    await activity.voice_check(bot, member)
 
 
 
@@ -155,7 +155,7 @@ async def on_raw_reaction_add(payload):
     if payload.message_id == config.channels['availability_message']:
         emoji_id = payload.emoji.id
         if emoji_id == config.channels['availability_reaction']:
-            await availability_vc.add_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
+            await activity.add_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
 
     # Reaction roles
     if payload.message_id in REACTION_ROLES:
@@ -173,7 +173,7 @@ async def on_raw_reaction_remove(payload):
     if payload.message_id == config.channels['availability_message']:
         emoji_id = payload.emoji.id
         if emoji_id == config.channels['availability_reaction']:
-            await availability_vc.remove_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
+            await activity.remove_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
 
     # Reaction roles
     if payload.message_id in REACTION_ROLES:
@@ -239,9 +239,9 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('spoiler_remove', mention=after.mention), 'spoiler')
 
         if any(role.id in config.roles['category:badges']['other'] for role in removed_roles):
-            await availability_vc.check_role_category(after, 'badges')
+            await activity.check_role_category(after, 'badges')
         if any(role.id in config.roles['category:misc']['other'] for role in removed_roles):
-            await availability_vc.check_role_category(after, 'misc')
+            await activity.check_role_category(after, 'misc')
 
     if before.nick != after.nick:
         old = before.nick if before.nick else before.display_name
@@ -619,9 +619,9 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('spoiler_remove', mention=after.mention), 'spoiler')
 
         if any(role.id in config.roles['category:badges']['other'] for role in removed_roles):
-            await availability_vc.check_role_category(after, 'badges')
+            await activity.check_role_category(after, 'badges')
         if any(role.id in config.roles['category:misc']['other'] for role in removed_roles):
-            await availability_vc.check_role_category(after, 'misc')
+            await activity.check_role_category(after, 'misc')
 
     if before.nick != after.nick:
         old = before.nick if before.nick else before.display_name
@@ -994,7 +994,7 @@ async def check_inactive(ctx, member: discord.Member):
 @general.try_bot_perms
 @general.has_perms('manage_roles')
 async def check_inactive_people(ctx):
-    await availability_vc.check_inactivity(bot)
+    await activity.check_inactivity(bot)
 
 
 
@@ -1016,8 +1016,86 @@ async def unavailable(ctx, member: discord.Member):
     await msg.remove_reaction(discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), member)
 
     return await general.send(bot, config.message('unavailable_auto', name=member.mention,
-                       available_count=f"{general.emojify(str(await availability_vc.count_available(bot)), 'b')}"))
+                       available_count=f"{general.emojify(str(await activity.count_available(bot)), 'b')}"))
 
+
+async def remove_availability(member):
+    channel = bot.get_channel(config.channels['availability'])
+    msg = await channel.fetch_message(config.channels['availability_message'])
+
+    await msg.remove_reaction(discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'),
+                              member)
+
+    return await general.send(bot, config.message('unavailable_auto', name=member.mention,
+                                                  available_count=f"{general.emojify(str(await activity.count_available(bot)), 'b')}"))
+
+@bot.command()
+@general.try_bot_perms
+@general.has_perms('manage_roles')
+async def clean_availability(ctx, member):
+    chat_channel = bot.get_channel(config.channels['chat'])
+    guild = bot.get_guild(config.TARGET_GUILD)
+    await general.update_status_checking(bot, '🔵', 0.0)
+
+    members_data = {
+        m: {'last_message': None, 'last_bot_mention': None}
+        for m in guild.members
+        if not m.bot
+    }
+
+    checked_msg = 0
+    async for msg in chat_channel.history(limit=1250):
+        checked_msg += 1
+
+        # update progress every 750 messages
+        if checked_msg % 250 == 0:
+            await general.update_status_checking(bot, '🔵', round(checked_msg/1250*100, 1))
+
+        for member, data in members_data.items():
+            if not data['last_message'] and msg.author == member:
+                data['last_message'] = msg
+            if (
+                not data['last_bot_mention']
+                and msg.author == bot.user
+                and member.display_name in msg.content
+            ):
+                data['last_bot_mention'] = msg
+
+        # stop early if we've found everything
+        if all(v['last_message'] and v['last_bot_mention'] for v in members_data.values()):
+            break
+
+    now = discord.utils.utcnow()
+    two_hours_ago = now.timestamp() - 2 * 60 * 60
+
+    for m, d in members_data.items():
+        last_msg_ts = (
+            d['last_message'].created_at.timestamp() if d['last_message'] else None     # type: ignore
+        )
+        last_mention_ts = (
+            d['last_bot_mention'].created_at.timestamp()     # type: ignore
+            if d['last_bot_mention']
+            else None
+        )
+
+        if (
+            not last_msg_ts
+            and not last_mention_ts
+        ) or (
+            (last_msg_ts and last_msg_ts < two_hours_ago)
+            and (last_mention_ts and last_mention_ts < two_hours_ago)
+        ):
+            channel = bot.get_channel(config.channels['availability'])
+            msg = await channel.fetch_message(config.channels['availability_message'])
+
+            await msg.remove_reaction(
+                discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), m)
+
+            return await general.send(bot, config.message('unavailable_auto', name=m.mention,
+                                                          available_count=f"{general.emojify(str(await activity.count_available(bot)), 'b')}"))
+    
+    
+    
 # @bot.command()
 # async def br(ctx, *args):
 #     # if not ctx.guild.get_role(ROLES['mod']) not in ctx.author.roles:
