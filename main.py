@@ -6,25 +6,20 @@ from datetime import datetime, timedelta, timezone
 import discord
 from discord.ext import commands, tasks
 from modules import config, availability_vc, moderation, general
-from modules.general import timed_delete_msg, send_timed_delete_msg, add_role
+from modules.general import timed_delete_msg, send_timed_delete_msg, add_role, remove_role
 from modules.saves import create_save, disband_save, rename_save
 from modules.points import calculate_points, get_ranked_leaderboard, update_leaderboard_message, parse_challenge_role
 
 
 ################################################################
 
-version = 'v3.0.11'
+version = 'v3.1.0'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- added spoiler season management
-- fully implemented a very secret system that is yet to be released for everyone
-  - and also fixed a thing there in .1
-  - also fixed the fact that im an absolute idiot in .2 (im still an idiot just not an absolute one)
-  - the amount of minor patches i made is starting to become a bit embarrassing
-- fixed member checker bug
-- idk what to write anymore anything i will write here will be a spoiler
+- member checking and inactivity checking is now happening automatically every 6 hours
+- inactivity checking also removes the available role if someone hasn't chatted in 2 hours
 """
 
 ################################################################
@@ -98,9 +93,10 @@ async def end_spoiler_season():
     save_spoiler_state()
 
 
-@tasks.loop(hours=3)
+@tasks.loop(hours=6)
 async def member_checker():
     await availability_vc.check_all_members(bot)
+    await availability_vc.check_inactivity(bot)
 
 
 @bot.event
@@ -110,6 +106,7 @@ async def on_ready():
     await general.set_status(bot, 'starting up...', status=discord.Status.idle)
     await bot.wait_until_ready()
     check_spoiler_season.start()
+    member_checker.start()
     await general.send(bot, f':ballot_box_with_check: restart complete!')
     await general.send(bot, changelog)
 
@@ -492,9 +489,9 @@ async def spoiler(ctx, action: str = None, *args):
         await ctx.send('invalid action')
 
 
-@bot.command()
-@general.try_bot_perms
-async def points(ctx, member: discord.Member = None):
+
+
+async def stat_checker(ctx, member: discord.Member = None):
     if not member:
         member = ctx.author
 
@@ -526,6 +523,53 @@ async def points(ctx, member: discord.Member = None):
     )
 
     await ctx.send(response, allowed_mentions=discord.AllowedMentions.none())
+
+    if not member:
+        member = ctx.author
+
+    total_points, challenges = calculate_points(member)
+    ranked_leaderboard = get_ranked_leaderboard(ctx.guild)  # Use the new ranked leaderboard
+
+    position_info = "*unranked*"
+    for rank, points, members in ranked_leaderboard:
+        if member in members:
+            # If multiple members are tied at this rank, list them
+            tied_members_mentions = [m.mention for m in members if m.id != member.id]
+            if len(tied_members_mentions) > 1:
+                # Format for display in .points command
+                position_info = f'**#{rank}** (tied with {", ".join(tied_members_mentions)})'
+            else:
+                position_info = f'**#{rank}**'
+            break
+
+    challenge_list = '\n'.join([f'{i + 1}. <@&{role_id}>' for i, role_id in enumerate(challenges)])
+    if not challenge_list:
+        challenge_list = '*none*'
+
+    response = (
+        f'# {member.mention}\'s stats\n'
+        f'total life savings `{total_points} pts`\n'
+        f'leaderboard position: {position_info}\n'  # Updated line
+        f'## completed challenge list\n'
+        f'{challenge_list}'
+    )
+
+    await ctx.send(response, allowed_mentions=discord.AllowedMentions.none())
+
+@bot.command()
+@general.try_bot_perms
+async def points(ctx, member: discord.Member = None):
+    await stat_checker(ctx, member)
+
+@bot.command()
+@general.try_bot_perms
+async def pts(ctx, member: discord.Member = None):
+    await stat_checker(ctx, member)
+
+@bot.command()
+@general.try_bot_perms
+async def stats(ctx, member: discord.Member = None):
+    await stat_checker(ctx, member)
 
 
 @bot.command()
@@ -981,58 +1025,9 @@ async def check_inactive(ctx, member: discord.Member):
 @general.try_bot_perms
 @general.has_perms('manage_roles')
 async def check_inactive_people(ctx):
-    chat_channel = ctx.guild.get_channel(config.channels['chat'])
+    await availability_vc.check_inactivity(bot)
 
-    members_data = {
-        m: {'last_message': None, 'last_bot_mention': None}
-        for m in ctx.guild.members
-        if not m.bot
-    }
 
-    checked_msg = 0
-    async for msg in chat_channel.history(limit=30000):
-        checked_msg += 1
-
-        # update progress every 750 messages
-        if checked_msg % 1750 == 0:
-            await general.update_status_checking(bot, '🛌', round(checked_msg/30000*100, 1))
-
-        for member, data in members_data.items():
-            if not data['last_message'] and msg.author == member:
-                data['last_message'] = msg
-            if (
-                not data['last_bot_mention']
-                and msg.author == bot.user
-                and member.display_name in msg.content
-            ):
-                data['last_bot_mention'] = msg
-
-        # stop early if we've found everything
-        if all(v['last_message'] and v['last_bot_mention'] for v in members_data.values()):
-            break
-
-    now = discord.utils.utcnow()
-    five_days_ago = now.timestamp() - 7 * 24 * 60 * 60
-
-    for m, d in members_data.items():
-        last_msg_ts = (
-            d['last_message'].created_at.timestamp() if d['last_message'] else None     # type: ignore
-        )
-        last_mention_ts = (
-            d['last_bot_mention'].created_at.timestamp()     # type: ignore
-            if d['last_bot_mention']
-            else None
-        )
-
-        # if neither was found nor both are older than 7 days
-        if (
-            not last_msg_ts
-            and not last_mention_ts
-        ) or (
-            (last_msg_ts and last_msg_ts < five_days_ago)
-            and (last_mention_ts and last_mention_ts < five_days_ago)
-        ):
-            await add_role(m, config.roles['inactive'])
 
 
 @bot.command()
@@ -1051,7 +1046,7 @@ async def unavailable(ctx, member: discord.Member):
 
     await msg.remove_reaction(discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), member)
 
-    return await general.send(bot, config.message('unavailable_auto', name=member.display_name,
+    return await general.send(bot, config.message('unavailable_auto', name=member.mention,
                        available_count=f"{general.emojify(str(await availability_vc.count_available(bot)), 'b')}"))
 
 # @bot.command()

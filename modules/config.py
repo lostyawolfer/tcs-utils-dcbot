@@ -292,7 +292,7 @@ _messages = {
         f"{emoji['newbie']} {{mention}} is not a newbie anymore!! please applaud!!"
     ],
     "inactive": [
-        f"{emoji['inactive']} {{mention}} seemed to be inactive... hey, if you have reasons, tell us! just, if you keep the silence going without reason, you might as well leave..."
+        f"{emoji['inactive']} {{mention}} didn't send a single message in chat in the past 7 days, marked inactive"
     ],
     "inactive_revoke": [
         f"{emoji['inactive_revoke']} {{mention}} is no longer considered inactive!"
