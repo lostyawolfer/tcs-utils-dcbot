@@ -13,7 +13,7 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 ################################################################
 
-version = 'v3.0.3'
+version = 'v3.0.4'
 
 changelog = \
     f"""

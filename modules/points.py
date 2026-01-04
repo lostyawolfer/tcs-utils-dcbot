@@ -67,14 +67,17 @@ def get_ranked_leaderboard(guild: discord.Guild) -> List[Tuple[int, int, List[di
     leaderboard = get_leaderboard(guild)
 
     ranked_entries: List[Tuple[int, int, List[discord.Member]]] = []
-    current_rank = 0
-    previous_points = -1  # Sentinel value
+    current_rank_value = 0  # This will track the actual rank number to assign
+    previous_points = -1  # Sentinel value, assuming points are non-negative
 
     for i, (member, points) in enumerate(leaderboard):
+        # Determine the rank for the current points
         if points < previous_points or previous_points == -1:
-            current_rank = i + 1
-            ranked_entries.append((current_rank, points, [member]))
-        else:  # Tie
+            current_rank_value = i + 1  # New rank
+            # Ensure it's appended as a new entry with its own list of members
+            ranked_entries.append((current_rank_value, points, [member]))
+        else:  # Tie with the previous entry
+            # Append member to the last entry's list of members
             ranked_entries[-1][2].append(member)
         previous_points = points
 
@@ -93,25 +96,21 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
 
     lines = ['# the point leaderboard']
 
-    displayed_members_count = 0
-    for rank, points, members in ranked_leaderboard:
-        if displayed_members_count >= 5:  # Limit to top 5 ranked positions
+    # Iterate through the top 5 unique ranks
+    for rank_idx, (rank, points, members) in enumerate(ranked_leaderboard):
+        if rank_idx >= 5:  # Limit to top 5 unique ranks
             break
 
         # Sort members in a tie alphabetically for consistent display
         members.sort(key=lambda m: m.display_name.lower())
 
         for i, member in enumerate(members):
-            if displayed_members_count >= 5:  # Ensure we don't display more than 5 total members
-                break
-
             pts_str = f' {points}' if points < 10 else str(points)
 
             if i == 0:  # First member in a tie gets the rank number
                 lines.append(f'{rank}. `{pts_str} pts` {member.mention}')
             else:  # Subsequent members in a tie are indented
                 lines.append(f'  - `{pts_str} pts` {member.mention}')
-            displayed_members_count += 1
 
     if not lines:
         lines.append('no one on the leaderboard yet!')
