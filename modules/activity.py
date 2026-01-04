@@ -219,13 +219,61 @@ async def check_inactivity(bot):
         else:
             await remove_role(m, config.roles['inactive'])
 
+async def check_availability(bot):
+    chat_channel = bot.get_channel(config.channels['chat'])
+    guild = bot.get_guild(config.TARGET_GUILD)
+    await general.update_status_checking(bot, '🔵', 0.0)
+
+    members_data = {
+        m: {'last_message': None, 'last_bot_mention': None}
+        for m in guild.members
+        if not m.bot
+    }
+
+    checked_msg = 0
+    async for msg in chat_channel.history(limit=1250):
+        checked_msg += 1
+
+        # update progress every 750 messages
+        if checked_msg % 250 == 0:
+            await general.update_status_checking(bot, '🔵', round(checked_msg/1250*100, 1))
+
+        for member, data in members_data.items():
+            if not data['last_message'] and msg.author == member:
+                data['last_message'] = msg
+            if (
+                not data['last_bot_mention']
+                and msg.author == bot.user
+                and member.display_name in msg.content
+            ):
+                data['last_bot_mention'] = msg
+
+        # stop early if we've found everything
+        if all(v['last_message'] and v['last_bot_mention'] for v in members_data.values()):
+            break
+
+    now = discord.utils.utcnow()
+    one_hour_ago = now.timestamp() - 1 * 60 * 60
+    availability_role = bot.get_role(config.roles['availability'])
+
+    for m, d in members_data.items():
+        if availability_role not in m.roles:
+            continue
+        last_msg_ts = (
+            d['last_message'].created_at.timestamp() if d['last_message'] else None     # type: ignore
+        )
+        last_mention_ts = (
+            d['last_bot_mention'].created_at.timestamp()     # type: ignore
+            if d['last_bot_mention']
+            else None
+        )
 
         if (
             not last_msg_ts
             and not last_mention_ts
         ) or (
-            (last_msg_ts and last_msg_ts < two_hours_ago)
-            and (last_mention_ts and last_mention_ts < two_hours_ago)
+            (last_msg_ts and last_msg_ts < one_hour_ago)
+            and (last_mention_ts and last_mention_ts < one_hour_ago)
         ):
             channel = bot.get_channel(config.channels['availability'])
             msg = await channel.fetch_message(config.channels['availability_message'])
