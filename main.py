@@ -8,12 +8,12 @@ from discord.ext import commands, tasks
 from modules import config, availability_vc, moderation, general
 from modules.general import timed_delete_msg, send_timed_delete_msg, add_role
 from modules.saves import create_save, disband_save, rename_save
-from modules.points import calculate_points, get_leaderboard, update_leaderboard_message, parse_challenge_role
+from modules.points import calculate_points, get_ranked_leaderboard, update_leaderboard_message, parse_challenge_role
 
 
 ################################################################
 
-version = 'v3.0.1'
+version = 'v3.0.2'
 
 changelog = \
     f"""
@@ -21,6 +21,7 @@ changelog = \
 - added spoiler season management
 - fully implemented a very secret system that is yet to be released for everyone
   - and also fixed a thing there in .1
+  - also fixed the fact that im an absolute idiot in .2 (im still an idiot just not an absolute one)
 - fixed member checker bug
 """
 
