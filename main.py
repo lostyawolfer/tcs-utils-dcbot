@@ -533,19 +533,25 @@ async def stat_checker(ctx, member: discord.Member = None):
     await ctx.send(response, allowed_mentions=discord.AllowedMentions.none())
 
 
-@bot.command()
-@general.try_bot_perms
-async def points(ctx, member: discord.Member = None):
-    await stat_checker(ctx, member)
+# @bot.command()
+# @general.try_bot_perms
+# async def points(ctx, member: discord.Member = None):
+#     await stat_checker(ctx, member)
+#
+# @bot.command()
+# @general.try_bot_perms
+# async def pts(ctx, member: discord.Member = None):
+#     await stat_checker(ctx, member)
+#
+# @bot.command()
+# @general.try_bot_perms
+# async def stats(ctx, member: discord.Member = None):
+#     await stat_checker(ctx, member)
 
 @bot.command()
 @general.try_bot_perms
+@general.has_perms('owner')
 async def pts(ctx, member: discord.Member = None):
-    await stat_checker(ctx, member)
-
-@bot.command()
-@general.try_bot_perms
-async def stats(ctx, member: discord.Member = None):
     await stat_checker(ctx, member)
 
 
