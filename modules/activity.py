@@ -195,7 +195,6 @@ async def check_inactivity(bot):
 
     now = discord.utils.utcnow()
     seven_days_ago = now.timestamp() - 7 * 24 * 60 * 60
-    two_hours_ago = now.timestamp() -       2 * 60 * 60
 
     for m, d in members_data.items():
         last_msg_ts = (
@@ -217,7 +216,7 @@ async def check_inactivity(bot):
         ):
             await add_role(m, config.roles['inactive'])
         else:
-            await remove_role(m, config.roles['inactive'])
+            ... # await remove_role(m, config.roles['inactive'])
 
 async def check_availability(bot):
     chat_channel = bot.get_channel(config.channels['chat'])

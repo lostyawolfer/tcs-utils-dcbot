@@ -114,9 +114,9 @@ async def on_ready():
     await bot.wait_until_ready()
     check_spoiler_season.start()
     availability_checker.start()
-    member_checker.start()
     await general.send(bot, f':ballot_box_with_check: restart complete!')
     await general.send(bot, changelog)
+    member_checker.start()
 
 @bot.command()
 @general.try_bot_perms
