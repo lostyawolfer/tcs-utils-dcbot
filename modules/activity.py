@@ -253,7 +253,7 @@ async def check_availability(bot):
 
     now = discord.utils.utcnow()
     one_hour_ago = now.timestamp() - 1 * 60 * 60
-    availability_role = bot.get_role(config.roles['availability'])
+    availability_role = bot.get_guild(config.TARGET_GUILD).get_role(config.roles['availability'])
 
     for m, d in members_data.items():
         if availability_role not in m.roles:
