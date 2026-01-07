@@ -123,7 +123,7 @@ async def enforce_person_inactive_exclusivity(member: discord.Member) -> None:
 
     # If has person, remove inactive
     if has_person and has_inactive:
-        await remove_role(member, config.roles['inactive'])
+        await remove_role(member, config.roles['person'])
 
     # If has inactive or explained inactive, remove person
     if (has_inactive or has_explained) and has_person:
@@ -215,6 +215,8 @@ async def check_inactivity(bot):
     for m, d in members_data.items():
         # Skip if they have explained inactivity
         if has_role(m, config.roles['explained_inactive']):
+            await add_role(m, config.roles['inactive'])
+            await remove_role(m, config.roles['person'])
             continue
 
         last_msg_ts = (
