@@ -5,16 +5,11 @@ def check_guild(guild_id: int) -> bool:
         return True
     return False
 
-
-
 from dotenv import dotenv_values
 TOKEN = dotenv_values('.env').get('TOKEN')
 if not TOKEN:
     print('there\'s no token\n'
           'create a .env file in this directory and put in "TOKEN=..." and replace the "..." with ur bot token')
-
-
-
 
 roles = {
     "admins": [
@@ -35,7 +30,6 @@ roles = {
     "role_check": [
         1445189559200776302, # cat: activity
         1445190367006818324, # cat: common
-        1427076669264498820, # person
         1445134463263707156, # cat: badges
         1445191426920153159, # cat: misc
     ],
@@ -62,18 +56,17 @@ roles = {
     "available_not_in_vc_2": 1444027740352155688,
     "birthday": 1439339439762444552,
     "inactive": 1434659281822679232,
+    "explained_inactive": 1444665652450169036,
+    "person": 1427076669264498820,
     "newbie": 1433872100837425193,
     "warn_1": 1442596622013038704,
     "warn_2": 1442596750576717905,
     "warn_3": 1442623000452005948,
     "mod": 1433828741548740781,
-
     "spoiler": 1451675068114669740,
-
 
     "completion_server_star_star": 1454594165857063004,
     "completion_server_base_star": 1453450000297365576,
-
     "completion_tcs+": 1454596340930838751,
     "completion_tcs": 1440647536397385800,
     "completion_has++": 1454596424120402061,
@@ -89,7 +82,6 @@ roles = {
     "completion_rmt": 1454812063435194490,
     "completion_pdo+": 1443264316236234862,
     "completion_pdo": 1443251500481646784,
-
     "completion_tbs": 1427674706076635169,
     "completion_ahp": 1445115775261081681,
     "completion_star": 1439783495248384162,
@@ -108,12 +100,10 @@ channels = {
     "leader_chat": 1453699078977224876,
     "logs_channel": 1453370470584815697,
     "spoiler": 1451673464359358465,
-
     "spoiler_access": 1451675640771383478,
     "spoiler_role": 1451675068114669740,
     "leaderboard": 1456353494448734331,
 }
-
 
 emoji = {
     "join": "<:join:1436503008924926052>",
@@ -140,9 +130,10 @@ emoji = {
     "pdo": "<:professional_door_opener:1443719522908504215>", # ON THE SERVER
     "nn": "<:neverending_night:1443768885097529394>", # ON THE SERVER
     "edit": "<:edit:1444529076516688064>",
-    "newbie": "<:upvote:1434612815062237195>", # ON THE SERVER
+    "newbie": "<:upvote:1434612815062237195>",
     "inactive": "🛌",
     "inactive_revoke": "🏆",
+    "explained_inactive": "✅",
 
     "knife": "🔪",
     "hug": "🤗",
@@ -165,7 +156,6 @@ emoji = {
     '7': '<:7_:1444462409342255204>',
     '8': '<:8_:1444462410584035388>',
     '9': '<:9_:1444462412559290492>',
-
     '0b': '<:0b:1448879492884861040>',
     '0g': '<:0g:1448879494063587509>',
     '0p': '<:0p:1448879495393054891>',
@@ -297,11 +287,11 @@ _messages = {
     "inactive_revoke": [
         f"{emoji['inactive_revoke']} {{mention}} is no longer considered inactive!"
     ],
+    "explained_inactive": [
+        f"{emoji['explained_inactive']} {{mention}}'s inactivity was excused"
+    ],
     "nuh_uh": [
         "https://cdn.discordapp.com/attachments/715528165132599337/1442162843452440777/nuh-uh-3d-thumbnail-url-7g84og.png?ex=69246e4f&is=69231ccf&hm=b1bf1bb44ee89017d8404d35a1b0812eef3c6dc29a870ef3a8fefaa96fc7353e&",
-        #"https://cdn.discordapp.com/attachments/715528165132599337/1442288061550563429/image.png?ex=6924e2ee&is=6923916e&hm=a8cf353e9b11473ae21a33cb7615f2f0369e2aa47bc6649b87798ccad07b5edd&",
-        #"https://cdn.discordapp.com/attachments/715528165132599337/1442289370970460351/the-sybau-image-without-text-v0-uffld2n8mj1f1.png?ex=6924e426&is=692392a6&hm=857fc631938e0ed5a2b9fd79e3765f4598d9981b1c764505979bec11d200ab7c&",
-        #"https://cdn.discordapp.com/attachments/715528165132599337/1442290208904183838/image.png?ex=6924e4ee&is=6923936e&hm=c3bcf903940e91605f0ed2f8bf399bdd43007de6fb2dc682693916345c7c65eb&"
     ],
     "bot_doesnt_have_perms": [
         "https://cdn.discordapp.com/attachments/715528165132599337/1442288380766457977/artworks-000519533403-ovb003-t1080x1080.png?ex=6924e33a&is=692391ba&hm=1ce891ca81be59241658390d96198e442226d78d4b4c7e708a28f5355f6ac5bb&"
@@ -315,16 +305,6 @@ _messages = {
     "channel_unlock": [
         "🔓 channel was unlocked"
     ],
-
-    "completion_tbs": [f"🏅 {{mention}} got **this badge sucks**"],
-    "completion_ahp": [f"🏅 {{mention}} got **a hard place**"],
-    "completion_star": [f"🏅 {{mention}} got **the completionist star**"],
-    "completion_dv": [f"⭐ {{mention}} beat **doorsverse**"],
-    "completion_ch_tcs": [f"🏆 {{mention}} beat **this challenge sucks**"],
-    "completion_ch_gor": [f"🏆 {{mention}} beat **group of rushers**"],
-    "completion_ch_pdo": [f"🏆 {{mention}} beat **professional doors opener**"],
-    "completion_ch_nn": [f"🏆 {{mention}} beat **neverending night**"],
-
     "rp_kill": [f"{emoji['knife']} {{author}} brutally murdered {{target}}"],
     "rp_hug": [f"{emoji['hug']} {{author}} hugged {{target}}"],
     "rp_kiss": [f"{emoji['kiss']} {{author}} kissed {{target}}"],

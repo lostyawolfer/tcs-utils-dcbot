@@ -7,21 +7,19 @@ import discord
 from discord.ext import commands, tasks
 from modules import config, activity, moderation, general
 from modules.activity import check_availability
-from modules.general import timed_delete_msg, send_timed_delete_msg, add_role, remove_role
+from modules.general import timed_delete_msg, send_timed_delete_msg, add_role, remove_role, has_role
 from modules.saves import create_save, disband_save, rename_save
 from modules.points import calculate_points, get_ranked_leaderboard, update_leaderboard_message, parse_challenge_role
 
 
 ################################################################
 
-version = 'v3.1.3'
+version = 'v3.1.4'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- member checking and inactivity checking is now happening automatically every 6 hours
-- inactivity checking also removes the available role if someone hasn't chatted in 1 hour
-  - it also happens separately every hour too
+- idk i didnt come up with a changelog
 """
 
 ################################################################
@@ -77,7 +75,7 @@ async def end_spoiler_season():
         try:
             msg = await access_channel.fetch_message(spoiler_state['access_message_id'])
             await msg.clear_reactions()
-        except:
+        except Exception as e:
             pass
 
     # Hide access channel
@@ -110,13 +108,35 @@ async def availability_checker():
 async def on_ready():
     load_spoiler_state()
     await general.send(bot, f':radio_button: bot connected... {version}')
-    await general.set_status(bot, 'starting up...', status=discord.Status.idle)
+    await general.set_status(bot, 'starting up...', status=discord.Status.idle) # type: ignore
     await bot.wait_until_ready()
-    check_spoiler_season.start()
-    availability_checker.start()
     await general.send(bot, f':ballot_box_with_check: restart complete!')
     await general.send(bot, changelog)
+
+@bot.command()
+@general.try_bot_perms
+@general.has_perms('owner')
+async def start_checking(ctx):
+    """Manually start the member checking loop."""
+    if member_checker.is_running():
+        return await ctx.send("member checking is already running")
     member_checker.start()
+    check_spoiler_season.start()
+    availability_checker.start()
+    return await ctx.send("started member checking loop :white_check_mark:")
+
+@bot.command()
+@general.try_bot_perms
+@general.has_perms('owner')
+async def stop_checking(ctx):
+    """Stop the member checking loop."""
+    if not member_checker.is_running():
+        return await ctx.send("member checking is not running")
+    member_checker.cancel()
+    check_spoiler_season.cancel()
+    availability_checker.cancel()
+    await general.update_status(bot, status=discord.Status.online)
+    return await ctx.send("stopped member checking loop :white_check_mark:")
 
 @bot.command()
 @general.try_bot_perms
@@ -198,6 +218,46 @@ async def on_member_update(before, after):
         after_roles = set(after.roles)
         added_roles = after_roles - before_roles
         removed_roles = before_roles - after_roles
+
+        # Handle person/inactive/explained inactive exclusivity
+        for role in added_roles:
+            if role.id == config.roles['person']:
+                await remove_role(after, config.roles['inactive'])
+            if role.id in [config.roles['inactive'], config.roles['explained_inactive']]:
+                await remove_role(after, config.roles['person'])
+
+        for role in removed_roles:
+            if role.id == config.roles['person']:
+                if not has_role(after, config.roles['inactive']) and not has_role(after,
+                                                                                  config.roles['explained_inactive']):
+                    await add_role(after, config.roles['inactive'])
+            if role.id == config.roles['inactive']:
+                if not has_role(after, config.roles['explained_inactive']) and not has_role(after,
+                                                                                            config.roles['person']):
+                    await add_role(after, config.roles['person'])
+
+        # Challenge role changes
+        for role in added_roles:
+            role_info = parse_challenge_role(role)
+            if role_info:
+                emoji_map = {
+                    '🟢': '<:yes:1454978155222663278>',
+                    '⭐': '<:star_completion:1453452694592159925>',
+                    '☄️': '<:star_pure_completion:1453452636618752214>'
+                }
+                emoji = emoji_map.get(role_info['tier_emoji'], '<:yes:1454978155222663278>')
+                await general.send(bot,
+                                   f'{emoji} {after.mention} completed **{role_info["name"]}** ({role_info["points"]} pts)')
+                await update_leaderboard_message(bot, after.guild)
+
+        for role in removed_roles:
+            role_info = parse_challenge_role(role)
+            if role_info:
+                await general.send(bot,
+                                   f'<:no:1454950318042255410> {after.mention}\'s **{role_info["name"]}** completion was taken')
+                await update_leaderboard_message(bot, after.guild)
+
+        # Existing role update logic
         for role in added_roles:
             if role.id == config.roles['mod']:
                 await general.send(bot, config.message('promotion', mention=after.mention))
@@ -206,27 +266,10 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('new_leader', mention=after.mention))
             if role.id == config.roles['inactive']:
                 await general.send(bot, config.message('inactive', mention=after.mention))
-
+            if role.id == config.roles['explained_inactive']:
+                await general.send(bot, config.message('explained_inactive', mention=after.mention))
             if role.id == config.roles['spoiler']:
                 await general.send(bot, config.message('spoiler_add', mention=after.mention), 'spoiler')
-
-            if role.id == config.roles['completion_tbs']:
-                await general.send(bot, config.message('completion_tbs', mention=after.mention))
-            if role.id == config.roles['completion_ahp']:
-                await general.send(bot, config.message('completion_ahp', mention=after.mention))
-            if role.id == config.roles['completion_star']:
-                await general.send(bot, config.message('completion_star', mention=after.mention))
-            if role.id == config.roles['completion_pdo+']:
-                await general.send(bot, config.message('completion_dv', mention=after.mention))
-            if role.id == config.roles['completion_tcs']:
-                await general.send(bot, config.message('completion_ch_tcs', mention=after.mention))
-            if role.id == config.roles['completion_gor']:
-                await general.send(bot, config.message('completion_ch_gor', mention=after.mention))
-            if role.id == config.roles['completion_pdo']:
-                await general.send(bot, config.message('completion_ch_pdo', mention=after.mention))
-            if role.id == config.roles['completion_nn']:
-                await general.send(bot, config.message('completion_ch_nn', mention=after.mention))
-
             if role.id in config.roles['category:badges']['other']:
                 await general.remove_role(after, config.roles['category:badges']['none'])
             if role.id in config.roles['category:misc']['other']:
@@ -242,7 +285,6 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('newbie', mention=after.mention))
             if role.id == config.roles['inactive']:
                 await general.send(bot, config.message('inactive_revoke', mention=after.mention))
-
             if role.id == config.roles['spoiler']:
                 await general.send(bot, config.message('spoiler_remove', mention=after.mention), 'spoiler')
 
@@ -255,7 +297,6 @@ async def on_member_update(before, after):
         old = before.nick if before.nick else before.display_name
         new = after.nick if after.nick else after.display_name
         await general.send(bot, config.message('name_change', mention=after.mention, old_name=old, new_name=new))
-
 
 @bot.event
 async def on_member_join(member):
