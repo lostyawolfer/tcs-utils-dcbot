@@ -14,12 +14,17 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 ################################################################
 
-version = 'v3.1.4'
+version = 'v3.2.0'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- idk i didnt come up with a changelog
+- bot making you go unavailable no longer sucks
+    - it now bases its checks also around you going in & out of vc
+    - also checks if you are in vc currently, if you are it lets you be available
+    - now only checks for ppl who weren't active for 2 hours not 1
+    - now it shows clearly that it's the bot that made the decision
+    - also the messages shouldn't be doubled now (only the "bot unavailabled" will show up, not both that one and "is no longer available"
 """
 
 ################################################################
@@ -1068,10 +1073,11 @@ async def unavailable(ctx, member: discord.Member):
     channel = bot.get_channel(config.channels['availability'])
     msg = await channel.fetch_message(config.channels['availability_message'])
 
-    await msg.remove_reaction(discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), member)
-
-    return await general.send(bot, config.message('unavailable_auto', name=member.mention,
-                       available_count=f"{general.emojify(str(await activity.count_available(bot)), 'b')}"))
+    await remove_role(member, config.roles['availability'])
+    await msg.remove_reaction(
+        discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), member)
+    await general.send(bot, config.message('unavailable_auto', name=member.mention,
+                                           available_count=f"{general.emojify(str(await activity.count_available(bot)), 'b')}"))
 
 
 async def remove_availability(member):

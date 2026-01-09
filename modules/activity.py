@@ -207,17 +207,22 @@ async def check_inactivity(bot):
         if all(v['last_message'] and v['last_bot_mention'] for v in members_data.values()):
             break
 
+    await general.update_status_checking(bot, '🛌', 100)
+
     now = discord.utils.utcnow()
-    seven_days_ago = now.timestamp() - 7 * 24 * 60 * 60
+    six_days_ago = now.timestamp() - 6 * 24 * 60 * 60
 
     m: discord.Member
     d: dict
     for m, d in members_data.items():
-        # Skip if they have explained inactivity
+        if has_role(m, config.roles['inactive']):
+            continue
+
         if has_role(m, config.roles['explained_inactive']):
             await add_role(m, config.roles['inactive'])
             await remove_role(m, config.roles['person'])
             continue
+
 
         last_msg_ts = (
             d['last_message'].created_at.timestamp() if d['last_message'] else None
@@ -232,8 +237,8 @@ async def check_inactivity(bot):
                 not last_msg_ts
                 and not last_mention_ts
         ) or (
-                (last_msg_ts and last_msg_ts < seven_days_ago)
-                and (last_mention_ts and last_mention_ts < seven_days_ago)
+                (last_msg_ts and last_msg_ts < six_days_ago)
+                and (last_mention_ts and last_mention_ts < six_days_ago)
         ):
             await add_role(m, config.roles['inactive'])
             await remove_role(m, config.roles['person'])
@@ -256,7 +261,7 @@ async def check_availability(bot):
     async for msg in chat_channel.history(limit=1250):
         checked_msg += 1
 
-        if checked_msg % 250 == 0:
+        if checked_msg % 208 == 0:
             await general.update_status_checking(bot, '🔵', round(checked_msg / 1250 * 100, 1))
 
         for member, data in members_data.items():
@@ -272,8 +277,10 @@ async def check_availability(bot):
         if all(v['last_message'] and v['last_bot_mention'] for v in members_data.values()):
             break
 
+    await general.update_status_checking(bot, '🔵', 100)
+
     now = discord.utils.utcnow()
-    one_hour_ago = now.timestamp() - 1 * 60 * 60
+    two_hours_ago = now.timestamp() - 2 * 60 * 60
     availability_role = bot.get_guild(config.TARGET_GUILD).get_role(config.roles['available'])
 
     m: discord.Member
@@ -281,6 +288,10 @@ async def check_availability(bot):
     for m, d in members_data.items():
         if availability_role not in m.roles:
             continue
+
+        if m.voice and m.voice.channel:
+            continue
+
         last_msg_ts = (
             d['last_message'].created_at.timestamp() if d['last_message'] else None
         )
@@ -294,16 +305,16 @@ async def check_availability(bot):
                 not last_msg_ts
                 and not last_mention_ts
         ) or (
-                (last_msg_ts and last_msg_ts < one_hour_ago)
-                and (last_mention_ts and last_mention_ts < one_hour_ago)
+                (last_msg_ts and last_msg_ts < two_hours_ago)
+                and (last_mention_ts and last_mention_ts < two_hours_ago)
         ):
             channel = bot.get_channel(config.channels['availability'])
             msg = await channel.fetch_message(config.channels['availability_message'])
 
+            await remove_role(m, config.roles['availability'])
             await msg.remove_reaction(
                 discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), m)
-
-            await general.send(bot, config.message('unavailable_auto', name=m.mention,
+            await general.send(bot, config.message('unavailable_auto_bot', name=m.mention,
                                                    available_count=f"{general.emojify(str(await count_available(bot)), 'b')}"))
 
     await general.update_status(bot, status=discord.Status.online)
