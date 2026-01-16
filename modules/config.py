@@ -43,6 +43,7 @@ roles = {
         "other": [1442212989351628810, 1439783181199872120, 1439831984695148544, 1429256434323034235,
                   1442596622013038704, 1442596750576717905, 1442623000452005948]
     },
+
     "bot": 1442086763161194597,
     "leader": 1426973394099896507,
     "available": 1434629510031999269,
@@ -54,6 +55,9 @@ roles = {
     "in_vc_2": 1444027810594295908,
     "in_vc_2_leader": 1444027828898238605,
     "available_not_in_vc_2": 1444027740352155688,
+    "in_vc_not_available": 1461550216330219561,
+    "in_vc_2_not_available": 1461550220209819841,
+
     "birthday": 1439339439762444552,
     "inactive": 1434659281822679232,
     "explained_inactive": 1444665652450169036,
@@ -199,7 +203,7 @@ _messages = {
         f"{emoji['join']} let's hope {{mention}} has it all Figured out"
     ],
     "join_bot": [
-        f"{emoji['app_join']} someone added a clanker who's called {{mention}}",
+        f"{emoji['app_join']} someone added a clanker who goes by {{mention}}",
         f"{emoji['app_join']} i think {{mention}} just hacked us",
         f"{emoji['app_join']} {{mention}} computed its way in"
     ],
@@ -207,8 +211,9 @@ _messages = {
         f"{emoji['leave']} {{mention}} couldn't handle The Backdoor any longer...",
         f"{emoji['leave']} {{mention}} disconnected. Please check your internet connection and try again. (Error Code: 277)",
         f"{emoji['leave']} {{mention}} ran out of crucifixes, I guess...",
-        f"{emoji['leave']} {{mention}} decided to ragequit",
-        f"{emoji['leave']} {{mention}} saw the light. it was outside. Outside this challenge. they're happier now"
+        f"{emoji['leave']} {{mention}} ragequit",
+        f"{emoji['leave']} {{mention}} saw the light. it was outside. outside this server. they're happier now",
+        f"{emoji['leave']} well off {{mention}} goes ig"
     ],
     "kick": [
         f"{emoji['kick']} {{mention}} was kicked from this experience (Error Code: 267)",
@@ -221,9 +226,9 @@ _messages = {
         f"{emoji['ban']} {{mention}} got figured out. by an admin."
     ],
     "kick_bot": [
-        f"{emoji['app_leave']} digital termination detected: Bot {{mention}} was kicked",
-        f"{emoji['app_leave']} error 403: bot {{mention}} was forcibly removed",
-        f"{emoji['app_leave']} {{mention}} was disconnected by administrator action"
+        f"{emoji['app_leave']} well off {{mention}} goes ig",
+        f"{emoji['app_leave']} bot {{mention}} was removed",
+        f"{emoji['app_leave']} {{mention}} got disconnected"
     ],
     "spoiler_add": [f"{emoji['join']} {{mention}} joined the spoilers channel"],
     "spoiler_remove": [f"{emoji['kick']} {{mention}} is no longer in the spoilers channel"],

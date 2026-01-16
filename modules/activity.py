@@ -7,9 +7,10 @@ from modules.general import has_role, send, add_role, remove_role, count_availab
 
 async def voice_check(bot: commands.Bot, member: discord.Member) -> None:
     async def check(vc: str, vc_role: str, vc_leader_role: str, reverse_role: str, join_msg_id: str, leave_msg_id: str,
-                    color: str = 'g'):
+                    not_available_role: str, color: str = 'g'):
         channel = member.guild.get_channel(config.channels[vc])
         members = await count_in_vc(bot, vc)
+
         if member.voice and member.voice.channel == channel:
             if not has_role(member, config.roles[vc_role]):
                 await send(bot, config.message(join_msg_id, name=member.display_name,
@@ -18,17 +19,24 @@ async def voice_check(bot: commands.Bot, member: discord.Member) -> None:
                 await add_role(member, config.roles[vc_leader_role])
             await add_role(member, config.roles[vc_role])
             await remove_role(member, config.roles[reverse_role])
+            if not has_role(member, config.roles['available']):
+                await add_role(member, config.roles[not_available_role])
+
         else:
             if has_role(member, config.roles[vc_role]):
                 await send(bot, config.message(leave_msg_id, name=member.display_name,
                                                count=f'{emojify(f'{members}', f'{color}')}'))
             await remove_role(member, config.roles[vc_role])
             await remove_role(member, config.roles[vc_leader_role])
+            await remove_role(member, config.roles[not_available_role])
             if has_role(member, config.roles['available']):
                 await add_role(member, config.roles[reverse_role])
 
-    await check('vc', 'in_vc', 'in_vc_leader', 'available_not_in_vc', 'join_vc', 'leave_vc')
-    await check('vc2', 'in_vc_2', 'in_vc_2_leader', 'available_not_in_vc_2', 'join_vc_2', 'leave_vc_2', 'p')
+    await check('vc', 'in_vc', 'in_vc_leader', 'available_not_in_vc',
+                'join_vc', 'leave_vc', 'in_vc_not_available')
+
+    await check('vc2', 'in_vc_2', 'in_vc_2_leader', 'available_not_in_vc_2',
+                'join_vc_2', 'leave_vc_2', 'in_vc_not_available_2', 'p')
 
 
 async def add_availability(bot: commands.Bot, member: discord.Member) -> None:

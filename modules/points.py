@@ -1,7 +1,6 @@
 import re
 import discord
 from typing import Optional, List, Tuple, Dict
-from collections import defaultdict
 
 
 def parse_challenge_role(role: discord.Role) -> Optional[dict]:
@@ -9,37 +8,30 @@ def parse_challenge_role(role: discord.Role) -> Optional[dict]:
     if not role.name.startswith('🏆'):
         return None
 
-    # Pattern: 🏆<tier_emoji> <name> /+<points>/
+    # pattern: 🏆<tier_emoji> <name> /+<points>/
     pattern = r'^🏆([🟢⭐☄️])\s+(.+?)\s+/\+(\d+)/$'
     match = re.match(pattern, role.name)
-
     if not match:
         return None
 
     tier_emoji, name, points = match.groups()
-
     return {
         'tier_emoji': tier_emoji,
         'name': name,
         'points': int(points),
-        'role_id': role.id
+        'role': role.id
     }
 
 
 def calculate_points(member: discord.Member) -> tuple[int, List[int]]:
-    """Calculate total points and return list of challenge role IDs."""
     total = 0
     challenge_roles = []
-
     for role in member.roles:
         role_info = parse_challenge_role(role)
         if role_info:
             total += role_info['points']
             challenge_roles.append((role_info['points'], role.id))
-
-    # Sort by points (descending)
     challenge_roles.sort(reverse=True, key=lambda x: x[0])
-
     return total, [role_id for _, role_id in challenge_roles]
 
 

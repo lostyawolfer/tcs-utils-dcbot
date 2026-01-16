@@ -14,17 +14,12 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 ################################################################
 
-version = 'v3.2.0'
+version = 'v3.2.1'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- bot making you go unavailable no longer sucks
-    - it now bases its checks also around you going in & out of vc
-    - also checks if you are in vc currently, if you are it lets you be available
-    - now only checks for ppl who weren't active for 2 hours not 1
-    - now it shows clearly that it's the bot that made the decision
-    - also the messages shouldn't be doubled now (only the "bot unavailabled" will show up, not both that one and "is no longer available"
+- idk
 """
 
 ################################################################
