@@ -622,11 +622,11 @@ async def on_member_update(before, after):
             role_info = parse_challenge_role(role)
             if role_info:
                 emoji_map = {
-                    '🟢': '<:yes:1454978155222663278>',
+                    '🟢': '<:yes:1463357188964618413>',
                     '⭐': '<:star_completion:1453452694592159925>',
                     '☄️': '<:star_pure_completion:1453452636618752214>'
                 }
-                emoji = emoji_map.get(role_info['tier_emoji'], '<:yes:1454978155222663278>')
+                emoji = emoji_map.get(role_info['tier_emoji'], '<:yes:1463357188964618413>')
                 await general.send(bot,
                                    f'{emoji} {after.mention} completed **{role_info["name"]}** ({role_info["points"]} pts)')
                 await update_leaderboard_message(bot, after.guild)
