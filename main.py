@@ -14,12 +14,12 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 ################################################################
 
-version = 'v3.2.1'
+version = 'v3.3.0'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- idk
+- added .points, .pts, and .stats commands
 """
 
 ################################################################
@@ -574,25 +574,19 @@ async def stat_checker(ctx, member: discord.Member = None):
     await ctx.send(response, allowed_mentions=discord.AllowedMentions.none())
 
 
-# @bot.command()
-# @general.try_bot_perms
-# async def points(ctx, member: discord.Member = None):
-#     await stat_checker(ctx, member)
-#
-# @bot.command()
-# @general.try_bot_perms
-# async def pts(ctx, member: discord.Member = None):
-#     await stat_checker(ctx, member)
-#
-# @bot.command()
-# @general.try_bot_perms
-# async def stats(ctx, member: discord.Member = None):
-#     await stat_checker(ctx, member)
+@bot.command()
+@general.try_bot_perms
+async def points(ctx, member: discord.Member = None):
+    await stat_checker(ctx, member)
 
 @bot.command()
 @general.try_bot_perms
-@general.has_perms('owner')
 async def pts(ctx, member: discord.Member = None):
+    await stat_checker(ctx, member)
+
+@bot.command()
+@general.try_bot_perms
+async def stats(ctx, member: discord.Member = None):
     await stat_checker(ctx, member)
 
 
