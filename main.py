@@ -14,12 +14,12 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 ################################################################
 
-version = 'v3.3.0'
+version = 'v3.3.1'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- added .points, .pts, and .stats commands
+- fix .pts leaderboard ranking
 """
 
 ################################################################

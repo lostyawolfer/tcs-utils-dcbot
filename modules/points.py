@@ -51,25 +51,18 @@ def get_leaderboard(guild: discord.Guild) -> List[Tuple[discord.Member, int]]:
     return leaderboard
 
 
-def get_ranked_leaderboard(guild: discord.Guild) -> List[Tuple[int, int, List[discord.Member]]]:
-    """
-    Get leaderboard with ranks, handling ties.
-    Returns: A list of tuples (rank, points, [members_with_these_points])
-    """
+def get_ranked_leaderboard(guild: discord.Guild) -> list[tuple[int, int, list[discord.Member]]]:
     leaderboard = get_leaderboard(guild)
 
-    ranked_entries: List[Tuple[int, int, List[discord.Member]]] = []
-    current_rank_value = 0  # This will track the actual rank number to assign
-    previous_points = -1  # Sentinel value, assuming points are non-negative
+    ranked_entries: list[tuple[int, int, list[discord.Member]]] = []
+    previous_points = None
+    unique_rank = 0
 
-    for i, (member, points) in enumerate(leaderboard):
-        # Determine the rank for the current points
-        if points < previous_points or previous_points == -1:
-            current_rank_value = i + 1  # New rank
-            # Ensure it's appended as a new entry with its own list of members
-            ranked_entries.append((current_rank_value, points, [member]))
-        else:  # Tie with the previous entry
-            # Append member to the last entry's list of members
+    for member, points in leaderboard:
+        if points != previous_points:
+            unique_rank += 1
+            ranked_entries.append((unique_rank, points, [member]))
+        else:
             ranked_entries[-1][2].append(member)
         previous_points = points
 
