@@ -79,7 +79,7 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
 
     ranked_leaderboard = get_ranked_leaderboard(guild)
 
-    lines = ['# THE LEADERBOARD', '\n** **']
+    lines = ['# __THE LEADERBOARD__', '\n-# ** **']
 
     # Iterate through the top 5 unique ranks
     for rank_idx, (actual_rank, points, members) in enumerate(ranked_leaderboard):
@@ -95,13 +95,13 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
         # Use markdown for headings for the top 3 visible ranks (1st, 2nd, 3rd)
         display_rank = rank_idx + 1
         if display_rank == 1:
-            lines.append(f'# {display_rank}. `{points} pts` {member_mentions}')
+            lines.append(f'# :first_place: `{points:2} pts` {member_mentions}')
         elif display_rank == 2:
-            lines.append(f'## {display_rank}. `{points} pts` {member_mentions}')
+            lines.append(f'## :second_place: {display_rank}. `{points:2} pts` {member_mentions}')
         elif display_rank == 3:
-            lines.append(f'### {display_rank}. `{points} pts` {member_mentions}')
+            lines.append(f'### :third_place: {display_rank}. `{points:2} pts` {member_mentions}')
         else:
-            lines.append(f'{display_rank}. `{points} pts` {member_mentions}')
+            lines.append(f'{display_rank}. `{points:2} pts` {member_mentions}')
 
     if not lines:
         lines.append('no one on the leaderboard yet!')
