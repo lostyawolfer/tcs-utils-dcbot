@@ -97,9 +97,9 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
         if display_rank == 1:
             lines.append(f'# :first_place: `{points:2} pts` {member_mentions}')
         elif display_rank == 2:
-            lines.append(f'## :second_place: {display_rank}. `{points:2} pts` {member_mentions}')
+            lines.append(f'## :second_place: `{points:2} pts` {member_mentions}')
         elif display_rank == 3:
-            lines.append(f'### :third_place: {display_rank}. `{points:2} pts` {member_mentions}')
+            lines.append(f'### :third_place: `{points:2} pts` {member_mentions}')
         else:
             lines.append(f'{display_rank}. `{points:2} pts` {member_mentions}')
 
