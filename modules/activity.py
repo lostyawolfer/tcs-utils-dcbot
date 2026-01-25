@@ -38,6 +38,9 @@ async def voice_check(bot: commands.Bot, member: discord.Member) -> None:
     await check('vc2', 'in_vc_2', 'in_vc_2_leader', 'available_not_in_vc_2',
                 'join_vc_2', 'leave_vc_2', 'in_vc_2_not_available', 'p')
 
+    await check('vc3', 'in_vc_3', 'in_vc_3_leader', 'available_not_in_vc_3',
+                'join_vc_3', 'leave_vc_3', 'in_vc_3_not_available', 'r')
+
 
 async def add_availability(bot: commands.Bot, member: discord.Member) -> None:
     if not has_role(member, config.roles['available']):
@@ -61,6 +64,11 @@ async def add_availability(bot: commands.Bot, member: discord.Member) -> None:
         await remove_role(member, config.roles['available_not_in_vc_2'])
     else:
         await add_role(member, config.roles['available_not_in_vc_2'])
+
+    if has_role(member, config.roles['in_vc_3']):
+        await remove_role(member, config.roles['available_not_in_vc_3'])
+    else:
+        await add_role(member, config.roles['available_not_in_vc_3'])
 
     await add_role(member, config.roles['available'])
     await remove_role(member, config.roles['not_available'])
@@ -86,6 +94,7 @@ async def remove_availability(bot: commands.Bot, member: discord.Member) -> None
     await add_role(member, config.roles['not_available'])
     await remove_role(member, config.roles['available_not_in_vc'])
     await remove_role(member, config.roles['available_not_in_vc_2'])
+    await remove_role(member, config.roles['available_not_in_vc_3'])
 
     if available_people == 0:
         msg = await member.guild.get_channel(config.channels['availability']).fetch_message(
@@ -127,18 +136,11 @@ async def enforce_person_inactive_exclusivity(member: discord.Member) -> None:
     """Ensure person and inactive roles are mutually exclusive."""
     has_person = has_role(member, config.roles['person'])
     has_inactive = has_role(member, config.roles['inactive'])
-    has_explained = has_role(member, config.roles['explained_inactive'])
 
-    # If has person, remove inactive
     if has_person and has_inactive:
         await remove_role(member, config.roles['person'])
 
-    # If has inactive or explained inactive, remove person
-    if (has_inactive or has_explained) and has_person:
-        await remove_role(member, config.roles['person'])
-
-    # If has neither inactive nor explained inactive, should have person
-    if not has_inactive and not has_explained and not has_person:
+    if not has_inactive and not has_person:
         await add_role(member, config.roles['person'])
 
 

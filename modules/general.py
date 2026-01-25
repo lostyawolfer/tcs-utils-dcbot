@@ -79,36 +79,29 @@ async def set_status(bot: commands.Bot, text: str, *, status: discord.Status = N
 async def get_status_text(bot: commands.Bot, short: bool = False) -> str:
     vc_count = await count_in_vc(bot, 'vc')
     vc_2_count = await count_in_vc(bot, 'vc2')
+    vc_3_count = await count_in_vc(bot, 'vc3')
     available_count = await count_available(bot)
     members = await count_filtered_members(bot)
 
-    text_members_long = f'{members} members'
-    text_members_short = f'{members} 👥'
+    text_members = f'{members} 👥'
 
-    text_available_long = f'{available_count} available'
-    text_available_short = f'{available_count} avail.'
+    text_in_vc = ''
+    if vc_count or vc_2_count or vc_3_count:
+        text_in_vc = ' / vc'
+        if vc_count:
+            text_in_vc += f' - {vc_count} 🟢'
+        if vc_2_count:
+            text_in_vc += f' - {vc_2_count} 🟣'
+        if vc_3_count:
+            text_in_vc += f' - {vc_3_count} 🔴'
 
-    text_in_vc1 = f'{vc_count} in vc 🟢'
-    text_in_vc2 = f'{vc_2_count} in vc 🟣'
-    text_in_both_vc = f'vc - {vc_count} 🟢 - {vc_2_count} 🟣'
+    text_available = ''
+    if available_count:
+        text_available = f' / {available_count} available'
+        if vc_count or vc_2_count or vc_3_count:
+            text_available = f' / {available_count} av.'
 
-    status = text_members_long
-
-    if available_count and not short:
-        status = f'{text_members_short} // {text_available_long}'
-    elif available_count and short:
-        status = f'{text_members_short} // {text_available_short}'
-
-    if not vc_count and not vc_2_count:
-        ...
-
-    elif vc_count and not vc_2_count:
-        status = f'{status} / {text_in_vc1}'
-    elif not vc_count and vc_2_count:
-        status = f'{status} / {text_in_vc2}'
-
-    else:
-        status = f'{text_members_short} // {text_available_short} / {text_in_both_vc}'
+    status = f'{text_members}{text_available}{text_in_vc}'
 
     return status
 

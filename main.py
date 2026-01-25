@@ -1,7 +1,4 @@
 import asyncio
-import json
-import os
-from datetime import datetime, timedelta, timezone
 
 import discord
 from discord.ext import commands, tasks
@@ -14,12 +11,19 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 ################################################################
 
-version = 'v3.3.3'
+version = 'v3.4.0'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- redesign leaderboard a bit and FIX IT
+- added vc 3 support
+- vc role check is now more optimized
+- when someone moves between vcs instead of leaving/joining it groups messages into a single one 
+- small bot status redesign
+- "ps" now only triggers when message is exactly "ps" and not contains it
+- fully deleted best runs command functionality (i'm not fixing it and there's not really a need to)
+
+let's just fucking hope this thing just works and doesn't break everything :pray:
 """
 
 ################################################################
@@ -33,64 +37,6 @@ intents.guilds = True
 intents.message_content = True
 bot = commands.Bot(command_prefix='.', intents=intents, help_command=None)
 
-# Spoiler season tracking
-SPOILER_STATE_FILE = 'spoiler_state.json'
-spoiler_state = {
-    'active': False,
-    'until': None,
-    'emoji': None,
-    'event_name': None,
-    'access_message_id': None
-}
-
-
-def load_spoiler_state():
-    global spoiler_state
-    if os.path.exists(SPOILER_STATE_FILE):
-        with open(SPOILER_STATE_FILE, 'r') as f:
-            spoiler_state = json.load(f)
-
-
-def save_spoiler_state():
-    with open(SPOILER_STATE_FILE, 'w') as f:
-        json.dump(spoiler_state, f)
-
-
-@tasks.loop(minutes=5)
-async def check_spoiler_season():
-    if spoiler_state['active'] and spoiler_state['until']:
-        until_dt = datetime.fromisoformat(spoiler_state['until']) # type: ignore
-        if datetime.now(timezone.utc) >= until_dt:
-            await end_spoiler_season()
-
-
-async def end_spoiler_season():
-    guild = bot.get_guild(config.TARGET_GUILD)
-    spoiler_role = guild.get_role(config.channels['spoiler_role'])
-    spoiler_channel = guild.get_channel(config.channels['spoiler'])
-    access_channel = guild.get_channel(config.channels['spoiler_access'])
-
-    # Remove reactions if message exists
-    if spoiler_state['access_message_id']:
-        try:
-            msg = await access_channel.fetch_message(spoiler_state['access_message_id'])
-            await msg.clear_reactions()
-        except Exception as e:
-            pass
-
-    # Hide access channel
-    await access_channel.set_permissions(guild.default_role, view_channel=False)
-
-    # Send message in spoilers channel
-    await spoiler_channel.send('# spoiler window ended!')
-
-    # Update state
-    spoiler_state['active'] = False
-    spoiler_state['until'] = None
-    spoiler_state['emoji'] = None
-    spoiler_state['event_name'] = None
-    spoiler_state['access_message_id'] = None
-    save_spoiler_state()
 
 
 @tasks.loop(hours=6)
@@ -106,7 +52,6 @@ async def availability_checker():
 
 @bot.event
 async def on_ready():
-    load_spoiler_state()
     await general.send(bot, f':radio_button: bot connected... {version}')
     await general.set_status(bot, 'starting up...', status=discord.Status.idle) # type: ignore
     await bot.wait_until_ready()
@@ -121,7 +66,6 @@ async def start_checking(ctx):
     if member_checker.is_running():
         return await ctx.send("member checking is already running")
     member_checker.start()
-    check_spoiler_season.start()
     availability_checker.start()
     return await ctx.send("started member checking loop :white_check_mark:")
 
@@ -133,7 +77,6 @@ async def stop_checking(ctx):
     if not member_checker.is_running():
         return await ctx.send("member checking is not running")
     member_checker.cancel()
-    check_spoiler_season.cancel()
     availability_checker.cancel()
     await general.update_status(bot, status=discord.Status.online)
     return await ctx.send("stopped member checking loop :white_check_mark:")
@@ -162,9 +105,70 @@ async def test(ctx):
 async def on_voice_state_update(member, before, after):
     if not config.check_guild(member.guild.id) or (member and member.bot):
         return
-    await activity.voice_check(bot, member)
 
+    vc1 = member.guild.get_channel(config.channels['vc'])
+    vc2 = member.guild.get_channel(config.channels['vc2'])
+    vc3 = member.guild.get_channel(config.channels['vc3'])
+    messages = []
 
+    channel_info = {
+        vc1: {
+            'role': member.guild.get_role(config.roles['in_vc']),
+            'leader': member.guild.get_role(config.roles['leader_in_vc']),
+            'available': member.guild.get_role(config.roles['available_not_in_vc']),
+            'join_msg': 'join_vc',
+            'leave_msg': 'leave_vc',
+            'color': 'g'
+        },
+        vc2: {
+            'role': member.guild.get_role(config.roles['in_vc_2']),
+            'leader': member.guild.get_role(config.roles['leader_in_vc_2']),
+            'available': member.guild.get_role(config.roles['available_not_in_vc_2']),
+            'join_msg': 'join_vc_2',
+            'leave_msg': 'leave_vc_2',
+            'color': 'p'
+        },
+        vc3: {
+            'role': member.guild.get_role(config.roles['in_vc_3']),
+            'leader': member.guild.get_role(config.roles['leader_in_vc_3']),
+            'available': member.guild.get_role(config.roles['available_not_in_vc_3']),
+            'join_msg': 'join_vc_3',
+            'leave_msg': 'leave_vc_3',
+            'color': 'r'
+        },
+    }
+
+    roles_to_add = []
+    roles_to_remove = []
+
+    # leaving
+    if before.channel in channel_info:
+        info = channel_info[before.channel]
+        if before.channel != after.channel:
+            messages.append(config.message(
+                info['leave_msg'],
+                member=member.mention,
+                count=general.emojify(str(len(before.channel.members)), info['color'])
+            ))
+            roles_to_remove.append(info['role'])
+            if info['leader'] in member.roles:
+                roles_to_remove.append(info['leader'])
+            if member.guild.get_role(config.roles['available']) in member.roles and not info['available'] in member.roles:
+                roles_to_add.append(info['available'])
+
+    # joining
+    if after.channel in channel_info:
+        info = channel_info[after.channel]
+        if before.channel != after.channel:
+            messages.append(config.message(
+                info['join_msg'],
+                member=member.mention,
+                count=general.emojify(str(len(after.channel.members)), info['color'])
+            ))
+            roles_to_add.append(info['role'])
+            if member.guild.get_role(config.roles['leader']) in member.roles:
+                roles_to_add.append(info['leader'])
+            roles_to_remove.append(info['available'])
 
 
 # Reaction Roles - easy hot-swap
@@ -379,7 +383,7 @@ async def on_message(message: discord.Message):
         return
 
     # ps link
-    if '<#1426974154556702720>' in message.content or 'ps' in re.findall(r"\b\w+\b", message.content.lower()):
+    if '<#1426974154556702720>' in message.content or message.content.lower() == 'ps':
         await message.channel.send(
             f'link: **https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server**',
             suppress_embeds=True)
@@ -437,107 +441,6 @@ async def on_message(message: discord.Message):
         await message.channel.send(response)
 
     await bot.process_commands(message)
-
-
-@bot.command()
-@general.try_bot_perms
-@general.has_perms('owner')
-async def spoiler(ctx, action: str = None, *args):
-    if not action:
-        return await ctx.send(
-            'usage: `.spoiler start <emoji> <event-name> [until-timestamp]` / `.spoiler cancel` / `.spoiler rename <emoji> <new_name>`')
-
-    guild = ctx.guild
-    spoiler_channel = guild.get_channel(config.channels['spoiler'])
-    access_channel = guild.get_channel(config.channels['spoiler_access'])
-    chat_channel = guild.get_channel(config.channels['chat'])
-
-    if action == 'start':
-        if spoiler_state['active']:
-            return await ctx.send('spoiler season is already active')
-
-        if len(args) < 2:
-            return await ctx.send('usage: `.spoiler start <emoji> <event-name> [until-timestamp]`')
-
-        emoji = args[0]
-        event_name = args[1]
-
-        # Calculate until timestamp
-        if len(args) >= 3:
-            try:
-                until_ts = int(args[2])
-                until_dt = datetime.fromtimestamp(until_ts, tz=timezone.utc)
-            except:
-                return await ctx.send('invalid timestamp')
-        else:
-            until_dt = datetime.now(timezone.utc) + timedelta(hours=48)
-            until_dt = until_dt.replace(minute=0, second=0, microsecond=0)
-
-        # Make access channel visible
-        await access_channel.set_permissions(guild.default_role, view_channel=True)
-
-        # Rename spoiler channel
-        new_channel_name = f'{emoji}┃{event_name}-spoilers'
-        await spoiler_channel.edit(name=new_channel_name)
-
-        # Delete existing messages in access channel
-        async for message in access_channel.history(limit=100):
-            await message.delete()
-
-        # Send access message
-        until_unix = int(until_dt.timestamp())
-        access_msg = await access_channel.send(
-            f'# click the reaction below if you wish to gain access to `{spoiler_channel.name}` channel\n\n'
-            f'- please avoid talking about the update or event in the main {chat_channel.mention}\n'
-            f'  - if spoilers unavoidable by discussed topic use spoiler tags (||like this||) or spoiler blurs for images\n'
-            f'- use {spoiler_channel.mention} (the channel you can access here) instead to talk about recent update\n'
-            f'- this rule lasts for 48h after initial update/event release (will be removed <t:{until_unix}:R>)\n\n'
-            f'ACCESS GRANT IS NOT UNDOABLE.\n'
-            f'-# (it is but you\'ll have to ping me; you can\'t do it by yourself)\n'
-            f'**IF YOU WISH TO NOT GET SPOILED ABOUT THE UPDATE OR EVENT, __DON\'T CLICK THIS__.**'
-        )
-        await access_msg.add_reaction('⚠️')
-
-        # Send message in spoilers channel
-        await spoiler_channel.send(f'# {event_name} started!')
-
-        # Update state
-        spoiler_state['active'] = True
-        spoiler_state['until'] = until_dt.isoformat() # type: ignore
-        spoiler_state['emoji'] = emoji
-        spoiler_state['event_name'] = event_name
-        spoiler_state['access_message_id'] = access_msg.id
-        save_spoiler_state()
-
-        await ctx.send(f'spoiler season started! ends <t:{until_unix}:R>')
-
-    elif action == 'cancel':
-        if not spoiler_state['active']:
-            return await ctx.send('no active spoiler season')
-
-        await end_spoiler_season()
-        await ctx.send('spoiler season cancelled')
-
-    elif action == 'rename':
-        if len(args) < 2:
-            return await ctx.send('usage: `.spoiler rename <emoji> <new_name>`')
-
-        emoji = args[0]
-        event_name = args[1]
-        new_channel_name = f'{emoji}┃{event_name}-spoilers'
-        await spoiler_channel.edit(name=new_channel_name)
-
-        if spoiler_state['active']:
-            spoiler_state['emoji'] = emoji
-            spoiler_state['event_name'] = event_name
-            save_spoiler_state()
-
-        await ctx.send(f'renamed to `{new_channel_name}`')
-
-    else:
-        await ctx.send('invalid action')
-
-
 
 
 async def stat_checker(ctx, member: discord.Member = None):
@@ -653,6 +556,8 @@ async def on_member_update(before, after):
                 await general.remove_role(after, config.roles['category:badges']['none'])
             if role.id in config.roles['category:misc']['other']:
                 await general.remove_role(after, config.roles['category:misc']['none'])
+            if role.id == config.roles['inactive']:
+                await general.remove_role(after, config.roles['person'])
 
         for role in removed_roles:
             if role.id == config.roles['mod']:
@@ -666,6 +571,8 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('inactive_revoke', mention=after.mention))
             if role.id == config.roles['spoiler']:
                 await general.send(bot, config.message('spoiler_remove', mention=after.mention), 'spoiler')
+            if role.id == config.roles['inactive']:
+                await general.add_role(after, config.roles['person'])
 
         if any(role.id in config.roles['category:badges']['other'] for role in removed_roles):
             await activity.check_role_category(after, 'badges')
