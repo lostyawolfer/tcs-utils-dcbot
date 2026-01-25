@@ -292,7 +292,7 @@ _messages = {
         f"{emoji['join_vc_3']} **{{name}}** joined the third voice channel {{count}}"
     ],
     "leave_vc_3": [
-        f"{emoji['leave_vc_3']} **{{name}}** left the third voice channel {{count}}"
+        f"{emoji['leave_vc']} **{{name}}** left the third voice channel {{count}}"
     ],
     "edit_vc": [f"{emoji['edit_g']} **{{name}}** edited the voice channel's status to be {{text}}"],
     "edit_vc_2": [f"{emoji['edit_p']} **{{name}}** edited the second voice channel's status to be {{text}}"],
