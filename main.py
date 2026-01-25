@@ -57,7 +57,7 @@ async def on_ready():
     await general.set_status(bot, 'starting up...', status=discord.Status.idle) # type: ignore
     await bot.wait_until_ready()
     await general.send(bot, f':ballot_box_with_check: restart complete!')
-    #await general.send(bot, changelog)
+    await general.send(bot, changelog)
 
 @bot.command()
 @general.try_bot_perms
