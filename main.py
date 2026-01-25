@@ -234,7 +234,7 @@ async def remove_availability_auto(member):
     channel = bot.get_channel(config.channels['available'])
     msg = await channel.fetch_message(config.channels['availability_message'])
 
-    await remove_role(member, config.roles['available'])
+    await general.remove_role(member, config.roles['available'])
     await msg.remove_reaction(
         discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), member)
     await general.send(bot, config.message('unavailable_auto', name=member.mention,
@@ -244,9 +244,10 @@ async def remove_availability_auto(member):
 async def on_member_update(before, after):
     if before.roles != after.roles:
         after: discord.Member
+        await asyncio.sleep(1)
         entry = await anext(
             after.guild.audit_logs(limit=1, action=discord.AuditLogAction.member_update), # type: ignore
-            None  # fallback if there are no entries
+            None
         )
         before_roles = set(before.roles)
         after_roles = set(after.roles)
@@ -257,11 +258,11 @@ async def on_member_update(before, after):
             if role.id == config.roles['person']:
                 if not has_role(after, config.roles['inactive']) and not has_role(after,
                                                                                   config.roles['explained_inactive']):
-                    await add_role(after, config.roles['inactive'])
+                    await general.add_role(after, config.roles['inactive'])
             if role.id == config.roles['inactive']:
                 if not has_role(after, config.roles['explained_inactive']) and not has_role(after,
                                                                                             config.roles['person']):
-                    await add_role(after, config.roles['person'])
+                    await general.add_role(after, config.roles['person'])
 
         # Challenge role changes
         for role in added_roles:
@@ -296,7 +297,7 @@ async def on_member_update(before, after):
                     await general.send(bot, config.message('inactive', mention=after.mention))
                 else:
                     await general.send(bot, config.message('inactive_mods', mention=after.mention))
-                await remove_role(after, config.roles['person'])
+                await general.remove_role(after, config.roles['person'])
             if role.id == config.roles['explained_inactive']:
                 await general.send(bot, config.message('explained_inactive', mention=after.mention))
             if role.id == config.roles['spoiler']:
@@ -321,8 +322,8 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('newbie', mention=after.mention))
             if role.id == config.roles['inactive']:
                 await general.send(bot, config.message('inactive_revoke', mention=after.mention))
-                await add_role(after, config.roles['person'])
-                await remove_role(after, config.roles['explained_inactive'])
+                await general.add_role(after, config.roles['person'])
+                await general.remove_role(after, config.roles['explained_inactive'])
             if role.id == config.roles['spoiler']:
                 await general.send(bot, config.message('spoiler_remove', mention=after.mention), 'spoiler')
 
@@ -544,7 +545,7 @@ async def complete(ctx, challenge_role: discord.Role, *members: discord.Member):
         return await ctx.send('that\'s not a challenge role')
 
     for member in members:
-        await add_role(member, challenge_role.id)
+        await general.add_role(member, challenge_role.id)
 
     member_mentions = ', '.join([m.mention for m in members])
     await ctx.send(f'gave {challenge_role.mention} to {member_mentions}')
