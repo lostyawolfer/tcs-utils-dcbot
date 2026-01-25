@@ -44,10 +44,10 @@ async def add_availability(bot: commands.Bot, member: discord.Member) -> None:
     if not has_role(member, config.roles['available']):
         available_people = await count_available(bot)
         if available_people >= 8:
-            await send(bot, config.message('available_ping', name=member.display_name,
+            await send(bot, config.message('available_ping', name=member.mention,
                                            available_count=f'{emojify(f'{available_people}', 'b')}'), pings=AllowedMentions(users=False, roles=True))
         else:
-            await send(bot, config.message('available', name=member.display_name,
+            await send(bot, config.message('available', name=member.mention,
                                            available_count=f'{emojify(f'{available_people}', 'b')}'), pings=AllowedMentions.none())
 
     if has_role(member, config.roles['leader']):
@@ -84,7 +84,7 @@ async def remove_availability(bot: commands.Bot, member: discord.Member) -> None
         #     await send(bot, config.message('unavailable_ping', name=member.display_name,
         #                                    available_count=f'{emojify(f'{available_people}', 'b')}'))
         # else:
-        await send(bot, config.message('unavailable', name=member.display_name,
+        await send(bot, config.message('unavailable', name=member.mention,
                                        available_count=f'{emojify(f'{available_people}', 'b')}'), pings=AllowedMentions.none())
 
     await remove_role(member, config.roles['available'])
