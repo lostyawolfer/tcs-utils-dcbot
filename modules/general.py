@@ -4,10 +4,10 @@ from discord.ext import commands
 from modules import config
 
 
-async def send(bot: commands.Bot, msg: str, where: str = 'chat') -> discord.Message:
+async def send(bot: commands.Bot, msg: str, where: str = 'chat', pings: discord.AllowedMentions = None) -> discord.Message:
     channel = bot.get_channel(config.channels[where])
     if channel:
-        msg = await channel.send(msg)
+        msg = await channel.send(msg, allowed_mentions=pings)
     await update_status(bot)
     return msg
 

@@ -271,7 +271,7 @@ _messages = {
         f"{emoji['unavailable']} **{{name}}** is no longer available {{available_count}} *(we still have 8 tho)*"
     ],
     "unavailable_auto": [
-        f"{emoji['unavailable']} **{{name}}** seemed inactive, so they were marked unavailable by mods {{available_count}}"
+        f"{emoji['unavailable']} **{{name}}** was marked unavailable by mods {{available_count}}"
     ],
     "unavailable_auto_bot": [
         f"{emoji['unavailable']} **{{name}}** was marked unavailable automatically (no activity in past 2 hrs) {{available_count}}"
@@ -325,7 +325,10 @@ _messages = {
         f"{emoji['newbie']} {{mention}} is not a newbie anymore!! please applaud!!"
     ],
     "inactive": [
-        f"{emoji['inactive']} {{mention}} didn't send a single message in chat in the past 7 days, marked inactive"
+        f"{emoji['inactive']} {{mention}} didn't send a single message in chat in the past 7 days so marked inactive automatically"
+    ],
+    "inactive_mods": [
+        f"{emoji['inactive']} mods marked {{mention}} inactive"
     ],
     "inactive_revoke": [
         f"{emoji['inactive_revoke']} {{mention}} is no longer considered inactive!"

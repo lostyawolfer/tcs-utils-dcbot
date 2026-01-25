@@ -1,5 +1,6 @@
 import asyncio
 import discord
+from discord import AllowedMentions
 from discord.ext import commands
 from modules import config, general
 from modules.general import has_role, send, add_role, remove_role, count_available, count_in_vc, emojify
@@ -44,10 +45,10 @@ async def add_availability(bot: commands.Bot, member: discord.Member) -> None:
         available_people = await count_available(bot)
         if available_people >= 8:
             await send(bot, config.message('available_ping', name=member.display_name,
-                                           available_count=f'{emojify(f'{available_people}', 'b')}'))
+                                           available_count=f'{emojify(f'{available_people}', 'b')}'), pings=AllowedMentions(users=False, roles=True))
         else:
             await send(bot, config.message('available', name=member.display_name,
-                                           available_count=f'{emojify(f'{available_people}', 'b')}'))
+                                           available_count=f'{emojify(f'{available_people}', 'b')}'), pings=AllowedMentions.none())
 
     if has_role(member, config.roles['leader']):
         await add_role(member, config.roles['available_leader'])
@@ -79,12 +80,12 @@ async def add_availability(bot: commands.Bot, member: discord.Member) -> None:
 async def remove_availability(bot: commands.Bot, member: discord.Member) -> None:
     available_people = await count_available(bot)
     if has_role(member, config.roles['available']):
-        if available_people >= 8:
-            await send(bot, config.message('unavailable_ping', name=member.display_name,
-                                           available_count=f'{emojify(f'{available_people}', 'b')}'))
-        else:
-            await send(bot, config.message('unavailable', name=member.display_name,
-                                           available_count=f'{emojify(f'{available_people}', 'b')}'))
+        # if available_people >= 8:
+        #     await send(bot, config.message('unavailable_ping', name=member.display_name,
+        #                                    available_count=f'{emojify(f'{available_people}', 'b')}'))
+        # else:
+        await send(bot, config.message('unavailable', name=member.display_name,
+                                       available_count=f'{emojify(f'{available_people}', 'b')}'), pings=AllowedMentions.none())
 
     await remove_role(member, config.roles['available'])
     await remove_role(member, config.roles['available_leader'])
@@ -256,7 +257,6 @@ async def check_inactivity(bot):
 async def check_availability(bot):
     chat_channel = bot.get_channel(config.channels['chat'])
     guild = bot.get_guild(config.TARGET_GUILD)
-    await general.update_status_checking(bot, '🔵', 0.0)
 
     members_data = {
         m: {'last_message': None, 'last_bot_mention': None}
@@ -268,8 +268,6 @@ async def check_availability(bot):
     async for msg in chat_channel.history(limit=1250):
         checked_msg += 1
 
-        if checked_msg % 208 == 0:
-            await general.update_status_checking(bot, '🔵', round(checked_msg / 1250 * 100, 1))
 
         for member, data in members_data.items():
             if not data['last_message'] and msg.author == member:
@@ -284,7 +282,6 @@ async def check_availability(bot):
         if all(v['last_message'] and v['last_bot_mention'] for v in members_data.values()):
             break
 
-    await general.update_status_checking(bot, '🔵', 100)
 
     now = discord.utils.utcnow()
     two_hours_ago = now.timestamp() - 2 * 60 * 60
@@ -318,10 +315,10 @@ async def check_availability(bot):
             channel = bot.get_channel(config.channels['availability'])
             msg = await channel.fetch_message(config.channels['availability_message'])
 
-            await remove_role(m, config.roles['availability'])
+            await remove_role(m, config.roles['available'])
             await msg.remove_reaction(
                 discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), m)
             await general.send(bot, config.message('unavailable_auto_bot', name=m.mention,
                                                    available_count=f"{general.emojify(str(await count_available(bot)), 'b')}"))
 
-    await general.update_status(bot, status=discord.Status.online)
+    await general.update_status(bot)
