@@ -198,11 +198,13 @@ def try_bot_perms(func):
             await func(ctx, *args, **kwargs)
         except discord.Forbidden as e:
             await ctx.send(config.message("bot_doesnt_have_perms"))
-            return await ctx.send(f'<@534097411048603648> fix ur fucking bot\n```{e}```')
+            await ctx.send(f'<@534097411048603648> fix ur fucking bot\n```{e}```')
+            raise e
         except Exception as e:
             await ctx.send(config.message("bot_doesnt_have_perms"))
             print(f"error in try_perm: {e}")
-            return await ctx.send(f'<@534097411048603648> fix ur fucking bot\n```{e}```')
+            await ctx.send(f'<@534097411048603648> fix ur fucking bot\n```{e}```')
+            raise e
     return wrapper
 
 

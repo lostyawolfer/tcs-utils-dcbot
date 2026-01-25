@@ -13,23 +13,24 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 version = 'v3.4.1'
 
-changelog = \
-    f"""
-:tada: **{version} changelog**
-- fixed availability updates
-  - going available & unavailable now shows pings instead of display names just like voice notifications
-    - when there's >=8 it pings the role still
-  - removed "(we still have 8 tho)" part when someone goes inactive and there's still >=8 people
-  - fixed .unavailable command
-  - now removing the available role automatically removes their reaction and cleans up other related roles
-  - fixed automatic availability cleanups
-- fixed and improved inactivity behavior
-  - marking inactive now removes the "person" role automatically
-  - removing inactive now removes "explained inactivity" role and gives "person" back automatically
-  - .inactive command is temporarily (i hope) disabled (not that anyone used it anyway), it could cause some problems because of how it works
-  - there's now different messages for moderators marking someone inactive and bot doing it automatically
-  - there's now a message for when someone's inactivity is explained
-"""
+# changelog = \
+#     f"""
+# :tada: **{version} changelog**
+# - fixed availability updates
+#   - going available & unavailable now shows pings instead of display names just like voice notifications
+#     - when there's >=8 it pings the role still
+#   - removed "(we still have 8 tho)" part when someone goes inactive and there's still >=8 people
+#   - fixed .unavailable command
+#   - now removing the available role automatically removes their reaction and cleans up other related roles
+#   - fixed automatic availability cleanups
+# - fixed and improved inactivity behavior
+#   - marking inactive now removes the "person" role automatically
+#   - removing inactive now removes "explained inactivity" role and gives "person" back automatically
+#   - .inactive command is temporarily (i hope) disabled (not that anyone used it anyway), it could cause some problems because of how it works
+#   - there's now a message for when someone's inactivity is explained
+# - .onemore and .one_more commands are now deleted, instead the bot reacts with the pic as soon as it sees "one more" anywhere in the message
+# """
+changelog = 'not sending changelog because fuck you'
 
 ################################################################
 
@@ -231,24 +232,26 @@ async def on_raw_reaction_remove(payload):
 
 
 async def remove_availability_auto(member):
-    channel = bot.get_channel(config.channels['available'])
+    channel = bot.get_channel(config.channels['availability'])
     msg = await channel.fetch_message(config.channels['availability_message'])
+    reaction_flag = False
+    for reaction in msg.reactions:
+        if reaction.emoji == discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'):
+            async for user in reaction.users():
+                if user == member:
+                    reaction_flag = True
+                    break
 
     await general.remove_role(member, config.roles['available'])
-    await msg.remove_reaction(
-        discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), member)
-    await general.send(bot, config.message('unavailable_auto', name=member.mention,
-                                           available_count=f"{general.emojify(str(await activity.count_available(bot)), 'b')}"))
+    if reaction_flag:
+        await msg.remove_reaction(
+            discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), member)
+        await general.send(bot, config.message('unavailable_auto', name=member.mention,
+                                               available_count=f"{general.emojify(str(await activity.count_available(bot)), 'b')}"))
 
 @bot.event
 async def on_member_update(before, after):
     if before.roles != after.roles:
-        after: discord.Member
-        await asyncio.sleep(1)
-        entry = await anext(
-            after.guild.audit_logs(limit=1, action=discord.AuditLogAction.member_update), # type: ignore
-            None
-        )
         before_roles = set(before.roles)
         after_roles = set(after.roles)
         added_roles = after_roles - before_roles
@@ -293,10 +296,7 @@ async def on_member_update(before, after):
             if role.id == config.roles['leader']:
                 await general.send(bot, config.message('new_leader', mention=after.mention))
             if role.id == config.roles['inactive']:
-                if entry.user == bot.user:
-                    await general.send(bot, config.message('inactive', mention=after.mention))
-                else:
-                    await general.send(bot, config.message('inactive_mods', mention=after.mention))
+                await general.send(bot, config.message('inactive', mention=after.mention))
                 await general.remove_role(after, config.roles['person'])
             if role.id == config.roles['explained_inactive']:
                 await general.send(bot, config.message('explained_inactive', mention=after.mention))
@@ -306,10 +306,6 @@ async def on_member_update(before, after):
                 await general.remove_role(after, config.roles['category:badges']['none'])
             if role.id in config.roles['category:misc']['other']:
                 await general.remove_role(after, config.roles['category:misc']['none'])
-
-            if role.id == config.roles['available']:
-                if entry.user != bot.user:
-                    await general.remove_role(after, config.roles['available'])
 
 
         for role in removed_roles:
@@ -328,8 +324,7 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('spoiler_remove', mention=after.mention), 'spoiler')
 
             if role.id == config.roles['available']:
-                if entry.user != bot.user:
-                    await remove_availability_auto(after)
+                await remove_availability_auto(after)
 
         if any(role.id in config.roles['category:badges']['other'] for role in removed_roles):
             await activity.check_role_category(after, 'badges')
@@ -430,7 +425,15 @@ async def on_message(message: discord.Message):
     # slur check
     if 'nigga' in message.content.lower() or 'nigger' in message.content.lower():
         await message.channel.send(
-            f'[[<@534097411048603648>]] i will personally fix ur fucking skin color if you say that word again')
+            '[[<@534097411048603648>]] i will personally fix ur fucking skin color if you say that word again')
+
+    if 'one more' in message.content.lower():
+        await message.channel.send(
+            'https://cdn.discordapp.com/attachments/1426972811293098014/1438983499804708915/image.png?ex=6941bbd1&is=69406a51&hm=eb4a1cd864b53f8c9865afd49aec5dd6a54fed7c327bd262df17b69589bef0bb&'
+        )
+
+    if 'npc' == message.content.lower():
+        await message.reply('yep thats me', allowed_mentions=discord.AllowedMentions.none())
 
     # roleplay actions
     rp_actions = {
@@ -588,16 +591,6 @@ async def rename(ctx, name: str = None):
 @bot.command()
 async def disband(ctx):
     await disband_save(ctx)
-
-
-@bot.command()
-async def one_more(ctx):
-    await ctx.send('https://cdn.discordapp.com/attachments/1426972811293098014/1438983499804708915/image.png?ex=6941bbd1&is=69406a51&hm=eb4a1cd864b53f8c9865afd49aec5dd6a54fed7c327bd262df17b69589bef0bb&')
-
-@bot.command()
-async def onemore(ctx):
-    await ctx.send('https://cdn.discordapp.com/attachments/1426972811293098014/1438983499804708915/image.png?ex=6941bbd1&is=69406a51&hm=eb4a1cd864b53f8c9865afd49aec5dd6a54fed7c327bd262df17b69589bef0bb&')
-
 
 @bot.command()
 @general.try_bot_perms
