@@ -243,7 +243,7 @@ async def remove_availability_auto(member):
 @bot.event
 async def on_member_update(before, after):
     if before.roles != after.roles:
-        entry = await after.guild.audit_logs(limit=1, action=discord.AuditLogAction.member_update)
+        entry = after.guild.audit_logs(limit=1, action=discord.AuditLogAction.member_update)
         before_roles = set(before.roles)
         after_roles = set(after.roles)
         added_roles = after_roles - before_roles
