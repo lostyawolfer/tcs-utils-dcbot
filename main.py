@@ -57,7 +57,7 @@ async def on_ready():
     await general.set_status(bot, 'starting up...', status=discord.Status.idle) # type: ignore
     await bot.wait_until_ready()
     await general.send(bot, f':ballot_box_with_check: restart complete!')
-    await general.send(bot, changelog)
+    # await general.send(bot, changelog)
 
 @bot.command()
 @general.try_bot_perms
@@ -176,7 +176,7 @@ async def on_voice_state_update(member, before, after):
     if roles_to_add:
         await member.add_roles(*roles_to_add)
     if messages:
-        await member.guild.get_channel(config.channels['chat'].send('\n'.join(messages), allowed_mentions=discord.AllowedMentions.none()))
+        await member.guild.get_channel(config.channels['chat']).send('\n'.join(messages), allowed_mentions=discord.AllowedMentions.none())
 
     await general.update_status(bot)
 
