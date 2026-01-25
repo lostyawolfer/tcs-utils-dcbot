@@ -13,24 +13,24 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 version = 'v3.4.1'
 
-# changelog = \
-#     f"""
-# :tada: **{version} changelog**
-# - fixed availability updates
-#   - going available & unavailable now shows pings instead of display names just like voice notifications
-#     - when there's >=8 it pings the role still
-#   - removed "(we still have 8 tho)" part when someone goes inactive and there's still >=8 people
-#   - fixed .unavailable command
-#   - now removing the available role automatically removes their reaction and cleans up other related roles
-#   - fixed automatic availability cleanups
-# - fixed and improved inactivity behavior
-#   - marking inactive now removes the "person" role automatically
-#   - removing inactive now removes "explained inactivity" role and gives "person" back automatically
-#   - .inactive command is temporarily (i hope) disabled (not that anyone used it anyway), it could cause some problems because of how it works
-#   - there's now a message for when someone's inactivity is explained
-# - .onemore and .one_more commands are now deleted, instead the bot reacts with the pic as soon as it sees "one more" anywhere in the message
-# """
-changelog = 'not sending changelog because fuck you'
+changelog = \
+    f"""
+:tada: **{version} changelog**
+- fixed availability updates
+  - going available & unavailable now shows pings instead of display names just like voice notifications
+    - when there's >=8 it pings the role still
+  - removed "(we still have 8 tho)" part when someone goes inactive and there's still >=8 people
+  - fixed .unavailable command
+  - now removing the available role automatically removes their reaction and cleans up other related roles
+  - fixed automatic availability cleanups
+- fixed and improved inactivity behavior
+  - marking inactive now removes the "person" role automatically
+  - removing inactive now removes "explained inactivity" role and gives "person" back automatically
+  - .inactive command is temporarily (i hope) disabled (not that anyone used it anyway), it could cause some problems because of how it works
+  - there's now a message for when someone's inactivity is explained
+- .onemore and .one_more commands are now deleted, instead the bot reacts with the pic as soon as it sees "one more" anywhere in the message
+"""
+# changelog = 'not sending changelog because fuck you'
 
 ################################################################
 
