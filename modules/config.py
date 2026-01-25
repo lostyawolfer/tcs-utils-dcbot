@@ -179,7 +179,7 @@ emoji = {
     '0b': '<:0b:1448879492884861040>',
     '0g': '<:0g:1448879494063587509>',
     '0p': '<:0p:1448879495393054891>',
-    '0p': '<:0r:1464759439784411166>',
+    '0r': '<:0r:1464759439784411166>',
     '1b': '<:1b:1448879496374779945>',
     '1g': '<:1g:1448879497838334122>',
     '1p': '<:1p:1448879499184705679>',
@@ -277,26 +277,26 @@ _messages = {
         f"{emoji['unavailable']} **{{name}}** was marked unavailable automatically (no activity in past 2 hrs) {{available_count}}"
     ],
     "join_vc": [
-        f"{emoji['join_vc']} **{{name}}** joined the voice channel {{count}}"
+        f"{emoji['join_vc']} **{{member}}** joined the voice channel {{count}}"
     ],
     "leave_vc": [
-        f"{emoji['leave_vc']} **{{name}}** left the voice channel {{count}}"
+        f"{emoji['leave_vc']} **{{member}}** left the voice channel {{count}}"
     ],
     "join_vc_2": [
-        f"{emoji['join_vc_2']} **{{name}}** joined the second voice channel {{count}}"
+        f"{emoji['join_vc_2']} **{{member}}** joined the second voice channel {{count}}"
     ],
     "leave_vc_2": [
-        f"{emoji['leave_vc']} **{{name}}** left the second voice channel {{count}}"
+        f"{emoji['leave_vc']} **{{member}}** left the second voice channel {{count}}"
     ],
     "join_vc_3": [
-        f"{emoji['join_vc_3']} **{{name}}** joined the third voice channel {{count}}"
+        f"{emoji['join_vc_3']} **{{member}}** joined the third voice channel {{count}}"
     ],
     "leave_vc_3": [
-        f"{emoji['leave_vc']} **{{name}}** left the third voice channel {{count}}"
+        f"{emoji['leave_vc']} **{{member}}** left the third voice channel {{count}}"
     ],
-    "edit_vc": [f"{emoji['edit_g']} **{{name}}** edited the voice channel's status to be {{text}}"],
-    "edit_vc_2": [f"{emoji['edit_p']} **{{name}}** edited the second voice channel's status to be {{text}}"],
-    "edit_vc_3": [f"{emoji['edit_r']} **{{name}}** edited the third voice channel's status to be {{text}}"],
+    "edit_vc": [f"{emoji['edit_g']} **{{member}}** edited the voice channel's status to be {{text}}"],
+    "edit_vc_2": [f"{emoji['edit_p']} **{{member}}** edited the second voice channel's status to be {{text}}"],
+    "edit_vc_3": [f"{emoji['edit_r']} **{{member}}** edited the third voice channel's status to be {{text}}"],
     "promotion": [
         f"{emoji['promotion']} {{mention}} is now a moderator!"
     ],

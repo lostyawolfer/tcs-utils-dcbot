@@ -18,7 +18,8 @@ changelog = \
 :tada: **{version} changelog**
 - added vc 3 support
 - vc role check is now more optimized
-- when someone moves between vcs instead of leaving/joining it groups messages into a single one 
+- when someone moves between vcs instead of leaving/joining it groups messages into a single one
+- vc join & leave messages now have a ping instead of just the name (it doesn't ping you btw) 
 - small bot status redesign
 - "ps" now only triggers when message is exactly "ps" and not contains it
 - fully deleted best runs command functionality (i'm not fixing it and there's not really a need to)
@@ -56,7 +57,7 @@ async def on_ready():
     await general.set_status(bot, 'starting up...', status=discord.Status.idle) # type: ignore
     await bot.wait_until_ready()
     await general.send(bot, f':ballot_box_with_check: restart complete!')
-    await general.send(bot, changelog)
+    #await general.send(bot, changelog)
 
 @bot.command()
 @general.try_bot_perms
@@ -114,7 +115,7 @@ async def on_voice_state_update(member, before, after):
     channel_info = {
         vc1: {
             'role': member.guild.get_role(config.roles['in_vc']),
-            'leader': member.guild.get_role(config.roles['leader_in_vc']),
+            'leader': member.guild.get_role(config.roles['in_vc_leader']),
             'available': member.guild.get_role(config.roles['available_not_in_vc']),
             'join_msg': 'join_vc',
             'leave_msg': 'leave_vc',
@@ -122,7 +123,7 @@ async def on_voice_state_update(member, before, after):
         },
         vc2: {
             'role': member.guild.get_role(config.roles['in_vc_2']),
-            'leader': member.guild.get_role(config.roles['leader_in_vc_2']),
+            'leader': member.guild.get_role(config.roles['in_vc_2_leader']),
             'available': member.guild.get_role(config.roles['available_not_in_vc_2']),
             'join_msg': 'join_vc_2',
             'leave_msg': 'leave_vc_2',
@@ -130,7 +131,7 @@ async def on_voice_state_update(member, before, after):
         },
         vc3: {
             'role': member.guild.get_role(config.roles['in_vc_3']),
-            'leader': member.guild.get_role(config.roles['leader_in_vc_3']),
+            'leader': member.guild.get_role(config.roles['in_vc_3_leader']),
             'available': member.guild.get_role(config.roles['available_not_in_vc_3']),
             'join_msg': 'join_vc_3',
             'leave_msg': 'leave_vc_3',
@@ -169,6 +170,15 @@ async def on_voice_state_update(member, before, after):
             if member.guild.get_role(config.roles['leader']) in member.roles:
                 roles_to_add.append(info['leader'])
             roles_to_remove.append(info['available'])
+
+    if roles_to_remove:
+        await member.remove_roles(*roles_to_remove)
+    if roles_to_add:
+        await member.add_roles(*roles_to_add)
+    if messages:
+        await member.guild.get_channel(config.channels['chat'].send('\n'.join(messages), allowed_mentions=discord.AllowedMentions.none()))
+
+    await general.update_status(bot)
 
 
 # Reaction Roles - easy hot-swap
