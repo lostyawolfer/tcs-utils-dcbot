@@ -319,6 +319,7 @@ async def check_availability(bot):
             await msg.remove_reaction(
                 discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), m)
             await general.send(bot, config.message('unavailable_auto_bot', name=m.mention,
-                                                   available_count=f"{general.emojify(str(await count_available(bot)), 'b')}"))
+                                                   available_count=f"{general.emojify(str(await count_available(bot)), 'b')}"),
+                                                   pings=discord.AllowedMentions.none())
 
     await general.update_status(bot)
