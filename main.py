@@ -263,7 +263,7 @@ async def on_member_update(before, after):
                 emoji_map = {
                     '🟢': '<:yes:1463357188964618413>',
                     '⭐': '<:star_completion:1453452694592159925>',
-                    '☄️': '<:star_pure_completion:1453452636618752214>'
+                    '☄': '<:star_pure_completion:1453452636618752214>'
                 }
                 emoji = emoji_map.get(role_info['tier_emoji'], '<:yes:1463357188964618413>')
                 await general.send(bot,
