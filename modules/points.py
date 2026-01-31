@@ -9,7 +9,7 @@ def parse_challenge_role(role: discord.Role) -> Optional[dict]:
         return None
 
     # pattern: 🏆<tier_emoji> <name> /+<points>/
-    pattern = r'^🏆([🟢⭐☄️])\s+(.+?)\s+/\+(\d+)/$'
+    pattern = r'^🏆([🟢⭐☄])\s+(.+?)\s+/\+(\d+)/$'
     match = re.match(pattern, role.name)
     if not match:
         return None
