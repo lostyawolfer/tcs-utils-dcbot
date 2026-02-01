@@ -341,6 +341,9 @@ def get_role_hierarchy(guild: discord.Guild):
             continue
 
         if current_category:
+            if role.is_default():  # stop at @everyone
+                current_category = None
+                continue
             # 2. detect "none" role
             if role.name == "🚫 none":
                 categories[current_category]['none_role'] = role
