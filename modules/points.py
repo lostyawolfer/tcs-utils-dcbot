@@ -5,14 +5,12 @@ from typing import Optional, List, Tuple, Dict
 
 def parse_challenge_role(role: discord.Role) -> Optional[dict]:
     """Parse a challenge role and extract information."""
-    if not role.name.startswith('🏆'):
+    if not role.name.startswith('🏆') and not role.name.startswith('💠'):
         return None
 
     # pattern: 🏆<tier_emoji> <name> /+<points>/
-    pattern = r'^🏆([🟢⭐☄])\s+(.+?)\s+/\+(\d+)/$'
+    pattern = r'^[🏆💠]([🟢⭐☄])\s+(.+?)\s+/\+(\d+)/$'
     match = re.match(pattern, role.name)
-    if not match:
-        return None
 
     tier_emoji, name, points = match.groups()
     return {

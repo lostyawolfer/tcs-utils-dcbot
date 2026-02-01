@@ -116,19 +116,9 @@ async def disband_save(ctx):
     if not role:
         return await ctx.send("couldn't find corresponding role for this save, deleting channel anyway")
 
-    members_with_role = [m for m in guild.members if role in m.roles]
 
     # remove role and re-add misc none if needed
     await send(ctx.bot, f"🗑️ {ctx.author.mention} disbanded the save number {number} {role.mention}")
-    for m in members_with_role:
-        await remove_role(m, role.id)
-        # check if they have any misc role left
-        misc_other = any(
-            misc in [r.id for r in m.roles]
-            for misc in config.roles['category:misc']['other']
-        )
-        if not misc_other:
-            await add_role(m, config.roles['category:misc']['none'])
 
     try:
         await role.delete(reason="save disbanded")

@@ -323,3 +323,102 @@ async def check_availability(bot):
                                                    pings=discord.AllowedMentions.none())
 
     await general.update_status(bot)
+
+
+def get_role_hierarchy(guild: discord.Guild):
+    # categories[category_role] = { 'roles': [list], 'none_role': discord.Role or None }
+    categories = {}
+    current_category = None
+
+    # roles are sorted from top to bottom in discord.py
+    sorted_roles = sorted(guild.roles, key=lambda r: r.position, reverse=True)
+
+    for role in sorted_roles:
+        # 1. detect category divider
+        if role.name.startswith("──╱") and role.name.endswith("─"):
+            current_category = role
+            categories[current_category] = {'roles': [], 'none_role': None}
+            continue
+
+        if current_category:
+            # 2. detect "none" role
+            if role.name == "🚫 none":
+                categories[current_category]['none_role'] = role
+            # 3. detect visual divider (empty name)
+            elif role.name.strip() == "":
+                continue
+            # 4. standard role belonging to the active category
+            else:
+                categories[current_category]['roles'].append(role)
+
+    return categories
+
+
+async def fix_categories(member: discord.Member):
+    hierarchy = get_role_hierarchy(member.guild)
+    current_roles = set(member.roles)
+    new_roles = current_roles.copy()
+
+    for cat_role, data in hierarchy.items():
+        sub_roles = set(data['roles'])
+        none_role = data['none_role']
+        has_sub_roles = any(r in current_roles for r in sub_roles)
+
+        if has_sub_roles:
+            new_roles.add(cat_role)
+            if none_role:
+                new_roles.discard(none_role)
+        else:
+            if none_role:
+                new_roles.add(cat_role)
+                new_roles.add(none_role)
+            else:
+                new_roles.discard(cat_role)
+
+    if new_roles != current_roles:
+        await member.edit(roles=list(new_roles))
+
+
+INTERESTED_PREFIX = "🎮 interested in "
+INTERESTED_CHANNEL_ID = 1464608724667858975
+INTERESTED_MESSAGE_ID = 1464609114612302035
+
+
+def get_interested_role_map(guild: discord.Guild):
+    role_map = {}
+    for role in guild.roles:
+        if not role.name.startswith(INTERESTED_PREFIX):
+            continue
+
+        suffix = role.name.replace(INTERESTED_PREFIX, "").strip().lower()
+
+        if suffix == "miscellaneous hosts":
+            role_map["🎮"] = role
+            continue
+
+        emoji_name = f"badge_{suffix.replace(' ', '_')}"
+        emoji = discord.utils.get(guild.emojis, name=emoji_name)
+
+        if emoji:
+            role_map[str(emoji)] = role
+
+    return role_map
+
+
+async def sync_interested_reactions(bot):
+    guild = bot.get_guild(config.TARGET_GUILD)
+    channel = guild.get_channel(INTERESTED_CHANNEL_ID)
+    if not channel: return
+
+    try:
+        msg = await channel.fetch_message(INTERESTED_MESSAGE_ID)
+        role_map = get_interested_role_map(guild)
+
+        # get existing reactions to avoid redundant calls
+        existing_reactions = [str(r.emoji) for r in msg.reactions if r.me]
+
+        for emoji_str in role_map.keys():
+            if emoji_str not in existing_reactions:
+                await msg.add_reaction(emoji_str)
+    except Exception as e:
+        print(f"failed to sync reactions: {e}")

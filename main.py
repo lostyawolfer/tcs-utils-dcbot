@@ -1,9 +1,10 @@
 import asyncio
 
 import discord
+from discord import AllowedMentions
 from discord.ext import commands, tasks
 from modules import config, activity, moderation, general
-from modules.activity import check_availability, remove_availability
+from modules.activity import check_availability, remove_availability, fix_categories
 from modules.general import timed_delete_msg, send_timed_delete_msg, add_role, remove_role, has_role
 from modules.saves import create_save, disband_save, rename_save
 from modules.points import calculate_points, get_ranked_leaderboard, update_leaderboard_message, parse_challenge_role
@@ -11,12 +12,15 @@ from modules.points import calculate_points, get_ranked_leaderboard, update_lead
 
 ################################################################
 
-version = 'v3.4.2'
+version = 'v3.5.0'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- autounavailable no longer pings you
+- role categories are now a thing - just an internal way of handling the role category type thing with its none role etc
+- role category updates now require a single api call instead of trillions per user
+- reaction roles for "interested in X" (basically host pings) now exist
+- custom challenges are now supported for the leaderboard and have different prefix emoji
 """
 # changelog = 'not sending changelog because fuck you'
 
@@ -51,6 +55,7 @@ async def on_ready():
     await bot.wait_until_ready()
     await general.send(bot, f':ballot_box_with_check: restart complete!')
     await general.send(bot, changelog)
+    await activity.sync_interested_reactions(bot)
 
 @bot.command()
 @general.try_bot_perms
@@ -183,16 +188,28 @@ REACTION_ROLES = {
 
 @bot.event
 async def on_raw_reaction_add(payload):
-    member = bot.get_guild(payload.guild_id).get_member(payload.user_id)
-    if not config.check_guild(payload.guild_id) or (member and member.bot):
-        return
+    if payload.user_id == bot.user.id: return
+    guild = bot.get_guild(payload.guild_id)
+    member = guild.get_member(payload.user_id)
+    if not member or member.bot: return
 
     if payload.message_id == config.channels['availability_message']:
         emoji_id = payload.emoji.id
         if emoji_id == config.channels['availability_reaction']:
             await activity.add_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
 
-    # Reaction roles
+    if payload.message_id == activity.INTERESTED_MESSAGE_ID:
+        role_map = activity.get_interested_role_map(guild)
+        emoji_str = str(payload.emoji)
+
+        if emoji_str in role_map:
+            role = role_map[emoji_str]
+            await general.add_role(member, role.id)
+
+            clean_name = role.name.replace(activity.INTERESTED_PREFIX, "")
+            await general.send(bot, f"🎮 {member.mention} is now interested in **{clean_name}**", pings=AllowedMentions.none())
+
+
     if payload.message_id in REACTION_ROLES:
         emoji_str = str(payload.emoji)
         if emoji_str in REACTION_ROLES[payload.message_id]:
@@ -202,16 +219,29 @@ async def on_raw_reaction_add(payload):
 
 @bot.event
 async def on_raw_reaction_remove(payload):
-    member = bot.get_guild(payload.guild_id).get_member(payload.user_id)
-    if not config.check_guild(payload.guild_id) or (member and member.bot):
-        return
+    guild = bot.get_guild(payload.guild_id)
+    member = guild.get_member(payload.user_id)
+    if not member or member.bot: return
+
 
     if payload.message_id == config.channels['availability_message']:
         emoji_id = payload.emoji.id
         if emoji_id == config.channels['availability_reaction']:
             await activity.remove_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
 
-    # Reaction roles
+
+    if payload.message_id == activity.INTERESTED_MESSAGE_ID:
+        role_map = activity.get_interested_role_map(guild)
+        emoji_str = str(payload.emoji)
+
+        if emoji_str in role_map:
+            role = role_map[emoji_str]
+            await general.remove_role(member, role.id)
+
+            clean_name = role.name.replace(activity.INTERESTED_PREFIX, "")
+            await general.send(bot, f"🚫 {member.mention} is no longer interested in **{clean_name}**", pings=AllowedMentions.none())
+
+
     if payload.message_id in REACTION_ROLES:
         emoji_str = str(payload.emoji)
         if emoji_str in REACTION_ROLES[payload.message_id]:
@@ -266,15 +296,23 @@ async def on_member_update(before, after):
                     '☄': '<:star_pure_completion:1453452636618752214>'
                 }
                 emoji = emoji_map.get(role_info['tier_emoji'], '<:yes:1463357188964618413>')
-                await general.send(bot,
-                                   f'{emoji} {after.mention} completed **{role_info["name"]}** ({role_info["points"]} pts)')
+                if role.name.startswith('🏆'):
+                    await general.send(bot,
+                                       f'{emoji} {after.mention} completed **{role_info["name"]}** ({role_info["points"]} pts)')
+                else:
+                    await general.send(bot,
+                                       f'{emoji} {after.mention} completed a custom challenge **{role_info["name"]}** ({role_info["points"]} pts)')
                 await update_leaderboard_message(bot, after.guild)
 
         for role in removed_roles:
             role_info = parse_challenge_role(role)
             if role_info:
-                await general.send(bot,
-                                   f'<:no:1454950318042255410> {after.mention}\'s **{role_info["name"]}** completion was taken')
+                if role.name.startswith('🏆'):
+                    await general.send(bot,
+                                       f'<:no:1454950318042255410> {after.mention}\'s **{role_info["name"]}** completion was taken')
+                else:
+                    await general.send(bot,
+                                       f'<:no:1454950318042255410> {after.mention}\'s **{role_info["name"]}** (custom challenge) completion was taken')
                 await update_leaderboard_message(bot, after.guild)
 
         # Existing role update logic
@@ -291,10 +329,6 @@ async def on_member_update(before, after):
                 await general.send(bot, config.message('explained_inactive', mention=after.mention))
             if role.id == config.roles['spoiler']:
                 await general.send(bot, config.message('spoiler_add', mention=after.mention), 'spoiler')
-            if role.id in config.roles['category:badges']['other']:
-                await general.remove_role(after, config.roles['category:badges']['none'])
-            if role.id in config.roles['category:misc']['other']:
-                await general.remove_role(after, config.roles['category:misc']['none'])
 
 
         for role in removed_roles:
@@ -315,15 +349,13 @@ async def on_member_update(before, after):
             if role.id == config.roles['available']:
                 await remove_availability_auto(after)
 
-        if any(role.id in config.roles['category:badges']['other'] for role in removed_roles):
-            await activity.check_role_category(after, 'badges')
-        if any(role.id in config.roles['category:misc']['other'] for role in removed_roles):
-            await activity.check_role_category(after, 'misc')
+        await fix_categories(after)
 
     if before.nick != after.nick:
         old = before.nick if before.nick else before.display_name
         new = after.nick if after.nick else after.display_name
         await general.send(bot, config.message('name_change', mention=after.mention, old_name=old, new_name=new))
+
 
 @bot.event
 async def on_member_join(member):
@@ -401,7 +433,7 @@ async def log_message(bot: commands.Bot, message: discord.Message):
 
 @bot.event
 async def on_message(message: discord.Message):
-    await log_message(bot, message)
+    #await log_message(bot, message)
     if message.author == bot.user:
         return
 
