@@ -227,6 +227,9 @@ async def run_activity_checks():
                     await availability_msg.remove_reaction(
                         discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), m
                     )
+                    await general.send(config.message('unavailable_auto_bot', name=m.mention,
+                                                      available_count=f"{general.emojify(str(await m.count_available(bot)), 'b')}"),
+                                       pings=discord.AllowedMentions.none())
 
                 if needs_inactive:
                     rs.add('inactive')
