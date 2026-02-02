@@ -14,7 +14,7 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.1.2'
+version = 'v4.1.4'
 
 changelog = \
     f"""
@@ -23,8 +23,7 @@ base
 - added support for multiple tier "interested in" reaction roles
 - added grouping interested in related messages together if user does multiple updates at once
 latest patch
-- tried to fix reaction roles not being in correct order
-- added an owner-only command to force an update of bot's reactions there
+- uhhmh..,,
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -199,6 +198,7 @@ async def on_raw_reaction_add(payload):
                 state = activity.user_pending_changes.setdefault(payload.user_id, {'added': set(), 'removed': set()})
                 state['added'].add(role)
                 state['removed'].discard(role)
+                activity.user_pending_changes[payload.user_id] = True
                 await activity.schedule_interested_debounce(payload.user_id, guild)
 
         # static reaction roles
@@ -239,6 +239,7 @@ async def on_raw_reaction_remove(payload):
                 state = activity.user_pending_changes.setdefault(payload.user_id, {'added': set(), 'removed': set()})
                 state['removed'].add(role)
                 state['added'].discard(role)
+                activity.user_pending_changes[payload.user_id] = True
                 await activity.schedule_interested_debounce(payload.user_id, guild)
 
         # static reaction roles

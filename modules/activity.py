@@ -290,13 +290,56 @@ def get_interested_role_map(guild: discord.Guild, message_id: int):
 async def process_interested_changes(user_id: int, guild: discord.Guild):
     if user_id not in user_pending_changes: return
 
-    changes = user_pending_changes.pop(user_id)
-    added = changes['added'] - changes['removed']
-    removed = changes['removed'] - changes['added']
+    # clear changes before processing to avoid race conditions
+    user_pending_changes.pop(user_id)
 
     member = guild.get_member(user_id)
-    if not member or (not added and not removed): return
+    if not member: return
 
+    # we get the current roles once to compare against
+    current_role_ids = {r.id for r in member.roles}
+
+    # find all possible "interested" roles across all tiered messages
+    all_interested_roles = []
+    for mid in [INTERESTED_MESSAGE_BASE, INTERESTED_MESSAGE_STAR, INTERESTED_MESSAGE_ULTIMATE]:
+        all_interested_roles.extend(get_interested_role_map(guild, mid).values())
+
+    # get the current reaction state for the user across those messages
+    # this is the "source of truth" for what they want
+    desired_role_ids = set()
+    for mid in [INTERESTED_MESSAGE_BASE, INTERESTED_MESSAGE_STAR, INTERESTED_MESSAGE_ULTIMATE]:
+        try:
+            channel = guild.get_channel(INTERESTED_CHANNEL_ID)
+            msg = await channel.fetch_message(mid)
+            role_map = get_interested_role_map(guild, mid)
+            for reaction in msg.reactions:
+                emoji_str = str(reaction.emoji)
+                if emoji_str in role_map:
+                    async for user in reaction.users():
+                        if user.id == user_id:
+                            desired_role_ids.add(role_map[emoji_str].id)
+                            break
+        except:
+            continue
+
+    # calculate what actually needs to change relative to current server state
+    to_add = []
+    to_remove = []
+
+    async with RoleSession(member) as rs:
+        for role in all_interested_roles:
+            is_active = role.id in current_role_ids
+            should_be_active = role.id in desired_role_ids
+
+            if should_be_active and not is_active:
+                rs.add(role.id)
+                to_add.append(role)
+            elif not should_be_active and is_active:
+                rs.remove(role.id)
+                to_remove.append(role)
+
+    # logic for formatting and sending messages remains same,
+    # but now it only triggers if there's a real difference from the start of the 5s window
     def format_names(roles):
         names = [f"**{r.name.split('interested in ')[-1]}**" for r in roles]
         if len(names) > 1:
@@ -304,12 +347,12 @@ async def process_interested_changes(user_id: int, guild: discord.Guild):
         return names[0]
 
     output = []
-    if removed:
+    if to_remove:
         output.append(
-            f"<:no_multiplayer:1463357263811973303> {member.mention} is no longer interested in {format_names(removed)}")
-    if added:
+            f"<:no_multiplayer:1463357263811973303> {member.mention} is no longer interested in {format_names(to_remove)}")
+    if to_add:
         output.append(
-            f"<:yes_multiplayer:1463357364110495754> {member.mention} is now interested in {format_names(added)}")
+            f"<:yes_multiplayer:1463357364110495754> {member.mention} is now interested in {format_names(to_add)}")
 
     if output:
         await general.send('\n'.join(output), pings=AllowedMentions.none())
