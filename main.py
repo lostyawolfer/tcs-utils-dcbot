@@ -79,6 +79,8 @@ async def on_voice_state_update(member, before, after):
     if not config.check_guild(member.guild.id) or member.bot:
         return
 
+    activity.update_cache(member.id)
+
     vc1 = member.guild.get_channel(config.channels['vc'])
     vc2 = member.guild.get_channel(config.channels['vc2'])
     vc3 = member.guild.get_channel(config.channels['vc3'])
@@ -158,6 +160,7 @@ REACTION_ROLES = {
 @bot.event
 async def on_raw_reaction_add(payload):
     if payload.user_id == bot.user.id: return
+    activity.update_cache(payload.user_id)
     guild = bot.get_guild(payload.guild_id)
     member = guild.get_member(payload.user_id)
     if not member or member.bot: return
@@ -187,6 +190,7 @@ async def on_raw_reaction_add(payload):
 
 @bot.event
 async def on_raw_reaction_remove(payload):
+    activity.update_cache(payload.user_id)
     guild = bot.get_guild(payload.guild_id)
     member = guild.get_member(payload.user_id)
     if not member or member.bot: return
