@@ -1,6 +1,7 @@
 import discord
 from modules import config
-from modules.general import add_role, remove_role, send
+from modules.general import send
+from modules.role_management import RoleSession
 
 SAVE_COOLDOWN = {}  # {user_id: datetime.datetime of last save}
 
@@ -56,12 +57,14 @@ async def create_save(ctx, members: list[discord.Member], save_name: str = None)
     )
 
     # assign role to members
+
     for m in members:
-        await add_role(m, save_role.id)
-        # remove misc none if exists
-        misc_none = guild.get_role(config.roles['category:misc']['none'])
-        if misc_none in m.roles:
-            await remove_role(m, misc_none.id)
+        async with RoleSession(m) as rs:
+            rs.add(save_role.id)
+            # remove misc none if exists
+            misc_none = guild.get_role(config.roles['category:misc']['none'])
+            if misc_none in m.roles:
+                rs.remove(misc_none.id)
 
     # create channel name
     if save_name:

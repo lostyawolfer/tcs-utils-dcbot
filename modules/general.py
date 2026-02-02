@@ -1,10 +1,12 @@
 import asyncio
 import discord
-from discord.ext import commands
+from discord import Guild
 from modules import config
+from modules.config import TARGET_GUILD
+from modules.bot_init import bot
 
 
-async def send(bot: commands.Bot, msg: str, where: str = 'chat', pings: discord.AllowedMentions = None) -> discord.Message:
+async def send(msg: str, where: str = 'chat', pings: discord.AllowedMentions = None) -> discord.Message:
     channel = bot.get_channel(config.channels[where])
     if channel:
         msg = await channel.send(msg, allowed_mentions=pings)
@@ -21,8 +23,8 @@ async def timed_delete_msg(msg: discord.Message, text: str, duration: int = 10):
             await asyncio.sleep(1)
     await msg.delete()
 
-async def send_timed_delete_msg(bot: commands.Bot, text: str, duration: int = 10, where: str = 'chat') -> None:
-    msg = await send(bot, text, where=where)
+async def send_timed_delete_msg(text: str, duration: int = 10, where: str = 'chat') -> None:
+    msg = await send(text, where=where)
     for i in range(1, duration):
         if i <= 11:
             await msg.edit(content=f':clock{duration-i}: {text}')
@@ -34,8 +36,7 @@ async def send_timed_delete_msg(bot: commands.Bot, text: str, duration: int = 10
 
 
 
-async def count_filtered_members(bot: commands.Bot) -> int:
-    guild = bot.get_guild(config.TARGET_GUILD)
+async def count_filtered_members(guild: Guild) -> int:
     excluded_role_id = 1427013313837011175 # alts
     excluded_role = guild.get_role(excluded_role_id)
 
@@ -51,8 +52,8 @@ async def count_filtered_members(bot: commands.Bot) -> int:
         member_count += 1
     return member_count
 
-async def count_available(bot: commands.Bot) -> int:
-    channel = bot.get_channel(config.channels['availability'])
+async def count_available(guild: Guild) -> int:
+    channel = guild.get_channel(config.channels['availability'])
     try:
         msg = await channel.fetch_message(config.channels['availability_message'])
     except (discord.NotFound, discord.Forbidden):
@@ -69,19 +70,19 @@ async def count_available(bot: commands.Bot) -> int:
         res -= 1
     return res
 
-async def count_in_vc(bot: commands.Bot, vc: str = 'vc') -> int:
-    return len(bot.get_channel(config.channels[vc]).members)
+async def count_in_vc(guild: Guild, vc: str = 'vc') -> int:
+    return len(guild.get_channel(config.channels[vc]).members)
 
-async def set_status(bot: commands.Bot, text: str, *, status: discord.Status = None) -> None:
+async def set_status(text: str, *, status: discord.Status = None) -> None:
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=text), status=status)
 
 
-async def get_status_text(bot: commands.Bot, short: bool = False) -> str:
-    vc_count = await count_in_vc(bot, 'vc')
-    vc_2_count = await count_in_vc(bot, 'vc2')
-    vc_3_count = await count_in_vc(bot, 'vc3')
-    available_count = await count_available(bot)
-    members = await count_filtered_members(bot)
+async def get_status_text(guild: Guild) -> str:
+    vc_count = await count_in_vc(guild, 'vc')
+    vc_2_count = await count_in_vc(guild, 'vc2')
+    vc_3_count = await count_in_vc(guild, 'vc3')
+    available_count = await count_available(guild)
+    members = await count_filtered_members(guild)
 
     text_members = f'{members} 👥'
 
@@ -106,14 +107,9 @@ async def get_status_text(bot: commands.Bot, short: bool = False) -> str:
     return status
 
 
-async def update_status(bot: commands.Bot, status: discord.Status = None) -> None:
-    status_text = await get_status_text(bot)
-    await set_status(bot, status_text, status=status)
-
-async def update_status_checking(bot: commands.Bot, check_type: str, percent: float) -> None:
-    status_text = await get_status_text(bot, True)
-    status_text = f'{check_type} {percent}% // {status_text}'
-    await set_status(bot, status_text, status=discord.Status('idle'))
+async def update_status(status: discord.Status = None) -> None:
+    status_text = await get_status_text(bot.get_guild(TARGET_GUILD))
+    await set_status(status_text, status=status)
 
 
 def has_role(member: discord.Member, role_id: int) -> bool:
@@ -129,17 +125,6 @@ def has_role_object(member: discord.Member, role: discord.Role) -> bool:
 
 
 
-async def add_role(member: discord.Member, role_id: int) -> None:
-    role = member.guild.get_role(role_id)
-    if not has_role_object(member, role):
-        await member.add_roles(role)
-
-async def remove_role(member: discord.Member, role_id: int) -> None:
-    role = member.guild.get_role(role_id)
-    if has_role_object(member, role):
-        await member.remove_roles(role)
-
-
 def emojify(text: str, color: str = '') -> str:
     converted_text = ''
     for char in text:
@@ -150,12 +135,6 @@ def emojify(text: str, color: str = '') -> str:
 
 
 import functools
-
-def work_in_progress(func):
-    @functools.wraps(func)
-    async def wrapper(ctx, *args, **kwargs):
-        return await ctx.send(config.message("wip"))
-    return wrapper
 
 def has_perms(required_perm: str):
     def decorator(func):

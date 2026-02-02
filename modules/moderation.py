@@ -1,8 +1,7 @@
 import discord
 import datetime
 from modules import config
-from modules.general import add_role, remove_role
-
+from modules.role_management import RoleSession
 
 
 def get_timeout_duration(duration: str) -> datetime.timedelta:
@@ -60,25 +59,26 @@ async def unmute(ctx, member: discord.Member, reason: str = None):
 
 
 async def warn(ctx, member: discord.Member, reason: str = None):
-    if member.guild.get_role(config.roles['warn_1']) in member.roles:
-        timeout_duration = datetime.timedelta(days=3)
-        await member.timeout(timeout_duration, reason=reason)
-        await add_role(member, config.roles['warn_2'])
-        await remove_role(member, config.roles['warn_1'])
-        await ctx.send(f"warned the guy :white_check_mark:\nwarn 2/3\nthey're muted for 3 days")
+    async with RoleSession(member) as rs:
+        if member.guild.get_role(config.roles['warn_1']) in member.roles:
+            timeout_duration = datetime.timedelta(days=3)
+            await member.timeout(timeout_duration, reason=reason)
+            rs.add(config.roles['warn_2'])
+            rs.remove(config.roles['warn_1'])
+            await ctx.send(f"warned the guy :white_check_mark:\nwarn 2/3\nthey're muted for 3 days")
 
-    elif member.guild.get_role(config.roles['warn_2']) in member.roles:
-        timeout_duration = datetime.timedelta(days=7)
-        await member.timeout(timeout_duration, reason=reason)
-        await add_role(member, config.roles['warn_3'])
-        await remove_role(member, config.roles['warn_2'])
-        await ctx.send(f"warned the guy :white_check_mark:\nwarn 3/3\nthey're muted for 7 days\nnext warn will ban them btw")
+        elif member.guild.get_role(config.roles['warn_2']) in member.roles:
+            timeout_duration = datetime.timedelta(days=7)
+            await member.timeout(timeout_duration, reason=reason)
+            rs.add(config.roles['warn_3'])
+            rs.remove(config.roles['warn_2'])
+            await ctx.send(f"warned the guy :white_check_mark:\nwarn 3/3\nthey're muted for 7 days\nnext warn will ban them btw")
 
-    elif member.guild.get_role(config.roles['warn_3']) in member.roles:
-        await member.ban()
+        elif member.guild.get_role(config.roles['warn_3']) in member.roles:
+            await member.ban()
 
-    else:
-        timeout_duration = datetime.timedelta(days=1)
-        await add_role(member, config.roles['warn_1'])
-        await member.timeout(timeout_duration, reason=reason)
-        await ctx.send(f"warned the guy :white_check_mark:\nwarn 1/3\nthey're muted for 1 day")
+        else:
+            timeout_duration = datetime.timedelta(days=1)
+            rs.add(config.roles['warn_1'])
+            await member.timeout(timeout_duration, reason=reason)
+            await ctx.send(f"warned the guy :white_check_mark:\nwarn 1/3\nthey're muted for 1 day")

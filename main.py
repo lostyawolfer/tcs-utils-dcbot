@@ -4,95 +4,68 @@ import discord
 from discord import AllowedMentions
 from discord.ext import commands, tasks
 from modules import config, activity, moderation, general
-from modules.activity import check_availability, remove_availability, fix_categories
-from modules.general import timed_delete_msg, send_timed_delete_msg, add_role, remove_role, has_role
+from modules.activity import run_activity_checks
+from modules.general import timed_delete_msg, send_timed_delete_msg
+from modules.role_management import RoleSession
 from modules.saves import create_save, disband_save, rename_save
 from modules.points import calculate_points, get_ranked_leaderboard, update_leaderboard_message, parse_challenge_role
+from modules.bot_init import bot
 
 
 ################################################################
 
-version = 'v3.5.0'
+version = 'v4.0.0'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- role categories are now a thing - just an internal way of handling the role category type thing with its none role etc
-- role category updates now require a single api call instead of trillions per user
-- reaction roles for "interested in X" (basically host pings) now exist
-- custom challenges are now supported for the leaderboard and have different prefix emoji
+- rewritten how adding & removing multiple roles at a time works, bot should now be mega fast in role management related stuff
+- a whole bunch of other refactors
+- fixed availability & inactivity checks (finally!)
+https://cdn.discordapp.com/attachments/715528165132599337/1459291126283636787/image.png?ex=69806804&is=697f1684&hm=d6243195cce8055bef4bdcc5ac139248ab49c6958373e3276f99d087e26af627&
 """
-# changelog = 'not sending changelog because fuck you'
+# changelog = 'not sending changelog because fuck you' # type: ignore
 
 ################################################################
 
 
-intents = discord.Intents.default()
-intents.members = True
-intents.presences = True
-intents.reactions = True
-intents.guilds = True
-intents.message_content = True
-bot = commands.Bot(command_prefix='.', intents=intents, help_command=None)
 
-
-
-@tasks.loop(hours=6)
+@tasks.loop(minutes=45)
 async def member_checker():
-    await activity.check_all_members(bot)
-    await activity.check_inactivity(bot)
-
-@tasks.loop(hours=1)
-async def availability_checker():
-    await asyncio.sleep(600)
-    await check_availability(bot)
+    await activity.check_all_members()
+    await activity.run_activity_checks()
 
 
 @bot.event
 async def on_ready():
-    await general.send(bot, f':radio_button: bot connected... {version}')
-    await general.set_status(bot, 'starting up...', status=discord.Status.idle) # type: ignore
+    await general.send(f':radio_button: bot connected... {version}')
+    await general.set_status('starting up...', status=discord.Status.idle) # type: ignore
     await bot.wait_until_ready()
-    await general.send(bot, f':ballot_box_with_check: restart complete!')
-    await general.send(bot, changelog)
-    await activity.sync_interested_reactions(bot)
-
-@bot.command()
-@general.try_bot_perms
-@general.has_perms('owner')
-async def start_checking(ctx):
-    """Manually start the member checking loop."""
-    if member_checker.is_running():
-        return await ctx.send("member checking is already running")
-    member_checker.start()
-    availability_checker.start()
-    return await ctx.send("started member checking loop :white_check_mark:")
-
-@bot.command()
-@general.try_bot_perms
-@general.has_perms('owner')
-async def stop_checking(ctx):
-    """Stop the member checking loop."""
+    await general.send(f':ballot_box_with_check: restart complete!')
+    await general.send(changelog)
+    msg = await general.send(f':eye: lemme build up some activity cache...')
+    await activity.build_activity_cache()
+    await msg.reply(':white_check_mark: activity cache built, gonna run activity checks every 45 mintues')
     if not member_checker.is_running():
-        return await ctx.send("member checking is not running")
-    member_checker.cancel()
-    availability_checker.cancel()
-    await general.update_status(bot, status=discord.Status.online)
-    return await ctx.send("stopped member checking loop :white_check_mark:")
+        member_checker.start()
+    await activity.sync_interested_reactions()
+
 
 @bot.command()
 @general.try_bot_perms
 @general.has_perms('manage_roles')
-async def check_members(ctx):
-    await activity.check_all_members(bot)
+async def force_check_all(ctx):
+    member_checker.stop()
+    member_checker.start()
 
 @bot.command()
 @general.try_bot_perms
-#@general.inject_reply
+
 @general.has_perms('manage_roles')
 async def check(ctx, member: discord.Member = None):
-    await activity.full_check_member(bot, member)
-    await send_timed_delete_msg(bot, f'checked {member.display_name}')
+    async with RoleSession(member) as rs:
+        await activity.full_check_member(rs, member)
+        await send_timed_delete_msg(f'checked {member.display_name}')
 
 @bot.command()
 @general.try_bot_perms
@@ -100,81 +73,77 @@ async def test(ctx):
     await ctx.send(f'test pass\n-# {version}')
 
 
+
 @bot.event
 async def on_voice_state_update(member, before, after):
-    if not config.check_guild(member.guild.id) or (member and member.bot):
+    if not config.check_guild(member.guild.id) or member.bot:
         return
 
     vc1 = member.guild.get_channel(config.channels['vc'])
     vc2 = member.guild.get_channel(config.channels['vc2'])
     vc3 = member.guild.get_channel(config.channels['vc3'])
-    messages = []
 
     channel_info = {
         vc1: {
-            'role': member.guild.get_role(config.roles['in_vc']),
-            'leader': member.guild.get_role(config.roles['in_vc_leader']),
-            'available': member.guild.get_role(config.roles['available_not_in_vc']),
+            'in_vc': 'in_vc',
             'join_msg': 'join_vc',
             'leave_msg': 'leave_vc',
-            'color': 'g'
+            'color': 'g',
         },
         vc2: {
-            'role': member.guild.get_role(config.roles['in_vc_2']),
-            'leader': member.guild.get_role(config.roles['in_vc_2_leader']),
-            'available': member.guild.get_role(config.roles['available_not_in_vc_2']),
+            'in_vc': 'in_vc_2',
             'join_msg': 'join_vc_2',
             'leave_msg': 'leave_vc_2',
-            'color': 'p'
+            'color': 'p',
         },
         vc3: {
-            'role': member.guild.get_role(config.roles['in_vc_3']),
-            'leader': member.guild.get_role(config.roles['in_vc_3_leader']),
-            'available': member.guild.get_role(config.roles['available_not_in_vc_3']),
+            'in_vc': 'in_vc_3',
             'join_msg': 'join_vc_3',
             'leave_msg': 'leave_vc_3',
-            'color': 'r'
+            'color': 'r',
         },
     }
 
-    roles_to_add = []
-    roles_to_remove = []
+    messages = []
 
-    # leaving
-    if before.channel in channel_info:
-        info = channel_info[before.channel]
-        if before.channel != after.channel:
+    async with RoleSession(member) as rs:
+        # leaving
+        if before.channel in channel_info and before.channel != after.channel:
+            info = channel_info[before.channel]
+
             messages.append(config.message(
                 info['leave_msg'],
                 member=member.mention,
-                count=general.emojify(str(len(before.channel.members)), info['color'])
+                count=general.emojify(
+                    str(len(before.channel.members)),
+                    info['color'],
+                ),
             ))
-            roles_to_remove.append(info['role'])
-            if info['leader'] in member.roles:
-                roles_to_remove.append(info['leader'])
-            if member.guild.get_role(config.roles['available']) in member.roles and not info['available'] in member.roles:
-                roles_to_add.append(info['available'])
 
-    # joining
-    if after.channel in channel_info:
-        info = channel_info[after.channel]
-        if before.channel != after.channel:
+            rs.remove(info['in_vc'])
+
+        # joining
+        if after.channel in channel_info and before.channel != after.channel:
+            info = channel_info[after.channel]
+
             messages.append(config.message(
                 info['join_msg'],
                 member=member.mention,
-                count=general.emojify(str(len(after.channel.members)), info['color'])
+                count=general.emojify(
+                    str(len(after.channel.members)),
+                    info['color'],
+                ),
             ))
-            roles_to_add.append(info['role'])
-            if member.guild.get_role(config.roles['leader']) in member.roles:
-                roles_to_add.append(info['leader'])
-            roles_to_remove.append(info['available'])
 
-    if roles_to_remove:
-        await member.remove_roles(*roles_to_remove)
-    if roles_to_add:
-        await member.add_roles(*roles_to_add)
+            rs.add(info['in_vc'])
+
     if messages:
-        await member.guild.get_channel(config.channels['chat']).send('\n'.join(messages), allowed_mentions=discord.AllowedMentions.none())
+        await member.guild.get_channel(
+            config.channels['chat']
+        ).send(
+            '\n'.join(messages),
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
 
     await general.update_status(bot)
 
@@ -193,28 +162,27 @@ async def on_raw_reaction_add(payload):
     member = guild.get_member(payload.user_id)
     if not member or member.bot: return
 
-    if payload.message_id == config.channels['availability_message']:
-        emoji_id = payload.emoji.id
-        if emoji_id == config.channels['availability_reaction']:
-            await activity.add_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
+    async with RoleSession(member) as rs:
+        if payload.message_id == config.channels['availability_message']:
+            emoji_id = payload.emoji.id
+            if emoji_id == config.channels['availability_reaction']:
+                await activity.add_availability(rs, bot.get_guild(payload.guild_id).get_member(payload.user_id))
 
-    if payload.message_id == activity.INTERESTED_MESSAGE_ID:
-        role_map = activity.get_interested_role_map(guild)
-        emoji_str = str(payload.emoji)
+        if payload.message_id == activity.INTERESTED_MESSAGE_ID:
+            role_map = activity.get_interested_role_map(guild)
+            emoji_str = str(payload.emoji)
 
-        if emoji_str in role_map:
-            role = role_map[emoji_str]
-            await general.add_role(member, role.id)
+            if emoji_str in role_map:
+                role = role_map[emoji_str]
+                rs.add(role.id)
 
-            clean_name = role.name.replace(activity.INTERESTED_PREFIX, "")
-            await general.send(bot, f"🎮 {member.mention} is now interested in **{clean_name}**", pings=AllowedMentions.none())
-
-
-    if payload.message_id in REACTION_ROLES:
-        emoji_str = str(payload.emoji)
-        if emoji_str in REACTION_ROLES[payload.message_id]:
-            role_id = REACTION_ROLES[payload.message_id][emoji_str]
-            await general.add_role(member, role_id)
+                clean_name = role.name.replace(activity.INTERESTED_PREFIX, "")
+                await general.send(f"🎮 {member.mention} is now interested in **{clean_name}**", pings=AllowedMentions.none())
+        if payload.message_id in REACTION_ROLES:
+            emoji_str = str(payload.emoji)
+            if emoji_str in REACTION_ROLES[payload.message_id]:
+                role_id = REACTION_ROLES[payload.message_id][emoji_str]
+                rs.add(role_id)
 
 
 @bot.event
@@ -223,30 +191,27 @@ async def on_raw_reaction_remove(payload):
     member = guild.get_member(payload.user_id)
     if not member or member.bot: return
 
+    async with RoleSession(member) as rs:
+        if payload.message_id == config.channels['availability_message']:
+            emoji_id = payload.emoji.id
+            if emoji_id == config.channels['availability_reaction']:
+                await activity.remove_availability(rs, member)
 
-    if payload.message_id == config.channels['availability_message']:
-        emoji_id = payload.emoji.id
-        if emoji_id == config.channels['availability_reaction']:
-            await activity.remove_availability(bot, bot.get_guild(payload.guild_id).get_member(payload.user_id))
+        if payload.message_id == activity.INTERESTED_MESSAGE_ID:
+            role_map = activity.get_interested_role_map(guild)
+            emoji_str = str(payload.emoji)
 
+            if emoji_str in role_map:
+                role = role_map[emoji_str]
+                rs.remove(role.id)
 
-    if payload.message_id == activity.INTERESTED_MESSAGE_ID:
-        role_map = activity.get_interested_role_map(guild)
-        emoji_str = str(payload.emoji)
-
-        if emoji_str in role_map:
-            role = role_map[emoji_str]
-            await general.remove_role(member, role.id)
-
-            clean_name = role.name.replace(activity.INTERESTED_PREFIX, "")
-            await general.send(bot, f"🚫 {member.mention} is no longer interested in **{clean_name}**", pings=AllowedMentions.none())
-
-
-    if payload.message_id in REACTION_ROLES:
-        emoji_str = str(payload.emoji)
-        if emoji_str in REACTION_ROLES[payload.message_id]:
-            role_id = REACTION_ROLES[payload.message_id][emoji_str]
-            await general.remove_role(member, role_id)
+                clean_name = role.name.replace(activity.INTERESTED_PREFIX, "")
+                await general.send(f"🚫 {member.mention} is no longer interested in **{clean_name}**", pings=AllowedMentions.none())
+        if payload.message_id in REACTION_ROLES:
+            emoji_str = str(payload.emoji)
+            if emoji_str in REACTION_ROLES[payload.message_id]:
+                role_id = REACTION_ROLES[payload.message_id][emoji_str]
+                rs.remove(role_id)
 
 
 async def remove_availability_auto(member):
@@ -260,11 +225,12 @@ async def remove_availability_auto(member):
                     reaction_flag = True
                     break
 
-    await general.remove_role(member, config.roles['available'])
+    async with RoleSession(member) as rs:
+        rs.remove(config.roles['available'])
     if reaction_flag:
         await msg.remove_reaction(
             discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), member)
-        await general.send(bot, config.message('unavailable_auto', name=member.mention,
+        await general.send(config.message('unavailable_auto', name=member.mention,
                                                available_count=f"{general.emojify(str(await activity.count_available(bot)), 'b')}"),
                                                pings=discord.AllowedMentions.none())
 
@@ -276,17 +242,6 @@ async def on_member_update(before, after):
         added_roles = after_roles - before_roles
         removed_roles = before_roles - after_roles
 
-        for role in removed_roles:
-            if role.id == config.roles['person']:
-                if not has_role(after, config.roles['inactive']) and not has_role(after,
-                                                                                  config.roles['explained_inactive']):
-                    await general.add_role(after, config.roles['inactive'])
-            if role.id == config.roles['inactive']:
-                if not has_role(after, config.roles['explained_inactive']) and not has_role(after,
-                                                                                            config.roles['person']):
-                    await general.add_role(after, config.roles['person'])
-
-        # Challenge role changes
         for role in added_roles:
             role_info = parse_challenge_role(role)
             if role_info:
@@ -296,65 +251,52 @@ async def on_member_update(before, after):
                     '☄': '<:star_pure_completion:1453452636618752214>'
                 }
                 emoji = emoji_map.get(role_info['tier_emoji'], '<:yes:1463357188964618413>')
-                if role.name.startswith('🏆'):
-                    await general.send(bot,
-                                       f'{emoji} {after.mention} completed **{role_info["name"]}** ({role_info["points"]} pts)')
-                else:
-                    await general.send(bot,
-                                       f'{emoji} {after.mention} completed a custom challenge **{role_info["name"]}** ({role_info["points"]} pts)')
+                announce = 'completed a custom challenge' if not role.name.startswith('🏆') else 'completed'
+                await general.send(f'{emoji} {after.mention} {announce} **{role_info["name"]}** ({role_info["points"]} pts)')
                 await update_leaderboard_message(bot, after.guild)
 
         for role in removed_roles:
             role_info = parse_challenge_role(role)
             if role_info:
-                if role.name.startswith('🏆'):
-                    await general.send(bot,
-                                       f'<:no:1454950318042255410> {after.mention}\'s **{role_info["name"]}** completion was taken')
-                else:
-                    await general.send(bot,
-                                       f'<:no:1454950318042255410> {after.mention}\'s **{role_info["name"]}** (custom challenge) completion was taken')
+                announce = '(custom challenge) ' if not role.name.startswith('🏆') else ''
+                await general.send(f'<:no:1454950318042255410> {after.mention}\'s **{role_info["name"]}** {announce}completion was taken')
                 await update_leaderboard_message(bot, after.guild)
 
-        # Existing role update logic
         for role in added_roles:
             if role.id == config.roles['mod']:
-                await general.send(bot, config.message('promotion', mention=after.mention))
-                await general.send(bot, config.message('promotion_welcome', mention=after.mention), 'mod_chat')
-            if role.id == config.roles['leader']:
-                await general.send(bot, config.message('new_leader', mention=after.mention))
-            if role.id == config.roles['inactive']:
-                await general.send(bot, config.message('inactive', mention=after.mention))
-                await general.remove_role(after, config.roles['person'])
-            if role.id == config.roles['explained_inactive']:
-                await general.send(bot, config.message('explained_inactive', mention=after.mention))
-            if role.id == config.roles['spoiler']:
-                await general.send(bot, config.message('spoiler_add', mention=after.mention), 'spoiler')
-
+                await general.send(config.message('promotion', mention=after.mention))
+                await general.send(config.message('promotion_welcome', mention=after.mention), 'mod_chat')
+            elif role.id == config.roles['leader']:
+                await general.send(config.message('new_leader', mention=after.mention))
+            elif role.id == config.roles['inactive']:
+                await general.send(config.message('inactive', mention=after.mention))
+            elif role.id == config.roles['explained_inactive']:
+                await general.send(config.message('explained_inactive', mention=after.mention))
+            elif role.id == config.roles['spoiler']:
+                await general.send(config.message('spoiler_add', mention=after.mention), 'spoiler')
 
         for role in removed_roles:
             if role.id == config.roles['mod']:
-                await general.send(bot, config.message('demotion', mention=after.mention))
-                await general.send(bot, config.message('demotion_goodbye', mention=after.mention), 'mod_chat')
-            if role.id == config.roles['leader']:
-                await general.send(bot, config.message('leader_removed', mention=after.mention))
-            if role.id == config.roles['newbie']:
-                await general.send(bot, config.message('newbie', mention=after.mention))
-            if role.id == config.roles['inactive']:
-                await general.send(bot, config.message('inactive_revoke', mention=after.mention))
-                await general.add_role(after, config.roles['person'])
-                await general.remove_role(after, config.roles['explained_inactive'])
-            if role.id == config.roles['spoiler']:
-                await general.send(bot, config.message('spoiler_remove', mention=after.mention), 'spoiler')
-
-            if role.id == config.roles['available']:
+                await general.send(config.message('demotion', mention=after.mention))
+                await general.send(config.message('demotion_goodbye', mention=after.mention), 'mod_chat')
+            elif role.id == config.roles['leader']:
+                await general.send(config.message('leader_removed', mention=after.mention))
+            elif role.id == config.roles['newbie']:
+                await general.send(config.message('newbie', mention=after.mention))
+            elif role.id == config.roles['inactive']:
+                await general.send(config.message('inactive_revoke', mention=after.mention))
+            elif role.id == config.roles['spoiler']:
+                await general.send(config.message('spoiler_remove', mention=after.mention), 'spoiler')
+            elif role.id == config.roles['available']:
                 await remove_availability_auto(after)
-
-        await fix_categories(after)
 
     if before.nick != after.nick:
         old = before.nick if before.nick else before.display_name
         new = after.nick if after.nick else after.display_name
-        await general.send(bot, config.message('name_change', mention=after.mention, old_name=old, new_name=new))
+        await general.send(config.message('name_change', mention=after.mention, old_name=old, new_name=new))
+
+    session = RoleSession(after)
+    await session.commit()
 
 
 @bot.event
@@ -363,19 +305,22 @@ async def on_member_join(member):
     if not config.check_guild(guild.id):
         return
 
-    if member.bot:
-        await general.send(bot, config.message('join_bot', mention=member.mention))
-        await general.add_role(member, config.roles['bot'])
-    else:
-        await general.send(bot, config.message('join', mention=member.mention))
-        await general.send(bot, msg='-# read below for just a quick tour around :3\n'
-                                    '-# channels you really should check out: <#1442604555798974485> <#1426974985402187776> <#1432401559672848507>\n'
-                                    '-# grab <#1434653852367585300> when you are ready to play! (don\'t forget to remove it when you stop being available!)\n'
-                                    '-# join <#1426974154556702720> at any time!\n'
-                                    '-# please respect others and remain active! unexplained long inactivity is something very frowned upon here')
-        await general.send(bot, f':new: <@&{config.roles['mod']}> hey, we got a new member in the server! nice work! a friendly reminder to set their nickname to their roblox display name :3', 'mod_chat')
-        for role in config.roles['new_people']:
-            await general.add_role(member, role)
+    async with RoleSession(member) as rs:
+        if member.bot:
+            await general.send(config.message('join_bot', mention=member.mention))
+            rs.add('bot')
+        else:
+            await general.send(config.message('join', mention=member.mention))
+            await general.send(msg='-# read below for just a quick tour around :3\n'
+                                        '-# channels you really should check out: <#1442604555798974485> <#1426974985402187776> <#1464608724667858975>\n'
+                                        '-# grab <#1434653852367585300> when you are ready to play! (don\'t forget to remove it when you stop being available!)\n'
+                                        '-# join <#1426974154556702720> at any time!\n'
+                                        '-# please respect others and remain active! unexplained long inactivity is something very frowned upon here')
+            await general.send(f':new: <@&{config.roles['mod']}> hey, we got a new member in the server! nice work! a friendly reminder to set their nickname to their roblox display name :3', 'mod_chat')
+
+            for role in config.roles['new_people']:
+                rs.add(role)
+
 
 
 @bot.event
@@ -385,65 +330,64 @@ async def on_member_remove(member):
         return
 
     if member.bot:
-        await general.send(bot, config.message('kick_bot', mention=member.mention))
+        await general.send(config.message('kick_bot', mention=member.mention))
 
     else:
         async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.kick):
             if entry.target == member and \
                 (discord.utils.utcnow() - entry.created_at).total_seconds() < 5:
-                    await general.send(bot, config.message('kick', mention=member.mention))
+                    await general.send(config.message('kick', mention=member.mention))
                     return
 
         async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
             if entry.target == member and \
                 (discord.utils.utcnow() - entry.created_at).total_seconds() < 5:
-                    await general.send(bot, config.message('ban', mention=member.mention))
+                    await general.send(config.message('ban', mention=member.mention))
                     return
 
-        await general.send(bot, config.message('leave', mention=member.mention))
+        await general.send(config.message('leave', mention=member.mention))
 
 
 import re
 
-
-async def log_message(bot: commands.Bot, message: discord.Message):
-    if message.channel.id == config.channels['logs_channel']:
-        return
-
-    print(f'#{message.channel.name} | @{message.author.display_name} >> {message.content}')
-
-    channel = bot.get_channel(config.channels['logs_channel'])
-    timestamp = f"<t:{int(message.created_at.timestamp())}:f>"
-    content = message.content
-
-    if not content.strip() and not message.attachments and not message.stickers:
-        content = "*[no visible content]*"
-
-    log_message = (
-        f'### {message.channel.mention} >> {message.author.mention} — {timestamp}\n'
-        f'{content}\n'
-    )
-
-    attachment_urls = [attachment.url for attachment in message.attachments]
-    if attachment_urls:
-        log_message += "\n" + "\n".join(attachment_urls)
-
-    await channel.send(log_message, allowed_mentions=discord.AllowedMentions.none(), silent=True,
-                       stickers=message.stickers)
+# async def log_message(message: discord.Message):
+#     if message.channel.id == config.channels['logs_channel']:
+#         return
+#
+#     print(f'#{message.channel.name} | @{message.author.display_name} >> {message.content}')
+#
+#     channel = bot.get_channel(config.channels['logs_channel'])
+#     timestamp = f"<t:{int(message.created_at.timestamp())}:f>"
+#     content = message.content
+#
+#     if not content.strip() and not message.attachments and not message.stickers:
+#         content = "*[no visible content]*"
+#
+#     log_message = (
+#         f'### {message.channel.mention} >> {message.author.mention} — {timestamp}\n'
+#         f'{content}\n'
+#     )
+#
+#     attachment_urls = [attachment.url for attachment in message.attachments]
+#     if attachment_urls:
+#         log_message += "\n" + "\n".join(attachment_urls)
+#
+#     await channel.send(log_message, allowed_mentions=discord.AllowedMentions.none(), silent=True,
+#                        stickers=message.stickers)
 
 @bot.event
 async def on_message(message: discord.Message):
-    #await log_message(bot, message)
     if message.author == bot.user:
         return
 
-    # ps link
+    if message.guild:
+        activity.update_cache(message.author.id)
+
     if '<#1426974154556702720>' in message.content or message.content.lower() == 'ps':
         await message.channel.send(
             f'link: **https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server**',
             suppress_embeds=True)
 
-    # slur check
     if 'nigga' in message.content.lower() or 'nigger' in message.content.lower():
         await message.channel.send(
             '[[<@534097411048603648>]] i will personally fix ur fucking skin color if you say that word again')
@@ -545,35 +489,17 @@ async def stat_checker(ctx, member: discord.Member = None):
 async def points(ctx, member: discord.Member = None):
     await stat_checker(ctx, member)
 
+
 @bot.command()
 @general.try_bot_perms
 async def pts(ctx, member: discord.Member = None):
     await stat_checker(ctx, member)
 
+
 @bot.command()
 @general.try_bot_perms
 async def stats(ctx, member: discord.Member = None):
     await stat_checker(ctx, member)
-
-
-@bot.command()
-@general.try_bot_perms
-@general.has_perms('manage_roles')
-async def complete(ctx, challenge_role: discord.Role, *members: discord.Member):
-    if not members:
-        return await ctx.send('usage: `.complete <challenge_role> <members...>`')
-
-    # Verify it's a challenge role
-    role_info = parse_challenge_role(challenge_role)
-    if not role_info:
-        return await ctx.send('that\'s not a challenge role')
-
-    for member in members:
-        await general.add_role(member, challenge_role.id)
-
-    member_mentions = ', '.join([m.mention for m in members])
-    await ctx.send(f'gave {challenge_role.mention} to {member_mentions}')
-
 
 
 @bot.command()
@@ -613,23 +539,24 @@ async def rename(ctx, name: str = None):
 async def disband(ctx):
     await disband_save(ctx)
 
+
 @bot.command()
 @general.try_bot_perms
-#@general.inject_reply
 async def van(ctx, member: discord.Member = None, *, reason: str = None):
     msg = f'{member.mention} has been vanned :white_check_mark:'
     if reason:
         msg += f'\nreason: {reason}'
     await ctx.send(msg)
 
+
 @bot.command()
 @general.try_bot_perms
-#@general.inject_reply
 async def war(ctx, member: discord.Member = None, *, reason: str = None):
     msg = f'{member.mention} has been warred :white_check_mark:'
     if reason:
         msg += f'\nreason: {reason}'
     await ctx.send(msg)
+
 
 @bot.command()
 @general.try_bot_perms
@@ -649,26 +576,26 @@ async def unpin(ctx):
     msg = ctx.message.reference.resolved
     return await msg.unpin()
 
+
 @bot.command()
 @general.try_bot_perms
 @general.has_perms('kick_members')
-#@general.inject_reply
 @general.can_moderate_member
 async def kick(ctx, member: discord.Member = None, *, reason: str = None):
     await member.kick(reason=reason)
 
+
 @bot.command()
 @general.try_bot_perms
 @general.has_perms('ban_members')
-#@general.inject_reply
 @general.can_moderate_member
 async def ban(ctx, member: discord.Member = None, *, reason: str = None):
     await member.ban(reason=reason, delete_message_seconds=0)
 
+
 @bot.command()
 @general.try_bot_perms
 @general.has_perms('moderate_members')
-#@general.inject_reply
 @general.can_moderate_member
 async def mute(ctx, member: discord.Member = None, duration: str = None, *, reason: str = None):
     if not duration:
@@ -681,25 +608,25 @@ async def mute(ctx, member: discord.Member = None, duration: str = None, *, reas
     formatted_duration = moderation.format_timedelta(timeout_duration)
     await ctx.send(f"muted the guy for {formatted_duration} :white_check_mark:")
 
+
 @bot.command()
 @general.try_bot_perms
 @general.has_perms('moderate_members')
-#@general.inject_reply
 @general.can_moderate_member
 async def unmute(ctx, member: discord.Member = None, *, reason: str = None):
     await moderation.unmute(ctx, member, reason)
 
+
 @bot.command()
 @general.try_bot_perms
 @general.has_perms('moderate_members')
-#@general.inject_reply
 @general.can_moderate_member
 async def warn(ctx, member: discord.Member = None, *, reason: str = None):
     await moderation.warn(ctx, member, reason)
 
+
 @bot.command()
 @general.try_bot_perms
-#@general.inject_reply
 async def warns(ctx, member: discord.Member = None):
     if member.guild.get_role(config.roles['warn_1']) in member.roles:
         await ctx.send(f"this guy has 1 warn :yellow_circle:")
@@ -713,13 +640,13 @@ async def warns(ctx, member: discord.Member = None):
 @bot.command()
 @general.try_bot_perms
 @general.has_perms('moderate_members')
-#@general.inject_reply
 @general.can_moderate_member
 async def clear_warns(ctx, member: discord.Member = None):
     await member.timeout(None)
-    await general.remove_role(member, general.config.roles['warn_1'])
-    await general.remove_role(member, general.config.roles['warn_2'])
-    await general.remove_role(member, general.config.roles['warn_3'])
+    async with RoleSession(member) as rs:
+        rs.remove(general.config.roles['warn_1'])
+        rs.remove(general.config.roles['warn_2'])
+        rs.remove(general.config.roles['warn_3'])
     await ctx.send(f"cleared all warns :white_check_mark:")
 
 @bot.command()
@@ -735,9 +662,6 @@ async def lock(ctx):
 async def unlock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=None)
     await ctx.send(config.message("channel_unlock"))
-
-
-
 
 
 from discord.ui import View, button
@@ -766,15 +690,6 @@ class ConfirmDeleteView(View):
         await interaction.message.edit(content="❌ deletion canceled", view=None)
         self.stop()
 
-
-
-@bot.command()
-@general.try_bot_perms
-@general.has_perms('owner')
-async def start_loop(ctx):
-    await ctx.message.delete()
-    await send_timed_delete_msg(bot, 'got it', 3)
-    member_checker.start()
 
 @bot.command()
 @general.has_perms('manage_messages')
@@ -852,12 +767,11 @@ async def r(ctx, start_id: int, end_id: int = None):
         return await timed_delete_msg(res_msg, f'deleted {total_deleted} messages', 10)
 
 
-
-import subprocess
 @bot.command()
 @general.try_bot_perms
 @general.has_perms('owner')
 async def update(ctx):
+    import subprocess
     await ctx.send(':radio_button: pulling from git...')
     try:
         result = subprocess.run(
@@ -880,66 +794,9 @@ async def update(ctx):
 
 @bot.command()
 @general.try_bot_perms
-@general.work_in_progress
-async def br(ctx):
-    return await ctx.reply('sry fam ts command no workie and im too lazy to fix it so its cancelled for now')
-
-
-@bot.command()
-@general.try_bot_perms
-@general.has_perms('manage_roles')
-async def check_inactive(ctx, member: discord.Member):
-    chat_channel = ctx.guild.get_channel(config.channels['chat'])
-    bot_msg = await ctx.send('🤔 checking past activity...')
-
-    last_message = None
-    last_bot_mention = None
-
-    checked_msg = 0
-    await bot_msg.edit(content='🤔 fetching 15000 messages from chat...')
-    async for msg in chat_channel.history(limit=15000):
-        checked_msg += 1
-        if (checked_msg % 750) == 0:
-            await bot_msg.edit(content=f'🤔 checking msg `{checked_msg}`/`10000`...'
-                                       f'{f'\n- last message: <t:{int(last_message.created_at.timestamp())}:R> ([jump]({last_message.jump_url}))' if last_message else '\n- last message: *searching*'}'
-                                       f'{f'\n- last mention by bot (availability/vc changes): <t:{int(last_bot_mention.created_at.timestamp())}:R> ([jump]({last_bot_mention.jump_url}))' if last_bot_mention else '\n- last mention by bot (availability/vc changes): *searching*'}')
-        if msg.author == member and not last_message:
-            last_message = msg
-        if msg.author == bot.user and member.display_name in msg.content and not last_bot_mention:
-            last_bot_mention = msg
-        if last_message and last_bot_mention:
-            break
-
-    response = f"🔥 **{member.mention}'s activity over the past 10000 messages**\n"
-
-    if last_message:
-        response += f"- last message: <t:{int(last_message.created_at.timestamp())}:R> ([jump]({last_message.jump_url}))\n"
-    else:
-        response += "- last message: *none*\n"
-
-    if last_bot_mention:
-        response += f"- last mention by bot (availability/vc changes): <t:{int(last_bot_mention.created_at.timestamp())}:R> ([jump]({last_bot_mention.jump_url}))"
-    else:
-        response += "- last mention by bot (availability/vc changes): *none*"
-
-    await bot_msg.edit(content=response)
-
-
-
-@bot.command()
-@general.try_bot_perms
 @general.has_perms('manage_roles')
 async def check_inactive_people(ctx):
-    await activity.check_inactivity(bot)
-
-
-
-
-# @bot.command()
-# @general.try_bot_perms
-# @general.has_perms('manage_roles')
-# async def inactive(ctx, member: discord.Member):
-#     await general.add_role(member, config.roles['inactive'])
+    await activity.check_inactivity()
 
 
 @bot.command()
@@ -947,112 +804,6 @@ async def check_inactive_people(ctx):
 @general.has_perms('manage_roles')
 async def unavailable(ctx, member: discord.Member):
     await remove_availability_auto(member)
-
-
-@bot.command()
-@general.try_bot_perms
-@general.has_perms('manage_roles')
-async def clean_availability(ctx):
-    await check_availability(bot)
-    
-    
-    
-# @bot.command()
-# async def br(ctx, *args):
-#     # if not ctx.guild.get_role(ROLES['mod']) not in ctx.author.roles:
-#     #     return await ctx.send(message("nuh_uh"))
-#     parsed_args = list(args)
-#     if len(parsed_args) == 0:
-#         return await ctx.send(
-#             'usage `.br <challenge> [best?] <route> <death-floor> <death-door> [flag][participants] -- <reason>`\n'
-#             'format `.br <tcs/gor/pdo> [b] bh[ro]m[-l] <b/h/r/o/m> (int) [-l @leader] [-d @dead_member] [-x @disconnected_member] [@normal_member] ... -- (str)`\n'
-#             'death-door argument can also represent death meters in outdoors if death-floor is \'o\'\n'
-#             '-l at the end of route means long rooms and only works if r is included. long rooms means up to a-1000, short rooms means up to a-200'
-#         )
-#
-#     run_type = parsed_args.pop(0).lower()
-#     if run_type not in config.emoji:
-#         return await ctx.send(
-#             f'invalid challenge `{run_type}`'
-#         )
-#
-#     new_best = False
-#     if len(parsed_args) >= 1 and parsed_args[0] == 'b':
-#         new_best = True
-#         parsed_args.pop(0)
-#
-#     if len(parsed_args) < 3:  # minimum route, death-floor, death-door
-#         return await ctx.send('wrong usage :wilted_rose:')
-#
-#     route = parsed_args[0]
-#     death_floor = parsed_args[1]
-#     try:
-#         death_time = int(parsed_args[2])
-#     except ValueError:
-#         await ctx.send(
-#             'wrong death door it has to be an integer :wilted_rose:'
-#         )
-#         return None
-#
-#     death_point = (death_floor, death_time)
-#
-#     # Find the separator for reason
-#     try:
-#         reason_separator_index = parsed_args.index('--', 3)
-#     except ValueError:
-#         return await ctx.send(
-#             'pls tell me the run failure reason after `--`'
-#         )
-#
-#     # Extract participant arguments and reason
-#     participant_args = parsed_args[3:reason_separator_index]
-#     reason = ' '.join(parsed_args[reason_separator_index + 1 :])
-#
-#     if not reason:
-#         return await ctx.send('how tf did u fail? tell me! after `--` at the end of the command')
-#
-#     from best_runs import RunMember, RunDetails
-#     participants: list[RunMember] = []
-#
-#     # Helper to create a RunMember from a discord.Member
-#     async def create_run_member(member: discord.Member):
-#         return RunMember(
-#             member=member,
-#             is_leader=current_member_flags['is_leader'],
-#             is_dead=current_member_flags['is_dead'],
-#             is_disconnected=current_member_flags['is_disconnected'],
-#         )
-#
-#     current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
-#     # Process participant arguments
-#     for arg in participant_args:
-#         if arg == '-l':
-#             current_member_flags['is_leader'] = True
-#         if arg == '-d':
-#             current_member_flags['is_dead'] = True
-#         if arg == '-x':
-#             current_member_flags['is_disconnected'] = True
-#         if arg not in ['-x', '-d', '-l']:
-#             try:
-#                 # Resolve member from mention (e.g., <@123456789>)
-#                 member = await commands.MemberConverter().convert(ctx, arg)
-#                 participants.append(await create_run_member(member))
-#                 current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
-#             except commands.MemberNotFound:
-#                 await ctx.send(f'Could not find member: `{arg}`')
-#             finally:
-#                 # Reset flags after adding a member or if it's not a flag
-#                 current_member_flags = {'is_leader': False, 'is_dead': False, 'is_disconnected': False}
-#
-#     run_details = RunDetails(
-#         run_type=run_type,
-#         route=route,
-#         death_point=death_point,
-#         reason=reason,
-#         participants=participants,
-#         is_new_best=new_best,
-#     )
-#     return await ctx.send(run_details.message_text)
 
 
 if __name__ == '__main__':

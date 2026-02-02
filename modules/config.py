@@ -1,3 +1,5 @@
+from discord.ext import commands
+
 TARGET_GUILD = 1426972810332340406
 
 def check_guild(guild_id: int) -> bool:
@@ -33,16 +35,6 @@ roles = {
         1445134463263707156, # cat: badges
         1445191426920153159, # cat: misc
     ],
-    "category:badges": {
-        "none": 1445191573305425930,
-        "other": [1443767416579559618, 1440647536397385800, 1443251279257407619, 1443251500481646784,
-                  1443264316236234862, 1427674706076635169, 1445115775261081681, 1439783495248384162]
-    },
-    "category:misc": {
-        "none":  1445191748010770493,
-        "other": [1442212989351628810, 1439783181199872120, 1439831984695148544, 1429256434323034235,
-                  1442596622013038704, 1442596750576717905, 1442623000452005948]
-    },
 
     "bot": 1442086763161194597,
     "leader": 1426973394099896507,
@@ -80,26 +72,15 @@ roles = {
     "spoiler": 1451675068114669740,
 
     "completion_server_star_star": 1454594165857063004,
-    "completion_server_base_star": 1453450000297365576,
-    "completion_tcs+": 1454596340930838751,
-    "completion_tcs": 1440647536397385800,
-    "completion_has++": 1454596424120402061,
-    "completion_has+": 1454596427077652671,
-    "completion_has": 1454596429782847772,
-    "completion_nn++": 1454595271056035861,
-    "completion_nn+": 1454595144841171164,
-    "completion_nn": 1443767416579559618,
-    "completion_gor+": 1453876081294573729,
-    "completion_gor": 1443251279257407619,
-    "completion_nnd+": 1454594591360811068,
-    "completion_nnd": 1454594411483758592,
-    "completion_rmt": 1454812063435194490,
-    "completion_pdo+": 1443264316236234862,
-    "completion_pdo": 1443251500481646784,
-    "completion_tbs": 1427674706076635169,
-    "completion_ahp": 1445115775261081681,
-    "completion_star": 1439783495248384162,
+    "completion_server_base_star": 1453450000297365576
 }
+
+def get_starting_roles(bot: commands.Bot):
+    for role_id in roles["new_people"]:
+        role = bot.get_guild(TARGET_GUILD).get_role(role_id)
+
+
+
 
 channels = {
     "vc": 1426972811293098015,
@@ -325,7 +306,7 @@ _messages = {
         f"{emoji['newbie']} {{mention}} is not a newbie anymore!! please applaud!!"
     ],
     "inactive": [
-        f"{emoji['inactive']} {{mention}} didn't send a single message in chat in the past 7 days so marked inactive automatically"
+        f"{emoji['inactive']} {{mention}} didn't send a single message in chat in the past 6 days so marked inactive automatically"
     ],
     "inactive_mods": [
         f"{emoji['inactive']} mods marked {{mention}} inactive"
