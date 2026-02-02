@@ -331,12 +331,26 @@ async def sync_interested_reactions():
     guild = bot.get_guild(config.TARGET_GUILD)
     channel = guild.get_channel(INTERESTED_CHANNEL_ID)
     if not channel: return
+
     for mid in [INTERESTED_MESSAGE_BASE, INTERESTED_MESSAGE_STAR, INTERESTED_MESSAGE_ULTIMATE]:
         try:
             msg = await channel.fetch_message(mid)
             role_map = get_interested_role_map(guild, mid)
+
+            # sort the items by role position (descending) to get the correct visual order
+            # higher position in discord role list = "later" in the channel role list
+            # usually role lists are: [Newest/Top] ... [Oldest/Bottom]
+            # but for display purposes we want them in the order they appear in the map
+            # which is determined by the order we find them in guild.roles
+            sorted_emojis = sorted(
+                role_map.keys(),
+                key=lambda e: role_map[e].position,
+                reverse=True
+            )
+
             existing = [str(r.emoji) for r in msg.reactions if r.me]
-            for emoji_str in role_map:
-                if emoji_str not in existing: await msg.add_reaction(emoji_str)
-        except:
-            pass
+            for emoji_str in sorted_emojis:
+                if emoji_str not in existing:
+                    await msg.add_reaction(emoji_str)
+        except Exception as e:
+            print(f"sync error for {mid}: {e}")

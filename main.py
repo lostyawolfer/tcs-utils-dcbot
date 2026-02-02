@@ -14,7 +14,7 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.1.1'
+version = 'v4.1.2'
 
 changelog = \
     f"""
@@ -23,7 +23,8 @@ base
 - added support for multiple tier "interested in" reaction roles
 - added grouping interested in related messages together if user does multiple updates at once
 latest patch
-- fixed role name parsing with strange characters (like "Tag, You're It" for example got the bot confused because of the comma and apostrophe, now should be fine)
+- tried to fix reaction roles not being in correct order
+- added an owner-only command to force an update of bot's reactions there
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -44,12 +45,12 @@ async def on_ready():
     await bot.wait_until_ready()
     await general.send(f':ballot_box_with_check: restart complete!')
     await general.send(changelog)
+    await activity.sync_interested_reactions()
     msg = await general.send(f':eye: lemme build up some activity cache...')
     await activity.build_activity_cache()
     await msg.reply(':white_check_mark: activity cache built, gonna run activity checks every 45 mintues')
     if not member_checker.is_running():
         member_checker.start()
-    await activity.sync_interested_reactions()
 
 
 @bot.command()
@@ -61,7 +62,6 @@ async def force_check_all(ctx):
 
 @bot.command()
 @general.try_bot_perms
-
 @general.has_perms('manage_roles')
 async def check(ctx, member: discord.Member = None):
     async with RoleSession(member) as rs:
@@ -70,8 +70,17 @@ async def check(ctx, member: discord.Member = None):
 
 @bot.command()
 @general.try_bot_perms
-async def test(ctx):
+@general.has_perms('owner')
+async def update(ctx):
     await ctx.send(f'test pass\n-# {version}')
+
+@bot.command()
+@general.try_bot_perms
+@general.has_perms('owner')
+async def force_reactions(ctx):
+    await activity.sync_interested_reactions()
+    await ctx.send('uh huh')
+
 
 
 
