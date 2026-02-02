@@ -255,7 +255,7 @@ _messages = {
         f"{emoji['unavailable']} **{{name}}** was marked unavailable by mods {{available_count}}"
     ],
     "unavailable_auto_bot": [
-        f"{emoji['unavailable']} **{{name}}** was marked unavailable automatically (no activity in past 2 hrs) {{available_count}}"
+        f"{emoji['unavailable']} **{{name}}** was marked unavailable automatically (no activity in past 1.5 hrs) {{available_count}}"
     ],
     "join_vc": [
         f"{emoji['join_vc']} **{{member}}** joined the voice channel {{count}}"
