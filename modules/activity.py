@@ -287,21 +287,15 @@ def get_interested_role_map(guild: discord.Guild, message_id: int):
     return role_map
 
 
-# add 'initial_roles' to the state tracking
 async def process_interested_changes(user_id: int, guild: discord.Guild):
     if user_id not in user_pending_changes: return
 
-    state = user_pending_changes.pop(user_id)
+    changes = user_pending_changes.pop(user_id)
+    added = changes['added'] - changes['removed']
+    removed = changes['removed'] - changes['added']
+
     member = guild.get_member(user_id)
-    if not member: return
-
-    # get current roles
-    current_role_ids = {r.id for r in member.roles}
-    initial_role_ids = state['initial_roles']
-
-    # only report roles that actually changed state compared to before the debounce
-    actual_added = [r for r in state['added'] if r.id in current_role_ids and r.id not in initial_role_ids]
-    actual_removed = [r for r in state['removed'] if r.id not in current_role_ids and r.id in initial_role_ids]
+    if not member or (not added and not removed): return
 
     def format_names(roles):
         names = [f"**{r.name.split('interested in ')[-1]}**" for r in roles]
@@ -310,28 +304,18 @@ async def process_interested_changes(user_id: int, guild: discord.Guild):
         return names[0]
 
     output = []
-    if actual_removed:
+    if removed:
         output.append(
-            f"<:no_multiplayer:1463357263811973303> {member.mention} is no longer interested in {format_names(actual_removed)}")
-    if actual_added:
+            f"<:no_multiplayer:1463357263811973303> {member.mention} is no longer interested in {format_names(removed)}")
+    if added:
         output.append(
-            f"<:yes_multiplayer:1463357364110495754> {member.mention} is now interested in {format_names(actual_added)}")
+            f"<:yes_multiplayer:1463357364110495754> {member.mention} is now interested in {format_names(added)}")
 
     if output:
         await general.send('\n'.join(output), pings=AllowedMentions.none())
 
 
 async def schedule_interested_debounce(user_id: int, guild: discord.Guild):
-    # if this is the first reaction in a while, capture the starting roles
-    if user_id not in user_pending_changes:
-        member = guild.get_member(user_id)
-        initial_roles = {r.id for r in member.roles} if member else set()
-        user_pending_changes[user_id] = {
-            'added': set(),
-            'removed': set(),
-            'initial_roles': initial_roles
-        }
-
     if user_id in user_debounce_tasks:
         user_debounce_tasks[user_id].cancel()
 

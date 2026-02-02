@@ -14,7 +14,7 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.1.3'
+version = 'v4.1.2'
 
 changelog = \
     f"""
@@ -23,8 +23,8 @@ base
 - added support for multiple tier "interested in" reaction roles
 - added grouping interested in related messages together if user does multiple updates at once
 latest patch
-- fix debounce chat messages showing strange changes
-- make debounce grace time 7 seconds (instead of 5)
+- tried to fix reaction roles not being in correct order
+- added an owner-only command to force an update of bot's reactions there
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
