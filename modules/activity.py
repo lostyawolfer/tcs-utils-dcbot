@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 from discord import AllowedMentions
 from modules import config, general
@@ -238,19 +240,39 @@ async def run_activity_checks():
     await general.update_status()
 
 
-
 INTERESTED_PREFIX = "🎮 interested in "
+INTERESTED_PREFIX_BASE = "🎮🟢 interested in "
+INTERESTED_PREFIX_STAR = "🎮⭐ interested in "
+INTERESTED_PREFIX_ULTIMATE = "🎮☄️ interested in "
+
 INTERESTED_CHANNEL_ID = 1464608724667858975
-INTERESTED_MESSAGE_ID = 1464609114612302035
+INTERESTED_MESSAGE_BASE = 1464609114612302035
+INTERESTED_MESSAGE_STAR = 1467834855315210376
+INTERESTED_MESSAGE_ULTIMATE = 1467834856640745542
+
+user_pending_changes = {}
+user_debounce_tasks = {}
 
 
-def get_interested_role_map(guild: discord.Guild):
+def get_interested_role_map(guild: discord.Guild, message_id: int):
     role_map = {}
-    for role in guild.roles:
-        if not role.name.startswith(INTERESTED_PREFIX):
-            continue
+    if message_id == INTERESTED_MESSAGE_BASE:
+        prefixes = [INTERESTED_PREFIX_BASE, INTERESTED_PREFIX]
+    elif message_id == INTERESTED_MESSAGE_STAR:
+        prefixes = [INTERESTED_PREFIX_STAR]
+    elif message_id == INTERESTED_MESSAGE_ULTIMATE:
+        prefixes = [INTERESTED_PREFIX_ULTIMATE]
+    else:
+        return role_map
 
-        suffix = role.name.replace(INTERESTED_PREFIX, "").strip().lower()
+    for role in guild.roles:
+        suffix = None
+        for p in prefixes:
+            if role.name.startswith(p):
+                suffix = role.name.replace(p, "").strip().lower()
+                break
+
+        if not suffix: continue
 
         if suffix == "miscellaneous hosts":
             role_map["🎮"] = role
@@ -258,27 +280,61 @@ def get_interested_role_map(guild: discord.Guild):
 
         emoji_name = f"badge_{suffix.replace(' ', '_')}"
         emoji = discord.utils.get(guild.emojis, name=emoji_name)
-
         if emoji:
             role_map[str(emoji)] = role
-
     return role_map
+
+
+async def process_interested_changes(user_id: int, guild: discord.Guild):
+    if user_id not in user_pending_changes: return
+
+    changes = user_pending_changes.pop(user_id)
+    added = changes['added'] - changes['removed']
+    removed = changes['removed'] - changes['added']
+
+    member = guild.get_member(user_id)
+    if not member or (not added and not removed): return
+
+    def format_names(roles):
+        names = [f"**{r.name.split('interested in ')[-1]}**" for r in roles]
+        if len(names) > 1:
+            return f"{', '.join(names[:-1])} and {names[-1]}"
+        return names[0]
+
+    output = []
+    if removed:
+        output.append(
+            f"<:no_multiplayer:1463357263811973303> {member.mention} is no longer interested in {format_names(removed)}")
+    if added:
+        output.append(
+            f"<:yes_multiplayer:1463357364110495754> {member.mention} is now interested in {format_names(added)}")
+
+    if output:
+        await general.send('\n'.join(output), pings=AllowedMentions.none())
+
+
+async def schedule_interested_debounce(user_id: int, guild: discord.Guild):
+    if user_id in user_debounce_tasks:
+        user_debounce_tasks[user_id].cancel()
+
+    async def wait():
+        await asyncio.sleep(5)
+        await process_interested_changes(user_id, guild)
+        user_debounce_tasks.pop(user_id, None)
+
+    user_debounce_tasks[user_id] = asyncio.create_task(wait())
 
 
 async def sync_interested_reactions():
     guild = bot.get_guild(config.TARGET_GUILD)
     channel = guild.get_channel(INTERESTED_CHANNEL_ID)
     if not channel: return
-
-    try:
-        msg = await channel.fetch_message(INTERESTED_MESSAGE_ID)
-        role_map = get_interested_role_map(guild)
-
-        # get existing reactions to avoid redundant calls
-        existing_reactions = [str(r.emoji) for r in msg.reactions if r.me]
-
-        for emoji_str in role_map.keys():
-            if emoji_str not in existing_reactions:
-                await msg.add_reaction(emoji_str)
-    except Exception as e:
-        print(f"failed to sync reactions: {e}")
+    for mid in [INTERESTED_MESSAGE_BASE, INTERESTED_MESSAGE_STAR, INTERESTED_MESSAGE_ULTIMATE]:
+        try:
+            msg = await channel.fetch_message(mid)
+            role_map = get_interested_role_map(guild, mid)
+            existing = [str(r.emoji) for r in msg.reactions if r.me]
+            for emoji_str in role_map:
+                if emoji_str not in existing: await msg.add_reaction(emoji_str)
+        except:
+            pass

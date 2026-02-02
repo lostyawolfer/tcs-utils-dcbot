@@ -14,15 +14,13 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.0.0'
+version = 'v4.1.0'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- rewritten how adding & removing multiple roles at a time works, bot should now be mega fast in role management related stuff
-- a whole bunch of other refactors
-- fixed availability & inactivity checks (finally!)
-https://cdn.discordapp.com/attachments/715528165132599337/1459291126283636787/image.png?ex=69806804&is=697f1684&hm=d6243195cce8055bef4bdcc5ac139248ab49c6958373e3276f99d087e26af627&
+- added support for multiple tier "interested in" reaction roles
+- added grouping interested in related messages together if user does multiple updates at once
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -157,6 +155,7 @@ REACTION_ROLES = {
     }
 }
 
+
 @bot.event
 async def on_raw_reaction_add(payload):
     if payload.user_id == bot.user.id: return
@@ -166,56 +165,75 @@ async def on_raw_reaction_add(payload):
     if not member or member.bot: return
 
     async with RoleSession(member) as rs:
+        # availability logic
         if payload.message_id == config.channels['availability_message']:
-            emoji_id = payload.emoji.id
-            if emoji_id == config.channels['availability_reaction']:
-                await activity.add_availability(rs, bot.get_guild(payload.guild_id).get_member(payload.user_id))
+            if payload.emoji.id == config.channels['availability_reaction']:
+                await activity.add_availability(rs, member)
 
-        if payload.message_id == activity.INTERESTED_MESSAGE_ID:
-            role_map = activity.get_interested_role_map(guild)
+        # interested roles logic (tiered)
+        interested_msgs = [
+            activity.INTERESTED_MESSAGE_BASE,
+            activity.INTERESTED_MESSAGE_STAR,
+            activity.INTERESTED_MESSAGE_ULTIMATE
+        ]
+        if payload.message_id in interested_msgs:
+            role_map = activity.get_interested_role_map(guild, payload.message_id)
             emoji_str = str(payload.emoji)
-
             if emoji_str in role_map:
                 role = role_map[emoji_str]
                 rs.add(role.id)
 
-                clean_name = role.name.replace(activity.INTERESTED_PREFIX, "")
-                await general.send(f"🎮 {member.mention} is now interested in **{clean_name}**", pings=AllowedMentions.none())
+                # update debounce state
+                state = activity.user_pending_changes.setdefault(payload.user_id, {'added': set(), 'removed': set()})
+                state['added'].add(role)
+                state['removed'].discard(role)
+                await activity.schedule_interested_debounce(payload.user_id, guild)
+
+        # static reaction roles
         if payload.message_id in REACTION_ROLES:
             emoji_str = str(payload.emoji)
             if emoji_str in REACTION_ROLES[payload.message_id]:
-                role_id = REACTION_ROLES[payload.message_id][emoji_str]
-                rs.add(role_id)
+                rs.add(REACTION_ROLES[payload.message_id][emoji_str])
 
 
 @bot.event
 async def on_raw_reaction_remove(payload):
+    if payload.user_id == bot.user.id: return
     activity.update_cache(payload.user_id)
     guild = bot.get_guild(payload.guild_id)
     member = guild.get_member(payload.user_id)
     if not member or member.bot: return
 
     async with RoleSession(member) as rs:
+        # availability logic
         if payload.message_id == config.channels['availability_message']:
-            emoji_id = payload.emoji.id
-            if emoji_id == config.channels['availability_reaction']:
+            if payload.emoji.id == config.channels['availability_reaction']:
                 await activity.remove_availability(rs, member)
 
-        if payload.message_id == activity.INTERESTED_MESSAGE_ID:
-            role_map = activity.get_interested_role_map(guild)
+        # interested roles logic (tiered)
+        interested_msgs = [
+            activity.INTERESTED_MESSAGE_BASE,
+            activity.INTERESTED_MESSAGE_STAR,
+            activity.INTERESTED_MESSAGE_ULTIMATE
+        ]
+        if payload.message_id in interested_msgs:
+            role_map = activity.get_interested_role_map(guild, payload.message_id)
             emoji_str = str(payload.emoji)
-
             if emoji_str in role_map:
                 role = role_map[emoji_str]
                 rs.remove(role.id)
 
-                clean_name = role.name.replace(activity.INTERESTED_PREFIX, "")
-                await general.send(f"🚫 {member.mention} is no longer interested in **{clean_name}**", pings=AllowedMentions.none())
+                # update debounce state
+                state = activity.user_pending_changes.setdefault(payload.user_id, {'added': set(), 'removed': set()})
+                state['removed'].add(role)
+                state['added'].discard(role)
+                await activity.schedule_interested_debounce(payload.user_id, guild)
+
+        # static reaction roles
         if payload.message_id in REACTION_ROLES:
             emoji_str = str(payload.emoji)
             if emoji_str in REACTION_ROLES[payload.message_id]:
-                role_id = REACTION_ROLES[payload.message_id][emoji_str]
-                rs.remove(role_id)
+                rs.remove(REACTION_ROLES[payload.message_id][emoji_str])
 
 
 async def remove_availability_auto(member):
