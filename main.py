@@ -14,7 +14,7 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.1.2'
+version = 'v4.1.5'
 
 changelog = \
     f"""
@@ -23,8 +23,7 @@ base
 - added support for multiple tier "interested in" reaction roles
 - added grouping interested in related messages together if user does multiple updates at once
 latest patch
-- tried to fix reaction roles not being in correct order
-- added an owner-only command to force an update of bot's reactions there
+- ...
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -182,7 +181,7 @@ async def on_raw_reaction_add(payload):
             if payload.emoji.id == config.channels['availability_reaction']:
                 await activity.add_availability(rs, member)
 
-        # interested roles logic (tiered)
+        # interested roles logic (tiered) - don't commit immediately
         interested_msgs = [
             activity.INTERESTED_MESSAGE_BASE,
             activity.INTERESTED_MESSAGE_STAR,
@@ -193,13 +192,21 @@ async def on_raw_reaction_add(payload):
             emoji_str = str(payload.emoji)
             if emoji_str in role_map:
                 role = role_map[emoji_str]
-                rs.add(role.id)
+
+                # track initial state if first change
+                if payload.user_id not in activity.user_initial_states:
+                    activity.user_initial_states[payload.user_id] = {
+                        r for r in role_map.values() if r in member.roles
+                    }
 
                 # update debounce state
-                state = activity.user_pending_changes.setdefault(payload.user_id, {'added': set(), 'removed': set()})
+                state = activity.user_pending_changes.setdefault(
+                    payload.user_id, {'added': set(), 'removed': set()}
+                )
                 state['added'].add(role)
                 state['removed'].discard(role)
                 await activity.schedule_interested_debounce(payload.user_id, guild)
+                return  # don't commit yet
 
         # static reaction roles
         if payload.message_id in REACTION_ROLES:
@@ -222,7 +229,7 @@ async def on_raw_reaction_remove(payload):
             if payload.emoji.id == config.channels['availability_reaction']:
                 await activity.remove_availability(rs, member)
 
-        # interested roles logic (tiered)
+        # interested roles logic (tiered) - don't commit immediately
         interested_msgs = [
             activity.INTERESTED_MESSAGE_BASE,
             activity.INTERESTED_MESSAGE_STAR,
@@ -233,20 +240,27 @@ async def on_raw_reaction_remove(payload):
             emoji_str = str(payload.emoji)
             if emoji_str in role_map:
                 role = role_map[emoji_str]
-                rs.remove(role.id)
+
+                # track initial state if first change
+                if payload.user_id not in activity.user_initial_states:
+                    activity.user_initial_states[payload.user_id] = {
+                        r for r in role_map.values() if r in member.roles
+                    }
 
                 # update debounce state
-                state = activity.user_pending_changes.setdefault(payload.user_id, {'added': set(), 'removed': set()})
+                state = activity.user_pending_changes.setdefault(
+                    payload.user_id, {'added': set(), 'removed': set()}
+                )
                 state['removed'].add(role)
                 state['added'].discard(role)
                 await activity.schedule_interested_debounce(payload.user_id, guild)
+                return  # don't commit yet
 
         # static reaction roles
         if payload.message_id in REACTION_ROLES:
             emoji_str = str(payload.emoji)
             if emoji_str in REACTION_ROLES[payload.message_id]:
                 rs.remove(REACTION_ROLES[payload.message_id][emoji_str])
-
 
 async def remove_availability_auto(member):
     channel = bot.get_channel(config.channels['availability'])

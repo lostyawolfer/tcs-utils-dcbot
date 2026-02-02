@@ -252,7 +252,7 @@ INTERESTED_MESSAGE_ULTIMATE = 1467834856640745542
 
 user_pending_changes = {}
 user_debounce_tasks = {}
-
+user_initial_states = {}
 
 def get_interested_role_map(guild: discord.Guild, message_id: int):
     role_map = {}
@@ -291,11 +291,22 @@ async def process_interested_changes(user_id: int, guild: discord.Guild):
     if user_id not in user_pending_changes: return
 
     changes = user_pending_changes.pop(user_id)
-    added = changes['added'] - changes['removed']
-    removed = changes['removed'] - changes['added']
+    initial = user_initial_states.pop(user_id, set())
+
+    # calculate net changes from initial state
+    final_roles = (initial | changes['added']) - changes['removed']
+    net_added = final_roles - initial
+    net_removed = initial - final_roles
 
     member = guild.get_member(user_id)
-    if not member or (not added and not removed): return
+    if not member or (not net_added and not net_removed): return
+
+    # now commit the actual role changes
+    async with RoleSession(member) as rs:
+        for role in net_added:
+            rs.add(role.id)
+        for role in net_removed:
+            rs.remove(role.id)
 
     def format_names(roles):
         names = [f"**{r.name.split('interested in ')[-1]}**" for r in roles]
@@ -304,12 +315,12 @@ async def process_interested_changes(user_id: int, guild: discord.Guild):
         return names[0]
 
     output = []
-    if removed:
+    if net_removed:
         output.append(
-            f"<:no_multiplayer:1463357263811973303> {member.mention} is no longer interested in {format_names(removed)}")
-    if added:
+            f"<:no_multiplayer:1463357263811973303> {member.mention} is no longer interested in {format_names(net_removed)}")
+    if net_added:
         output.append(
-            f"<:yes_multiplayer:1463357364110495754> {member.mention} is now interested in {format_names(added)}")
+            f"<:yes_multiplayer:1463357364110495754> {member.mention} is now interested in {format_names(net_added)}")
 
     if output:
         await general.send('\n'.join(output), pings=AllowedMentions.none())
