@@ -166,7 +166,7 @@ async def check_all_members() -> None:
                 await full_check_member(rs, member)
         print(f'checking members - {percent}')
 
-    await general.update_status(status=discord.Status.online)
+    await general.update_status(status=discord.Status.online) # type: ignore
 
 
 last_activity_cache = {}
@@ -278,7 +278,9 @@ def get_interested_role_map(guild: discord.Guild, message_id: int):
             role_map["🎮"] = role
             continue
 
-        emoji_name = f"badge_{suffix.replace(' ', '_')}"
+        # remove any char that isn't a letter, number, or space, then swap spaces for underscores
+        clean_suffix = "".join(c for c in suffix if c.isalnum() or c.isspace())
+        emoji_name = f"badge_{clean_suffix.replace(' ', '_')}"
         emoji = discord.utils.get(guild.emojis, name=emoji_name)
         if emoji:
             role_map[str(emoji)] = role

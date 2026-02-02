@@ -14,13 +14,16 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.1.0'
+version = 'v4.1.1'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
+base
 - added support for multiple tier "interested in" reaction roles
 - added grouping interested in related messages together if user does multiple updates at once
+latest patch
+- fixed role name parsing with strange characters (like "Tag, You're It" for example got the bot confused because of the comma and apostrophe, now should be fine)
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
