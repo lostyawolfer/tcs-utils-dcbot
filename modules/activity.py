@@ -331,7 +331,7 @@ async def schedule_interested_debounce(user_id: int, guild: discord.Guild):
         user_debounce_tasks[user_id].cancel()
 
     async def wait():
-        await asyncio.sleep(5)
+        await asyncio.sleep(7)
         await process_interested_changes(user_id, guild)
         user_debounce_tasks.pop(user_id, None)
 
