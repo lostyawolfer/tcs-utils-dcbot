@@ -71,7 +71,7 @@ async def check(ctx, member: discord.Member = None):
 @bot.command()
 @general.try_bot_perms
 @general.has_perms('owner')
-async def update(ctx):
+async def test(ctx):
     await ctx.send(f'test pass\n-# {version}')
 
 @bot.command()
