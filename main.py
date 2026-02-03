@@ -1,10 +1,8 @@
 import asyncio
 
 import discord
-from discord import AllowedMentions
 from discord.ext import commands, tasks
-from modules import config, activity, moderation, general
-from modules.activity import run_activity_checks
+from modules import config, activity, moderation, general, badges
 from modules.general import timed_delete_msg, send_timed_delete_msg
 from modules.role_management import RoleSession
 from modules.saves import create_save, disband_save, rename_save
@@ -14,16 +12,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.1.5'
+version = 'v4.2.0'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-base
-- added support for multiple tier "interested in" reaction roles
-- added grouping interested in related messages together if user does multiple updates at once
-latest patch
-- ...
+- badge icons are now choosable instead of forced - choose them in <#1468068634680229979>
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -44,6 +38,8 @@ async def on_ready():
     await bot.wait_until_ready()
     await general.send(f':ballot_box_with_check: restart complete!')
     await general.send(changelog)
+    bot.add_view(badges.WardrobeOpenView())
+    await badges.ensure_wardrobe_message(bot)
     await activity.sync_interested_reactions()
     msg = await general.send(f':eye: lemme build up some activity cache...')
     await activity.build_activity_cache()
