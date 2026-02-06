@@ -59,9 +59,8 @@ async def force_check_all(ctx):
 @general.try_bot_perms
 @general.has_perms('manage_roles')
 async def check(ctx, member: discord.Member = None):
-    async with RoleSession(member) as rs:
-        await activity.full_check_member(rs, member)
-        await send_timed_delete_msg(f'checked {member.display_name}')
+    await activity.full_check_member(member)
+    await send_timed_delete_msg(f'checked {member.display_name}')
 
 @bot.command()
 @general.try_bot_perms

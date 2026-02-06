@@ -28,7 +28,7 @@ async def build_activity_cache():
     guild = bot.get_guild(config.TARGET_GUILD)
     chat = bot.get_channel(config.channels["chat"])
 
-    async for msg in chat.history(limit=10_000):
+    async for msg in chat.history(limit=10000):
         ts = msg.created_at.timestamp()
 
         if not msg.author.bot:
@@ -274,3 +274,130 @@ async def run_activity_checks():
                 rs.remove("person")
 
     await general.update_status()
+
+
+INTERESTED_PREFIX = "🎮 interested in "
+INTERESTED_PREFIX_BASE = "🎮🟢 interested in "
+INTERESTED_PREFIX_STAR = "🎮⭐ interested in "
+INTERESTED_PREFIX_ULTIMATE = "🎮☄️ interested in "
+
+INTERESTED_CHANNEL_ID = 1464608724667858975
+INTERESTED_MESSAGE_BASE = 1464609114612302035
+INTERESTED_MESSAGE_STAR = 1467834855315210376
+INTERESTED_MESSAGE_ULTIMATE = 1467834856640745542
+
+user_pending_changes = {}
+user_debounce_tasks = {}
+user_initial_states = {}
+
+def get_interested_role_map(guild: discord.Guild, message_id: int):
+    role_map = {}
+    if message_id == INTERESTED_MESSAGE_BASE:
+        prefixes = [INTERESTED_PREFIX_BASE, INTERESTED_PREFIX]
+    elif message_id == INTERESTED_MESSAGE_STAR:
+        prefixes = [INTERESTED_PREFIX_STAR]
+    elif message_id == INTERESTED_MESSAGE_ULTIMATE:
+        prefixes = [INTERESTED_PREFIX_ULTIMATE]
+    else:
+        return role_map
+
+    for role in guild.roles:
+        suffix = None
+        for p in prefixes:
+            if role.name.startswith(p):
+                suffix = role.name.replace(p, "").strip().lower()
+                break
+
+        if not suffix: continue
+
+        if suffix == "miscellaneous hosts":
+            role_map["🎮"] = role
+            continue
+
+        # remove any char that isn't a letter, number, or space, then swap spaces for underscores
+        clean_suffix = "".join(c for c in suffix if c.isalnum() or c.isspace())
+        emoji_name = f"badge_{clean_suffix.replace(' ', '_')}"
+        emoji = discord.utils.get(guild.emojis, name=emoji_name)
+        if emoji:
+            role_map[str(emoji)] = role
+    return role_map
+
+
+async def process_interested_changes(user_id: int, guild: discord.Guild):
+    if user_id not in user_pending_changes: return
+
+    changes = user_pending_changes.pop(user_id)
+    initial = user_initial_states.pop(user_id, set())
+
+    # calculate net changes from initial state
+    final_roles = (initial | changes['added']) - changes['removed']
+    net_added = final_roles - initial
+    net_removed = initial - final_roles
+
+    member = guild.get_member(user_id)
+    if not member or (not net_added and not net_removed): return
+
+    # now commit the actual role changes
+    async with RoleSession(member) as rs:
+        for role in net_added:
+            rs.add(role.id)
+        for role in net_removed:
+            rs.remove(role.id)
+
+    def format_names(roles):
+        names = [f"**{r.name.split('interested in ')[-1]}**" for r in roles]
+        if len(names) > 1:
+            return f"{', '.join(names[:-1])} and {names[-1]}"
+        return names[0]
+
+    output = []
+    if net_removed:
+        output.append(
+            f"<:no_multiplayer:1463357263811973303> {member.mention} is no longer interested in {format_names(net_removed)}")
+    if net_added:
+        output.append(
+            f"<:yes_multiplayer:1463357364110495754> {member.mention} is now interested in {format_names(net_added)}")
+
+    if output:
+        await general.send('\n'.join(output), pings=AllowedMentions.none())
+
+
+async def schedule_interested_debounce(user_id: int, guild: discord.Guild):
+    if user_id in user_debounce_tasks:
+        user_debounce_tasks[user_id].cancel()
+
+    async def wait():
+        await asyncio.sleep(7)
+        await process_interested_changes(user_id, guild)
+        user_debounce_tasks.pop(user_id, None)
+
+    user_debounce_tasks[user_id] = asyncio.create_task(wait())
+
+
+async def sync_interested_reactions():
+    guild = bot.get_guild(config.TARGET_GUILD)
+    channel = guild.get_channel(INTERESTED_CHANNEL_ID)
+    if not channel: return
+
+    for mid in [INTERESTED_MESSAGE_BASE, INTERESTED_MESSAGE_STAR, INTERESTED_MESSAGE_ULTIMATE]:
+        try:
+            msg = await channel.fetch_message(mid)
+            role_map = get_interested_role_map(guild, mid)
+
+            # sort the items by role position (descending) to get the correct visual order
+            # higher position in discord role list = "later" in the channel role list
+            # usually role lists are: [Newest/Top] ... [Oldest/Bottom]
+            # but for display purposes we want them in the order they appear in the map
+            # which is determined by the order we find them in guild.roles
+            sorted_emojis = sorted(
+                role_map.keys(),
+                key=lambda e: role_map[e].position,
+                reverse=True
+            )
+
+            existing = [str(r.emoji) for r in msg.reactions if r.me]
+            for emoji_str in sorted_emojis:
+                if emoji_str not in existing:
+                    await msg.add_reaction(emoji_str)
+        except Exception as e:
+            print(f"sync error for {mid}: {e}")
