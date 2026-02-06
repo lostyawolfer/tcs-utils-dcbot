@@ -12,12 +12,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.2.1'
+version = 'v4.2.0'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- checker fix
+- badge icons are now choosable instead of forced - choose them in <#1468068634680229979>
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -59,8 +59,9 @@ async def force_check_all(ctx):
 @general.try_bot_perms
 @general.has_perms('manage_roles')
 async def check(ctx, member: discord.Member = None):
-    await activity.full_check_member(member)
-    await send_timed_delete_msg(f'checked {member.display_name}')
+    async with RoleSession(member) as rs:
+        await activity.full_check_member(rs, member)
+        await send_timed_delete_msg(f'checked {member.display_name}')
 
 @bot.command()
 @general.try_bot_perms
