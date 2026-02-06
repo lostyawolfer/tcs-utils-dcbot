@@ -13,7 +13,7 @@ async def voice_check(rs: RoleSession, member: discord.Member) -> None:
     async def check(vc: str, vc_role: str, vc_leader_role: str, reverse_role: str, join_msg_id: str, leave_msg_id: str,
                     color: str = 'g'):
         channel = member.guild.get_channel(config.channels[vc])
-        members = await count_in_vc(bot, vc)
+        members = await count_in_vc(member.guild, vc)
 
         if member.voice and member.voice.channel == channel:
             if not has_role(member, config.roles[vc_role]):
@@ -230,7 +230,7 @@ async def run_activity_checks():
                         discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), m
                     )
                     await general.send(config.message('unavailable_auto_bot', name=m.mention,
-                                                      available_count=f"{general.emojify(str(await m.count_available(bot)), 'b')}"),
+                                                      available_count=f"{general.emojify(str(await count_available(guild)), 'b')}"),
                                        pings=discord.AllowedMentions.none())
 
                 if needs_inactive:

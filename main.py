@@ -12,12 +12,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.2.0'
+version = 'v4.2.1'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- badge icons are now choosable instead of forced - choose them in <#1468068634680229979>
+- checker fix
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
