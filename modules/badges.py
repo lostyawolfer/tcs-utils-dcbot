@@ -170,9 +170,6 @@ class WardrobeSelect(Select):
             elif choice != "none":
                 rs.add(int(choice))
 
-        ranked_leaderboard = get_ranked_leaderboard(member.guild)
-        await sync_leaderboard_roles(member.guild, ranked_leaderboard)
-
         if choice == "none":
             text = "badge removed ✅"
         elif choice == LEADERBOARD_OPTION_VALUE:
@@ -187,6 +184,9 @@ class WardrobeSelect(Select):
             content=text,
             view=None,
         )
+
+        ranked_leaderboard = get_ranked_leaderboard(member.guild)
+        await sync_leaderboard_roles(member.guild, ranked_leaderboard)
 
 
 # -------------------------
