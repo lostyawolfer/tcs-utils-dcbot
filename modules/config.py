@@ -44,10 +44,6 @@ roles = {
     "in_vc_2_leader": 1444027828898238605,
     "in_vc_3_leader": 1464748454193659967,
 
-    # "in_vc_available": 1464754733905477887,
-    # "in_vc_2_available": 1464754732257116210,
-    # "in_vc_3_available": 1464754730352902215,
-
     "in_vc": 1427076261586669688,
     "in_vc_2": 1444027810594295908,
     "in_vc_3": 1464748438754295975,
@@ -70,6 +66,21 @@ roles = {
     "warn_3": 1442623000452005948,
     "mod": 1433828741548740781,
     "spoiler": 1451675068114669740,
+
+    # leaderboard display badges (user-chosen)
+    "lb_display_top_1": 1469749458777538776,
+    "lb_display_top_2": 1469749287196950826,
+    "lb_display_top_3": 1469749290116190459,
+    "lb_display_not_top": 1469749283946500119,
+
+    # leaderboard normal badges (auto-assigned)
+    "lb_top_1": 1469749299943440447,
+    "lb_top_2": 1469749302636056759,
+    "lb_top_3": 1469749305697898750,
+
+    # completion roles
+    "completion_all_base": 1453450000297365576,
+    "completion_all_ultimate": 1454594165857063004,
 
     "completion_server_star_star": 1454594165857063004,
     "completion_server_base_star": 1453450000297365576
@@ -118,14 +129,14 @@ emoji = {
     "promotion": "<:promotion:1442087863347974294>",
     "demotion": "<:demotion:1442087886391607376>",
     "birthday": "",
-    "leader": "<:leader:1436531052670619791>", # ON THE SERVER
-    "death": "<:death:1436531054704852993>", # ON THE SERVER
-    "disconnect": "<:disconnected:1439792812165038080>", # ON THE SERVER
-    "blank": "<:blank:1436531505831612456>", # ON THE SERVER
-    "tcs": "<:this_challenge_sucks:1440645344252792922>", # ON THE SERVER
-    "gor": "<:group_of_rushers:1443250418418188402>", # ON THE SERVER
-    "pdo": "<:professional_door_opener:1443719522908504215>", # ON THE SERVER
-    "nn": "<:neverending_night:1443768885097529394>", # ON THE SERVER
+    "leader": "<:leader:1436531052670619791>",
+    "death": "<:death:1436531054704852993>",
+    "disconnect": "<:disconnected:1439792812165038080>",
+    "blank": "<:blank:1436531505831612456>",
+    "tcs": "<:this_challenge_sucks:1440645344252792922>",
+    "gor": "<:group_of_rushers:1443250418418188402>",
+    "pdo": "<:professional_door_opener:1443719522908504215>",
+    "nn": "<:neverending_night:1443768885097529394>",
     "edit": "<:edit:1444529076516688064>",
     "edit_g": "<:edit_g:1464760651120509072>",
     "edit_p": "<:edit_p:1464760669596553246>",
@@ -145,6 +156,13 @@ emoji = {
     "slap": "👋",
     "pat": "🫳",
     "touch": "👉",
+
+    "lb_top_1": "<:leaderboard_top_1:1469760932950573117>",
+    "lb_top_2": "<:leaderboard_top_2:1469760954844713222>",
+    "lb_top_3": "<:leaderboard_top_3:1469760977229709507>",
+
+    "star_completion": "<:star_completion:1453452694592159925>",
+    "star_pure_completion": "<:star_pure_completion:1453452636618752214>",
 
     '0': '<:0_:1444462399632445473>',
     '1': '<:1_:1444462401075548353>',

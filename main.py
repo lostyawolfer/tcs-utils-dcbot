@@ -6,18 +6,21 @@ from modules import config, activity, moderation, general, badges
 from modules.general import timed_delete_msg, send_timed_delete_msg
 from modules.role_management import RoleSession
 from modules.saves import create_save, disband_save, rename_save
-from modules.points import calculate_points, get_ranked_leaderboard, update_leaderboard_message, parse_challenge_role
+from modules.points import calculate_points, get_ranked_leaderboard, update_leaderboard_message, parse_challenge_role, get_member_rank, has_all_challenges, LB_EMOJI
 from modules.bot_init import bot
 
 
 ################################################################
 
-version = 'v4.2.0'
+version = 'v4.3.0'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- badge icons are now choosable instead of forced - choose them in <#1468068634680229979>
+- you can now choose to show your leaderboard position in <#1468068634680229979>
+- changing leaderboard positions now sends messages in chat
+- automatic adding of special roles and announcement of when someone completes all base or ultimate challenges
+- the leaderboard channel now uses the custom emoji for top-3 instead of base ones
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -278,6 +281,7 @@ async def remove_availability_auto(member):
                                                available_count=f"{general.emojify(str(await activity.count_available(bot)), 'b')}"),
                                                pings=discord.AllowedMentions.none())
 
+
 @bot.event
 async def on_member_update(before, after):
     if before.roles != after.roles:
@@ -286,9 +290,17 @@ async def on_member_update(before, after):
         added_roles = after_roles - before_roles
         removed_roles = before_roles - after_roles
 
+        # track old rank before any leaderboard update
+        old_rank = None
+        challenge_changed = False
+
         for role in added_roles:
             role_info = parse_challenge_role(role)
             if role_info:
+                challenge_changed = True
+                if old_rank is None:
+                    old_rank = get_member_rank(after.guild, after)
+
                 emoji_map = {
                     '🟢': '<:yes:1463357188964618413>',
                     '⭐': '<:star_completion:1453452694592159925>',
@@ -296,15 +308,50 @@ async def on_member_update(before, after):
                 }
                 emoji = emoji_map.get(role_info['tier_emoji'], '<:yes:1463357188964618413>')
                 announce = 'completed a custom challenge' if not role.name.startswith('🏆') else 'completed'
-                await general.send(f'{emoji} {after.mention} {announce} **{role_info["name"]}** ({role_info["points"]} pts)')
-                await update_leaderboard_message(bot, after.guild)
+                await general.send(
+                    f'{emoji} {after.mention} {announce} **{role_info["name"]}** ({role_info["points"]} pts)')
 
         for role in removed_roles:
             role_info = parse_challenge_role(role)
             if role_info:
+                challenge_changed = True
+                if old_rank is None:
+                    old_rank = get_member_rank(after.guild, after)
+
                 announce = '(custom challenge) ' if not role.name.startswith('🏆') else ''
-                await general.send(f'<:no:1454950318042255410> {after.mention}\'s **{role_info["name"]}** {announce}completion was taken')
-                await update_leaderboard_message(bot, after.guild)
+                await general.send(
+                    f'<:no:1454950318042255410> {after.mention}\'s **{role_info["name"]}** {announce}completion was taken')
+
+        # update leaderboard and check for rank changes
+        if challenge_changed:
+            await update_leaderboard_message(bot, after.guild)
+            new_rank = get_member_rank(after.guild, after)
+
+            if old_rank != new_rank and new_rank is not None:
+                emoji = LB_EMOJI.get(new_rank, "🏆")
+                await general.send(
+                    f"{emoji} {after.mention}'s leaderboard position is now **#{new_rank}**!"
+                )
+
+        # check completion roles
+        async with RoleSession(after) as rs:
+            had_all_base = config.roles["completion_all_base"] in before_roles
+            has_all_base = has_all_challenges(after, {"🟢"})
+
+            if has_all_base and not had_all_base:
+                rs.add(config.roles["completion_all_base"])
+                await general.send(
+                    f"{config.emoji['star_completion']} {after.mention} beat **all base challenges**!"
+                )
+
+            had_all_ultimate = config.roles["completion_all_ultimate"] in before_roles
+            has_all_ultimate = has_all_challenges(after, {"⭐", "☄"})
+
+            if has_all_ultimate and not had_all_ultimate:
+                rs.add(config.roles["completion_all_ultimate"])
+                await general.send(
+                    f"{config.emoji['star_pure_completion']} {after.mention} beat **all ultimate challenges**!"
+                )
 
         for role in added_roles:
             if role.id == config.roles['mod']:

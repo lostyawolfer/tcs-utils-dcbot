@@ -11,6 +11,15 @@ WARDROBE_MESSAGE_TEXT = (
     "choose the badge you wish to display near your name!"
 )
 
+LEADERBOARD_OPTION_VALUE = "leaderboard_rank"
+
+LEADERBOARD_DISPLAY_ROLES = {
+    config.roles["lb_display_top_1"],
+    config.roles["lb_display_top_2"],
+    config.roles["lb_display_top_3"],
+    config.roles["lb_display_not_top"],
+}
+
 # -------------------------
 # helpers
 # -------------------------
@@ -63,6 +72,10 @@ def get_owned_badge_roles(member: discord.Member):
     return owned_badges, all_badges
 
 
+def has_leaderboard_opt_in(member: discord.Member) -> bool:
+    return any(r.id in LEADERBOARD_DISPLAY_ROLES for r in member.roles)
+
+
 # -------------------------
 # views
 # -------------------------
@@ -73,7 +86,7 @@ class WardrobeOpenView(View):
 
     @discord.ui.button(
         label="open wardrobe",
-        style=discord.ButtonStyle.secondary, # type: ignore
+        style=discord.ButtonStyle.secondary,  # type: ignore
         emoji="🥇",
         custom_id=WARDROBE_CUSTOM_ID,
     )
@@ -81,13 +94,13 @@ class WardrobeOpenView(View):
         member = interaction.user
         owned, _ = get_owned_badge_roles(member)
 
-        if not owned:
-            return await interaction.response.send_message( # type: ignore
+        if not owned and not has_leaderboard_opt_in(member):
+            return await interaction.response.send_message(  # type: ignore
                 "you don’t own any badges yet - complete challenges to unlock them!",
                 ephemeral=True,
             )
 
-        return await interaction.response.send_message( # type: ignore
+        return await interaction.response.send_message(  # type: ignore
             "pick a badge to display:",
             view=WardrobeSelectView(member),
             ephemeral=True,
@@ -106,12 +119,20 @@ class WardrobeSelectView(View):
                 label="none",
                 description="remove displayed badge",
                 value="none",
-                emoji="❌",
-            )
+                emoji="🚫",
+            ),
+            discord.SelectOption(
+                label="leaderboard rank",
+                description="show a medal if you're on top-3, show nothing otherwise",
+                value=LEADERBOARD_OPTION_VALUE,
+                emoji="🏆",
+            ),
         ]
 
         for badge in sorted(owned, key=lambda r: r.position, reverse=True):
-            emoji = badge_emoji_for_name(member.guild, badge.name.replace("👁 ", ""))
+            emoji = badge_emoji_for_name(
+                member.guild, badge.name.replace("👁 ", "")
+            )
             options.append(
                 discord.SelectOption(
                     label=badge.name.replace("👁 ", ""),
@@ -131,18 +152,32 @@ class WardrobeSelect(Select):
         choice = self.values[0]
 
         async with RoleSession(member) as rs:
+            # remove all normal badge display roles
             for badge in all_badges:
                 rs.remove(badge.id)
 
-            if choice != "none":
+            # remove all leaderboard display roles
+            for r_id in LEADERBOARD_DISPLAY_ROLES:
+                rs.remove(r_id)
+
+            if choice == LEADERBOARD_OPTION_VALUE:
+                # opt-in to leaderboard display
+                rs.add(config.roles["lb_display_not_top"])
+
+            elif choice != "none":
                 rs.add(int(choice))
 
         if choice == "none":
             text = "badge removed ✅"
+        elif choice == LEADERBOARD_OPTION_VALUE:
+            text = (
+                "you're now showing your leaderboard rank 🏆\n"
+                "if you reach top 3, it will update automatically"
+            )
         else:
             text = "done, badge updated, go show it off ✨"
 
-        await interaction.response.edit_message( # type: ignore
+        await interaction.response.edit_message(  # type: ignore
             content=text,
             view=None,
         )
