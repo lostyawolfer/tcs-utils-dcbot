@@ -1,6 +1,6 @@
 import discord
 from discord.ui import View, Select
-from modules.points import parse_challenge_role
+from modules.points import parse_challenge_role, get_ranked_leaderboard, sync_leaderboard_roles
 from modules.role_management import RoleSession
 from modules import config
 
@@ -114,6 +114,9 @@ class WardrobeSelectView(View):
 
         owned, _ = get_owned_badge_roles(member)
 
+        # top_1_emoji = discord.utils.get(member.guild.emojis, name="leaderboard_top_1")
+        # top_2_emoji = discord.utils.get(member.guild.emojis, name="leaderboard_top_2")
+        # top_3_emoji = discord.utils.get(member.guild.emojis, name="leaderboard_top_3")
         options = [
             discord.SelectOption(
                 label="none",
@@ -167,12 +170,15 @@ class WardrobeSelect(Select):
             elif choice != "none":
                 rs.add(int(choice))
 
+        ranked_leaderboard = get_ranked_leaderboard(member.guild)
+        await sync_leaderboard_roles(member.guild, ranked_leaderboard)
+
         if choice == "none":
             text = "badge removed ✅"
         elif choice == LEADERBOARD_OPTION_VALUE:
             text = (
                 "you're now showing your leaderboard rank 🏆\n"
-                "if you reach top 3, it will update automatically"
+                "updates automatically if you're top 3"
             )
         else:
             text = "done, badge updated, go show it off ✨"
