@@ -158,8 +158,8 @@ emoji = {
     "touch": "👉",
 
     "lb_top_1": "<:leaderboard_top_1:1469760932950573117>",
-    "lb_top_2": "<:leaderboard_top_2:1469760954844713222>",
-    "lb_top_3": "<:leaderboard_top_3:1469760977229709507>",
+    "lb_top_2": "<:leaderboard_top_2:1470181634111443217>",
+    "lb_top_3": "<:leaderboard_top_3:1470181674804580422>",
 
     "star_completion": "<:star_completion:1453452694592159925>",
     "star_pure_completion": "<:star_pure_completion:1453452636618752214>",
