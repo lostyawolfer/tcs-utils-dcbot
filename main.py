@@ -12,15 +12,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.3.0'
+version = 'v4.3.3'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- you can now choose to show your leaderboard position in <#1468068634680229979>
-- changing leaderboard positions now sends messages in chat
-- automatic adding of special roles and announcement of when someone completes all base or ultimate challenges
-- the leaderboard channel now uses the custom emoji for top-3 instead of base ones
+- fixes
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -335,7 +332,7 @@ async def on_member_update(before, after):
 
         # check completion roles
         async with RoleSession(after) as rs:
-            had_all_base = after.guild.get_role(config.roles["completion_all_base"]) in before_roles
+            had_all_base = after.guild.get_role(config.roles["completion_all_base"]) in after_roles
             has_all_base = has_all_challenges(after, {"🟢"})
 
             if has_all_base and not had_all_base:
@@ -344,7 +341,7 @@ async def on_member_update(before, after):
                     f"{config.emoji['star_completion']} {after.mention} beat **all base challenges**!"
                 )
 
-            had_all_ultimate = after.guild.get_role(config.roles["completion_all_ultimate"]) in before_roles
+            had_all_ultimate = after.guild.get_role(config.roles["completion_all_ultimate"]) in after_roles
             has_all_ultimate = has_all_challenges(after, {"⭐", "☄"})
 
             if has_all_ultimate and not had_all_ultimate:
