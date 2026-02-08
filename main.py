@@ -335,7 +335,7 @@ async def on_member_update(before, after):
 
         # check completion roles
         async with RoleSession(after) as rs:
-            had_all_base = config.roles["completion_all_base"] in before_roles
+            had_all_base = after.guild.get_role(config.roles["completion_all_base"]) in before_roles
             has_all_base = has_all_challenges(after, {"🟢"})
 
             if has_all_base and not had_all_base:
@@ -344,7 +344,7 @@ async def on_member_update(before, after):
                     f"{config.emoji['star_completion']} {after.mention} beat **all base challenges**!"
                 )
 
-            had_all_ultimate = config.roles["completion_all_ultimate"] in before_roles
+            had_all_ultimate = after.guild.get_role(config.roles["completion_all_ultimate"]) in before_roles
             has_all_ultimate = has_all_challenges(after, {"⭐", "☄"})
 
             if has_all_ultimate and not had_all_ultimate:
