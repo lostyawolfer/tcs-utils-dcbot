@@ -12,12 +12,15 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.3.3'
+version = 'v4.3.4'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- fixes
+- that one message that pinged mods in mod chat no longer pings them (still exists though)
+- removed that one additional message that appears whenever a member joins (only the generic "they joined" stays)
+-# why? because we transitioned this server to being a "community server" in the discord sense.
+-# we now could set up in-ui tutorials that will do a way better job than a random bot sending a message
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -388,7 +391,7 @@ async def on_member_update(before, after):
 
 
 @bot.event
-async def on_member_join(member):
+async def on_member_join(member: discord.Member):
     guild = member.guild
     if not config.check_guild(guild.id):
         return
@@ -399,12 +402,14 @@ async def on_member_join(member):
             rs.add('bot')
         else:
             await general.send(config.message('join', mention=member.mention))
-            await general.send(msg='-# read below for just a quick tour around :3\n'
-                                        '-# channels you really should check out: <#1442604555798974485> <#1426974985402187776> <#1464608724667858975>\n'
-                                        '-# grab <#1434653852367585300> when you are ready to play! (don\'t forget to remove it when you stop being available!)\n'
-                                        '-# join <#1426974154556702720> at any time!\n'
-                                        '-# please respect others and remain active! unexplained long inactivity is something very frowned upon here')
-            await general.send(f':new: <@&{config.roles['mod']}> hey, we got a new member in the server! nice work! a friendly reminder to set their nickname to their roblox display name :3', 'mod_chat')
+            # await general.send(msg='-# read below for just a quick tour around :3\n'
+            #                             '-# channels you really should check out: <#1442604555798974485> <#1426974985402187776> <#1464608724667858975>\n'
+            #                             '-# grab <#1434653852367585300> when you are ready to play! (don\'t forget to remove it when you stop being available!)\n'
+            #                             '-# join <#1426974154556702720> at any time!\n'
+            #                             '-# please respect others and remain active! unexplained long inactivity is something very frowned upon here')
+            await general.send(f'# nice work, new member arrived!\n'
+                               f'{member.mention} ({member.display_name}) joined, congrats!\n'
+                               f'a friendly reminder to **PLEASE** set their discord nickname to their roblox display name! :3', 'mod_chat')
 
             for role in config.roles['new_people']:
                 rs.add(role)
