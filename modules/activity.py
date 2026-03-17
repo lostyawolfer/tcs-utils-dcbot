@@ -17,8 +17,8 @@ async def voice_check(rs: RoleSession, member: discord.Member) -> None:
 
         if member.voice and member.voice.channel == channel:
             if not has_role(member, config.roles[vc_role]):
-                await send(bot, config.message(join_msg_id, member=member.display_name,
-                                               count=f'{emojify(f'{members}', f'{color}')}'))
+                await send(config.message(join_msg_id, member=member.display_name,
+                                               count=f'{emojify(str(members), color)}'))
             if has_role(member, config.roles['leader']):
                 rs.add(config.roles[vc_leader_role])
             rs.add(config.roles[vc_role])
@@ -26,8 +26,8 @@ async def voice_check(rs: RoleSession, member: discord.Member) -> None:
 
         else:
             if has_role(member, config.roles[vc_role]):
-                await send(bot, config.message(leave_msg_id, member=member.display_name,
-                                               count=f'{emojify(f'{members}', f'{color}')}'))
+                await send(config.message(leave_msg_id, member=member.display_name,
+                                               count=f'{emojify(str(members), color)}'))
             rs.remove(config.roles[vc_role])
             rs.remove(config.roles[vc_leader_role])
             if has_role(member, config.roles['available']):

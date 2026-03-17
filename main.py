@@ -12,15 +12,16 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.3.4'
+version = 'v4.4.0'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- that one message that pinged mods in mod chat no longer pings them (still exists though)
-- removed that one additional message that appears whenever a member joins (only the generic "they joined" stays)
--# why? because we transitioned this server to being a "community server" in the discord sense.
--# we now could set up in-ui tutorials that will do a way better job than a random bot sending a message
+- do you know what caused the availability role autochange issue? i don't know take a wild guess.
+"did you change a function somewhere and forget to update something that calls it?"
+yes. yes it was that. YES IT WAS EXACTLY MOTHERFUCKING THAT.
+umm the system should be working now. I LITERALLY JUST REMOVED 8 CHARACTERS. THE ENTIRE THING FELL APART DUE TO 8 CHARACTERS.
+fml
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
