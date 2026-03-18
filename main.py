@@ -12,16 +12,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.0'
+version = 'v4.4.1'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- do you know what caused the availability role autochange issue? i don't know take a wild guess.
-"did you change a function somewhere and forget to update something that calls it?"
-yes. yes it was that. YES IT WAS EXACTLY MOTHERFUCKING THAT.
-umm the system should be working now. I LITERALLY JUST REMOVED 8 CHARACTERS. THE ENTIRE THING FELL APART DUE TO 8 CHARACTERS.
-fml
+- remove automute on .warn
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
