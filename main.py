@@ -12,12 +12,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.1'
+version = 'v4.4.2'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- remove automute on .warn
+- this will fix autounavailable trust
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
