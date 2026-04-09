@@ -13,12 +13,13 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.6'
+version = 'v4.4.6-1'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
 - add logging in thread under leaderboard post
+    - hotfix fixed that not working
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -317,7 +318,7 @@ async def on_member_update(before, after):
                     f"moved from #{old_rank} to #{new_rank} on leaderboard"
                 )
                 if log_thread:
-                    await log_thread.send(log_msg, allowed_mentions=discord.AllowedMentions.none)
+                    await log_thread.send(log_msg, allowed_mentions=discord.AllowedMentions.none())
 
         for role in removed_roles:
             role_info = parse_challenge_role(role)
@@ -338,7 +339,7 @@ async def on_member_update(before, after):
                     f"moved from #{old_rank} to #{new_rank} on leaderboard"
                 )
                 if log_thread:
-                    await log_thread.send(log_msg, allowed_mentions=discord.AllowedMentions.none)
+                    await log_thread.send(log_msg, allowed_mentions=discord.AllowedMentions.none())
 
         # update leaderboard and check for rank changes
         if challenge_changed:
