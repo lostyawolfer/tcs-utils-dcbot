@@ -13,12 +13,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.5'
+version = 'v4.4.6'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- fix rank update message thing i guess?
+- add logging in thread under leaderboard post
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -292,6 +292,8 @@ async def on_member_update(before, after):
         old_rank = get_member_rank(after.guild, before)
         challenge_changed = False
 
+        log_thread = after.guild.get_thread(1457200972215484417)
+
         for role in added_roles:
             role_info = parse_challenge_role(role)
             if role_info:
@@ -307,6 +309,16 @@ async def on_member_update(before, after):
                 await general.send(
                     f'{emoji} {after.mention} {announce} **{role_info["name"]}** ({role_info["points"]} pts)')
 
+                new_rank = get_member_rank(after.guild, after)
+                current_pts = calculate_points(after)[0]
+                log_msg = (
+                    f"<:yes:1463357188964618413> {after.mention} completed **{role_info['name']}** - "
+                    f"+{role_info['points']} pts - now has {current_pts} pts - "
+                    f"moved from #{old_rank} to #{new_rank} on leaderboard"
+                )
+                if log_thread:
+                    await log_thread.send(log_msg, allowed_mentions=discord.AllowedMentions.none)
+
         for role in removed_roles:
             role_info = parse_challenge_role(role)
             if role_info:
@@ -317,6 +329,16 @@ async def on_member_update(before, after):
                 announce = '(custom challenge) ' if not role.name.startswith('🏆') else ''
                 await general.send(
                     f'<:no:1454950318042255410> {after.mention}\'s **{role_info["name"]}** {announce}completion was taken')
+
+                new_rank = get_member_rank(after.guild, after)
+                current_pts = calculate_points(after)[0]
+                log_msg = (
+                    f"<:no:1454950318042255410> {after.mention}'s completion of **{role_info['name']}** is revoked - "
+                    f"-{role_info['points']} pts - now has {current_pts} pts - "
+                    f"moved from #{old_rank} to #{new_rank} on leaderboard"
+                )
+                if log_thread:
+                    await log_thread.send(log_msg, allowed_mentions=discord.AllowedMentions.none)
 
         # update leaderboard and check for rank changes
         if challenge_changed:
