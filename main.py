@@ -13,12 +13,13 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.8'
+version = 'v4.4.8-1'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
 - make .points, .stats and .pts now only show first 3 challenges, and then let you expand if needed
+    - hotfix 1: change how completed amount looks like
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
