@@ -13,13 +13,13 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.6-1'
+version = 'v4.4.6-2'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
 - add logging in thread under leaderboard post
-    - hotfix fixed that not working
+    - hotfix removed "from #X" from logs
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -315,7 +315,7 @@ async def on_member_update(before, after):
                 log_msg = (
                     f"<:yes:1463357188964618413> {after.mention} completed **{role_info['name']}** - "
                     f"+{role_info['points']} pts - now has {current_pts} pts - "
-                    f"moved from #{old_rank} to #{new_rank} on leaderboard"
+                    f"moved to #{new_rank} on leaderboard"
                 )
                 if log_thread:
                     await log_thread.send(log_msg, allowed_mentions=discord.AllowedMentions.none())
@@ -336,7 +336,7 @@ async def on_member_update(before, after):
                 log_msg = (
                     f"<:no:1454950318042255410> {after.mention}'s completion of **{role_info['name']}** is revoked - "
                     f"-{role_info['points']} pts - now has {current_pts} pts - "
-                    f"moved from #{old_rank} to #{new_rank} on leaderboard"
+                    f"moved to #{new_rank} on leaderboard"
                 )
                 if log_thread:
                     await log_thread.send(log_msg, allowed_mentions=discord.AllowedMentions.none())
