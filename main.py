@@ -13,13 +13,13 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.8-1'
+version = 'v4.4.8-2'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
 - make .points, .stats and .pts now only show first 3 challenges, and then let you expand if needed
-    - hotfix 1: change how completed amount looks like
+    - hotfix 2: change how completed amount looks like
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -606,7 +606,8 @@ class ChallengeExpandView(View):
 
         content = (
             f'# {self.member.mention}\'s stats\n'
-            f'total life savings: `{total_points} pts` ({len(self.challenges)} completed)\n'
+            f'total life savings: `{total_points} pts`\n'
+            f'total challenges completed: `{len(self.challenges)}\n`'
             f'leaderboard position: {pos_info}\n'
             f'## completed challenge list\n'
             f'{display_list}'
@@ -646,7 +647,7 @@ async def stat_checker(ctx, member: discord.Member = None):
     response = (
         f'# {member.mention}\'s stats\n'
         f'total life savings: `{total_points} pts`\n'
-        f'total challenges completed: `{challenge_count}`'
+        f'total challenges completed: `{challenge_count}\n`'
         f'leaderboard position: {position_info}\n'
         f'## completed challenge list\n'
         f'{challenge_list}'
