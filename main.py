@@ -13,12 +13,13 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.7'
+version = 'v4.4.7-1'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
 - fix .save (yay!!)
+    - hotfix 1: fix .disband too
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -59,7 +60,7 @@ async def force_check_all(ctx):
 @bot.command()
 @general.try_bot_perms
 @general.has_perms('manage_roles')
-async def check(ctx, member: discord.Member = None):
+async def check(ctx, member: discord.Member):
     async with RoleSession(member) as rs:
         await activity.full_check_member(rs, member)
         await send_timed_delete_msg(f'checked {member.display_name}')

@@ -117,7 +117,7 @@ async def disband_save(ctx):
 
 
     # remove role and re-add misc none if needed
-    await send(ctx.bot, f"🗑️ {ctx.author.mention} disbanded the save number {number} {role.mention}")
+    await ctx.send(f"🗑️ {ctx.author.mention} disbanded the save number {number} {role.mention}")
 
     try:
         await role.delete(reason="save disbanded")
