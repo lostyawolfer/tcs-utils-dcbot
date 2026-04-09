@@ -57,14 +57,10 @@ async def create_save(ctx, members: list[discord.Member], save_name: str = None)
     )
 
     # assign role to members
-
     for m in members:
         async with RoleSession(m) as rs:
             rs.add(save_role.id)
-            # remove misc none if exists
-            misc_none = guild.get_role(config.roles['category:misc']['none'])
-            if misc_none in m.roles:
-                rs.remove(misc_none.id)
+            # manual category removal removed: RoleSession._fix_categories handles this now
 
     # create channel name
     if save_name:

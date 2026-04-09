@@ -13,13 +13,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.6-2'
+version = 'v4.4.7'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- add logging in thread under leaderboard post
-    - hotfix removed "from #X" from logs
+- fix .save (yay!!)
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
