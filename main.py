@@ -13,13 +13,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.7-2'
+version = 'v4.4.8'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- fix .save (yay!!)
-    - hotfix 2: fix message for .disband
+- make .points, .stats and .pts now only show first 3 challenges, and then let you expand if needed
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -570,38 +569,90 @@ async def on_message(message: discord.Message):
         await bot.process_commands(message)
 
 
+from discord.ui import View, Button
+
+
+class ChallengeExpandView(View):
+    def __init__(self, member: discord.Member, challenges: list):
+        super().__init__(timeout=60)
+        self.member = member
+        self.challenges = challenges
+        self.expanded = False
+
+    @discord.ui.button(label="see more challenges", style=discord.ButtonStyle.secondary)
+    async def toggle_view(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.expanded = not self.expanded
+
+        total_points, _ = calculate_points(self.member)
+        ranked_lb = get_ranked_leaderboard(interaction.guild)
+
+        pos_info = "*unranked*"
+        for rank, points, members in ranked_lb:
+            if self.member in members:
+                tied = [m.mention for m in members if m.id != self.member.id]
+                pos_info = f'**#{rank}** (tied with {", ".join(tied)})' if tied else f'**#{rank}**'
+                break
+
+        if self.expanded:
+            display_list = '\n'.join([f'{i + 1}. <@&{role_id}>' for i, role_id in enumerate(self.challenges)])
+            button.label = "see less"
+        else:
+            top_3 = self.challenges[:3]
+            remaining = len(self.challenges) - 3
+            display_list = '\n'.join([f'{i + 1}. <@&{role_id}>' for i, role_id in enumerate(top_3)])
+            display_list += f'\n*(+ {remaining} more challenges...)*'
+            button.label = "see more challenges"
+
+        content = (
+            f'# {self.member.mention}\'s stats\n'
+            f'total life savings: `{total_points} pts` ({len(self.challenges)} completed)\n'
+            f'leaderboard position: {pos_info}\n'
+            f'## completed challenge list\n'
+            f'{display_list}'
+        )
+
+        await interaction.response.edit_message(content=content, view=self)
+
+
 async def stat_checker(ctx, member: discord.Member = None):
     if not member:
         member = ctx.author
 
     total_points, challenges = calculate_points(member)
-    ranked_leaderboard = get_ranked_leaderboard(ctx.guild)  # Use the new ranked leaderboard
+    ranked_leaderboard = get_ranked_leaderboard(ctx.guild)
 
     position_info = "*unranked*"
     for rank, points, members in ranked_leaderboard:
         if member in members:
-            # If multiple members are tied at this rank, list them
             tied_members_mentions = [m.mention for m in members if m.id != member.id]
-            if len(tied_members_mentions) > 1:
-                # Format for display in .points command
-                position_info = f'**#{rank}** (tied with {", ".join(tied_members_mentions)})'
-            else:
-                position_info = f'**#{rank}**'
+            position_info = f'**#{rank}** (tied with {", ".join(tied_members_mentions)})' if tied_members_mentions else f'**#{rank}**'
             break
 
-    challenge_list = '\n'.join([f'{i + 1}. <@&{role_id}>' for i, role_id in enumerate(challenges)])
-    if not challenge_list:
-        challenge_list = '*none*'
+    view = None
+    challenge_count = len(challenges)
+
+    if challenge_count > 3:
+        top_3 = challenges[:3]
+        remaining = challenge_count - 3
+        challenge_list = '\n'.join([f'{i + 1}. <@&{role_id}>' for i, role_id in enumerate(top_3)])
+        challenge_list += f'\n*(+ {remaining} more challenges...)*'
+        view = ChallengeExpandView(member, challenges)
+    else:
+        challenge_list = '\n'.join([f'{i + 1}. <@&{role_id}>' for i, role_id in enumerate(challenges)])
+        if not challenge_list:
+            challenge_list = '*none*'
 
     response = (
         f'# {member.mention}\'s stats\n'
-        f'total life savings `{total_points} pts`\n'
-        f'leaderboard position: {position_info}\n'  # Updated line
+        f'total life savings: `{total_points} pts`\n'
+        f'total challenges completed: `{challenge_count}`'
+        f'leaderboard position: {position_info}\n'
         f'## completed challenge list\n'
         f'{challenge_list}'
     )
 
-    await ctx.send(response, allowed_mentions=discord.AllowedMentions.none())
+    await ctx.send(response, view=view, allowed_mentions=discord.AllowedMentions.none())
+
 
 
 @bot.command()
