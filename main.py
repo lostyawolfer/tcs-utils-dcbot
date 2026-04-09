@@ -13,13 +13,13 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.7-1'
+version = 'v4.4.7-2'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
 - fix .save (yay!!)
-    - hotfix 1: fix .disband too
+    - hotfix 2: fix message for .disband
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
