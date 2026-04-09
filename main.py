@@ -13,13 +13,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.4'
+version = 'v4.4.5'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- fix autounavailable being very aggressive
-- also 4.4.4 nice version
+- fix rank update message thing i guess?
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -290,15 +289,13 @@ async def on_member_update(before, after):
         removed_roles = before_roles - after_roles
 
         # track old rank before any leaderboard update
-        old_rank = None
+        old_rank = get_member_rank(after.guild, before)
         challenge_changed = False
 
         for role in added_roles:
             role_info = parse_challenge_role(role)
             if role_info:
                 challenge_changed = True
-                if old_rank is None:
-                    old_rank = get_member_rank(after.guild, after)
 
                 emoji_map = {
                     '🟢': '<:yes:1463357188964618413>',
