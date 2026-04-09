@@ -13,12 +13,13 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.3'
+version = 'v4.4.4'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- added a thing that automatically reminds ppl im in rest when they ping me
+- fix autounavailable being very aggressive
+- also 4.4.4 nice version
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -471,82 +472,82 @@ async def on_message(message: discord.Message):
     if message.author == bot.user:
         return
 
-    if message.guild == TARGET_GUILD:
+    if message.guild.id == TARGET_GUILD:
         activity.update_cache(message.author.id)
 
-    if message.content.lower() == 'ps':     # '<#1426974154556702720>' in message.content or
-        await message.channel.send(
-            f'link: **https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server**',
-            suppress_embeds=True)
+        if message.content.lower() == 'ps':     # '<#1426974154556702720>' in message.content or
+            await message.channel.send(
+                f'link: **https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server**',
+                suppress_embeds=True)
 
-    if 'one more' in message.content.lower():
-        await message.channel.send(
-            'https://cdn.discordapp.com/attachments/1426972811293098014/1438983499804708915/image.png?ex=6941bbd1&is=69406a51&hm=eb4a1cd864b53f8c9865afd49aec5dd6a54fed7c327bd262df17b69589bef0bb&'
-        )
-
-    if 'npc' == message.content.lower():
-        await message.reply('yep thats me', allowed_mentions=discord.AllowedMentions.none())
-
-    if 'bot' == message.content.lower():
-        await message.reply('online :white_checkmark:', allowed_mentions=discord.AllowedMentions.none())
-
-    if isinstance(message.author, discord.Member):
-        if '<@534097411048603648>' in message.content and \
-                config.roles['mod'] not in [r.id for r in message.author.roles]:
-            await message.reply(
-                "a friendly reminder lostya is currently in rest - don't ping them without an important reason.\n"
-                "ping moderators instead; they will escalate if necessary.\n"
-                "-# more info: https://discord.com/channels/1426972810332340406/1434248797369663518/1490686502160695336"
+        if 'one more' in message.content.lower():
+            await message.channel.send(
+                'https://cdn.discordapp.com/attachments/1426972811293098014/1438983499804708915/image.png?ex=6941bbd1&is=69406a51&hm=eb4a1cd864b53f8c9865afd49aec5dd6a54fed7c327bd262df17b69589bef0bb&'
             )
 
-    # roleplay actions
-    rp_actions = {
-        'kill': 'rp_kill',
-        'hug': 'rp_hug',
-        'kiss': 'rp_kiss',
-        'high five': 'rp_high_five',
-        'highfive': 'rp_high_five',
-        'shake hands': 'rp_handshake',
-        'handshake': 'rp_handshake',
-        'burn': 'rp_burn',
-        'punch': 'rp_punch',
-        'slap': 'rp_slap',
-        'pat': 'rp_pat',
-        'touch': 'rp_touch',
-    }
+        if 'npc' == message.content.lower():
+            await message.reply('yep thats me', allowed_mentions=discord.AllowedMentions.none())
 
-    content_lower = message.content.lower().strip()
-    target = None
-    action = None
+        if 'bot' == message.content.lower():
+            await message.reply('online :white_checkmark:', allowed_mentions=discord.AllowedMentions.none())
 
-    # check if replying with just the action word
-    if message.reference and message.reference.resolved:
-        replied_msg = message.reference.resolved
-        if isinstance(replied_msg.author, discord.Member):
+        if isinstance(message.author, discord.Member):
+            if '<@534097411048603648>' in message.content and \
+                    config.roles['mod'] not in [r.id for r in message.author.roles]:
+                await message.reply(
+                    "a friendly reminder lostya is currently in rest - don't ping them without an important reason.\n"
+                    "ping moderators instead; they will escalate if necessary.\n"
+                    "-# more info: https://discord.com/channels/1426972810332340406/1434248797369663518/1490686502160695336"
+                )
+
+        # roleplay actions
+        rp_actions = {
+            'kill': 'rp_kill',
+            'hug': 'rp_hug',
+            'kiss': 'rp_kiss',
+            'high five': 'rp_high_five',
+            'highfive': 'rp_high_five',
+            'shake hands': 'rp_handshake',
+            'handshake': 'rp_handshake',
+            'burn': 'rp_burn',
+            'punch': 'rp_punch',
+            'slap': 'rp_slap',
+            'pat': 'rp_pat',
+            'touch': 'rp_touch',
+        }
+
+        content_lower = message.content.lower().strip()
+        target = None
+        action = None
+
+        # check if replying with just the action word
+        if message.reference and message.reference.resolved:
+            replied_msg = message.reference.resolved
+            if isinstance(replied_msg.author, discord.Member):
+                for action_word, action_key in rp_actions.items():
+                    if content_lower == action_word:
+                        action = action_key
+                        target = replied_msg.author
+                        break
+
+        # check for "action @member" pattern
+        if not action:
             for action_word, action_key in rp_actions.items():
-                if content_lower == action_word:
-                    action = action_key
-                    target = replied_msg.author
-                    break
+                pattern = rf'^{re.escape(action_word)}\s+<@!?(\d+)>$'
+                match = re.match(pattern, content_lower)
+                if match:
+                    member_id = int(match.group(1))
+                    member = message.guild.get_member(member_id)
+                    if member:
+                        action = action_key
+                        target = member
+                        break
 
-    # check for "action @member" pattern
-    if not action:
-        for action_word, action_key in rp_actions.items():
-            pattern = rf'^{re.escape(action_word)}\s+<@!?(\d+)>$'
-            match = re.match(pattern, content_lower)
-            if match:
-                member_id = int(match.group(1))
-                member = message.guild.get_member(member_id)
-                if member:
-                    action = action_key
-                    target = member
-                    break
+        if action and target:
+            response = config.message(action, author=message.author.mention, target=target.mention)
+            await message.channel.send(response)
 
-    if action and target:
-        response = config.message(action, author=message.author.mention, target=target.mention)
-        await message.channel.send(response)
-
-    await bot.process_commands(message)
+        await bot.process_commands(message)
 
 
 async def stat_checker(ctx, member: discord.Member = None):
