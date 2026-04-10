@@ -13,7 +13,7 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.10'
+version = 'v4.4.10-1'
 
 changelog = \
     f"""
@@ -391,6 +391,7 @@ async def on_member_update(before, after):
                 await general.send(config.message('demotion_goodbye', mention=after.mention), 'mod_chat')
             elif role.id == config.roles['leader']:
                 await general.send(config.message('leader_removed', mention=after.mention))
+                await general.send(config.message('leader_removed', mention=after.mention), 'leader_chat')
             elif role.id == config.roles['newbie']:
                 await general.send(config.message('newbie', mention=after.mention))
             elif role.id == config.roles['inactive']:
