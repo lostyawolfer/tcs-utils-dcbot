@@ -13,12 +13,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.9'
+version = 'v4.4.10'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- make users update their activity upon joining the server too
+- fix a thing that i didnt know was like i didnt want it to (dw about it)
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -377,6 +377,7 @@ async def on_member_update(before, after):
                 await general.send(config.message('promotion_welcome', mention=after.mention), 'mod_chat')
             elif role.id == config.roles['leader']:
                 await general.send(config.message('new_leader', mention=after.mention))
+                await general.send(config.message('new_leader', mention=after.mention), 'leader_chat')
             elif role.id == config.roles['inactive']:
                 await general.send(config.message('inactive', mention=after.mention))
             elif role.id == config.roles['explained_inactive']:
