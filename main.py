@@ -13,13 +13,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v4.4.8-2'
+version = 'v4.4.9'
 
 changelog = \
     f"""
 :tada: **{version} changelog**
-- make .points, .stats and .pts now only show first 3 challenges, and then let you expand if needed
-    - hotfix 2: change how completed amount looks like
+- make users update their activity upon joining the server too
 """
 # changelog = 'not sending changelog because fuck you' # type: ignore
 
@@ -432,6 +431,8 @@ async def on_member_join(member: discord.Member):
 
             for role in config.roles['new_people']:
                 rs.add(role)
+
+    activity.update_cache(member.id)
 
 
 

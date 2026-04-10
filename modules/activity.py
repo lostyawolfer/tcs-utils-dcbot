@@ -7,6 +7,7 @@ from modules.general import has_role, send, count_available, count_in_vc, emojif
 from modules.role_management import RoleSession
 import datetime
 from modules.bot_init import bot
+import re
 
 
 async def voice_check(rs: RoleSession, member: discord.Member) -> None:
@@ -193,9 +194,15 @@ async def build_activity_cache():
 
         # check for bot mentions (vc logs, joins, etc)
         elif msg.author == bot.user:
-            for mention in msg.mentions:
-                if ts > last_activity_cache.get(mention.id, 0):
-                    update_cache(mention.id, ts)
+            keyword = "<:join:1436503008924926052>"
+            if keyword in msg.content:
+                # find all sequences of digits (ids) in the message
+                potential_ids = re.findall(r'\d{17,19}', msg.content)
+                for user_id_str in potential_ids:
+                    user_id = int(user_id_str)
+                    if ts > last_activity_cache.get(user_id, 0):
+                        update_cache(user_id, ts)
+
     print(f"cache built. tracked {len(last_activity_cache)} members.")
 
 
