@@ -197,7 +197,7 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
             lines.append(f'## {emoji} `{points:3} pts` {member_mentions}')
         elif display_rank == 3:
             lines.append(f'### {emoji} `{points:3} pts` {member_mentions}')
-        elif display_rank < 10:
+        elif display_rank <= 10:
             lines.append(f'{display_rank}. `{points:3} pts` {member_mentions}')
         else:
             lines.append(f'-# {display_rank}. `{points:3} pts` {member_mentions}')

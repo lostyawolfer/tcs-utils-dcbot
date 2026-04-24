@@ -13,25 +13,27 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v5.0.0'
+version = 'v5.0.0-1'
 
 changelog = \
 f"""
 :tada: **{version} changelog**
-- removed the message reminding that the owner is in rest BECAUSE THEY GOT OUT OF REST LET'S GOOOOO
-- the leaderboard (<#1456353494448734331>) now adds leading spaces to point counts to make all numbers appear on the same level
-- the leaderboard was now extended to show people up to position #15 in small font
-- an actual (i hope) fix of the automatic unavailability and inactivity role updates (finally!!!)
-- stopped the bot from giving the usual "member" roles to bots including itself (and made it give the bot role automatically)
-- changed the way the bot sends challenge completion notifications a bit
-- added back a special onboarding message for when new members join
-- changed the mod-chat member join notification; added nickname change and leave notifications to mod chat too
-- fixed mod commands pinging me when misused
-- activity cache messages are now moved to mod chat so that they don't flood the chat on bot restarts
-- fixed that one message using `:white_checkmark:` instead of `:white_check_mark:` which is wrong
-- <#1468068634680229979> now uses placeholder icons correctly instead of just not having icons for iconless challenges
-- the bot now automatically pings challenge run verifiers and adds the pending verification tag in the forum upon post creation
-  - more features for making the verification process easier are on their way!
+- fixed leaderboard having #10 smaller than #9 (the small font only should start at #11)
+base patch changelog:
+> -# - removed the message reminding that the owner is in rest BECAUSE THEY GOT OUT OF REST LET'S GOOOOO
+> -# - the leaderboard (<#1456353494448734331>) now adds leading spaces to point counts to make all numbers appear on the same level
+> -# - the leaderboard was now extended to show people up to position #15 in small font
+> -# - an actual (i hope) fix of the automatic unavailability and inactivity role updates (finally!!!)
+> -# - stopped the bot from giving the usual "member" roles to bots including itself (and made it give the bot role automatically)
+> -# - changed the way the bot sends challenge completion notifications a bit
+> -# - added back a special onboarding message for when new members join
+> -# - changed the mod-chat member join notification; added nickname change and leave notifications to mod chat too
+> -# - fixed mod commands pinging me when misused
+> -# - activity cache messages are now moved to mod chat so that they don't flood the chat on bot restarts
+> -# - fixed that one message using `:white_checkmark:` instead of `:white_check_mark:` which is wrong
+> -# - <#1468068634680229979> now uses placeholder icons correctly instead of just not having icons for iconless challenges
+> -# - the bot now automatically pings challenge run verifiers and adds the pending verification tag in the forum upon post creation
+> -#   - more features for making the verification process easier are on their way!
 """
 
 ################################################################
