@@ -200,7 +200,7 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
         elif display_rank <= 10:
             lines.append(f'{display_rank}. `{points:3} pts` {member_mentions}')
         else:
-            lines.append(f'-# {display_rank}. `{points:3} pts` {member_mentions}')
+            lines.append(f'-# {display_rank}. **    **`{points:3} pts` {member_mentions}')
 
     if len(lines) <= 2:
         lines.append('no one on the leaderboard yet!')

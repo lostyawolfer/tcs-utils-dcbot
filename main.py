@@ -13,12 +13,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v5.0.0-1'
+version = 'v5.0.0-2'
 
 changelog = \
 f"""
 :tada: **{version} changelog**
-- fixed leaderboard having #10 smaller than #9 (the small font only should start at #11)
+- small leaderboard design change
 base patch changelog:
 > -# - removed the message reminding that the owner is in rest BECAUSE THEY GOT OUT OF REST LET'S GOOOOO
 > -# - the leaderboard (<#1456353494448734331>) now adds leading spaces to point counts to make all numbers appear on the same level
