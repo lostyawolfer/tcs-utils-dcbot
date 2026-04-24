@@ -29,6 +29,7 @@ f"""
 - fixed mod commands pinging me when misused
 - activity cache messages are now moved to mod chat so that they don't flood the chat on bot restarts
 - fixed that one message using `:white_checkmark:` instead of `:white_check_mark:` which is wrong
+- <#1468068634680229979> now uses placeholder icons correctly instead of just not having icons for iconless challenges
 - the bot now automatically pings challenge run verifiers and adds the pending verification tag in the forum upon post creation
   - more features for making the verification process easier are on their way!
 """
