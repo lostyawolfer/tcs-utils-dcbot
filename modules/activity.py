@@ -1,48 +1,58 @@
 import asyncio
+import re
+import datetime
 
 import discord
 from discord import AllowedMentions
+
 from modules import config, general
 from modules.general import has_role, send, count_available, count_in_vc, emojify
 from modules.role_management import RoleSession
-import datetime
 from modules.bot_init import bot
-import re
-
 
 async def voice_check(rs: RoleSession, member: discord.Member) -> None:
-    async def check(vc: str, vc_role: str, vc_leader_role: str, reverse_role: str, join_msg_id: str, leave_msg_id: str,
-                    color: str = 'g'):
+    async def check(
+        vc: str,
+        vc_role: str,
+        vc_leader_role: str,
+        reverse_role: str,
+        join_msg_id: str,
+        leave_msg_id: str,
+        color: str = 'g',
+    ):
         channel = member.guild.get_channel(config.channels[vc])
-        members = await count_in_vc(bot, vc)
+        members = await count_in_vc(member.guild, vc)
 
         if member.voice and member.voice.channel == channel:
             if not has_role(member, config.roles[vc_role]):
-                await send(config.message(join_msg_id, member=member.display_name,
-                                               count=f'{emojify(str(members), color)}'))
+                await send(
+                    config.message(
+                        join_msg_id,
+                        member=member.display_name,
+                        count=emojify(str(members), color),
+                    )
+                )
             if has_role(member, config.roles['leader']):
                 rs.add(config.roles[vc_leader_role])
             rs.add(config.roles[vc_role])
             rs.remove(config.roles[reverse_role])
-
         else:
             if has_role(member, config.roles[vc_role]):
-                await send(config.message(leave_msg_id, member=member.display_name,
-                                               count=f'{emojify(str(members), color)}'))
+                await send(
+                    config.message(
+                        leave_msg_id,
+                        member=member.display_name,
+                        count=emojify(str(members), color),
+                    )
+                )
             rs.remove(config.roles[vc_role])
             rs.remove(config.roles[vc_leader_role])
             if has_role(member, config.roles['available']):
                 rs.add(config.roles[reverse_role])
 
-    await check('vc', 'in_vc', 'in_vc_leader', 'available_not_in_vc',
-                'join_vc', 'leave_vc')
-
-    await check('vc2', 'in_vc_2', 'in_vc_2_leader', 'available_not_in_vc_2',
-                'join_vc_2', 'leave_vc_2', 'p')
-
-    await check('vc3', 'in_vc_3', 'in_vc_3_leader', 'available_not_in_vc_3',
-                'join_vc_3', 'leave_vc_3', 'r')
-
+    await check('vc', 'in_vc', 'in_vc_leader', 'available_not_in_vc', 'join_vc', 'leave_vc')
+    await check('vc2', 'in_vc_2', 'in_vc_2_leader', 'available_not_in_vc_2', 'join_vc_2', 'leave_vc_2', 'p')
+    await check('vc3', 'in_vc_3', 'in_vc_3_leader', 'available_not_in_vc_3', 'join_vc_3', 'leave_vc_3', 'r')
 
 
 async def add_availability(rs: RoleSession, member: discord.Member) -> None:
@@ -53,7 +63,7 @@ async def add_availability(rs: RoleSession, member: discord.Member) -> None:
                 config.message(
                     'available_ping',
                     name=member.mention,
-                    available_count=f"{emojify(f'{available_people}', 'b')}",
+                    available_count=emojify(str(available_people), 'b'),
                 ),
                 pings=AllowedMentions(users=False, roles=True),
             )
@@ -62,7 +72,7 @@ async def add_availability(rs: RoleSession, member: discord.Member) -> None:
                 config.message(
                     'available',
                     name=member.mention,
-                    available_count=f"{emojify(f'{available_people}', 'b')}",
+                    available_count=emojify(str(available_people), 'b'),
                 ),
                 pings=AllowedMentions.none(),
             )
@@ -75,11 +85,8 @@ async def add_availability(rs: RoleSession, member: discord.Member) -> None:
     ).fetch_message(config.channels['availability_message'])
 
     await msg.remove_reaction(
-        discord.PartialEmoji(
-            id=config.channels['availability_reaction'],
-            name='available',
-        ),
-        member.guild.me
+        discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'),
+        member.guild.me,
     )
 
 
@@ -92,9 +99,9 @@ async def remove_availability(rs: RoleSession, member: discord.Member) -> None:
             config.message(
                 'unavailable',
                 name=member.mention,
-                available_count=f"{emojify(f'{available_people}', 'b')}",
+                available_count=emojify(str(available_people), 'b'),
             ),
-            pings=AllowedMentions.none()
+            pings=AllowedMentions.none(),
         )
 
     rs.remove('available')
@@ -106,10 +113,7 @@ async def remove_availability(rs: RoleSession, member: discord.Member) -> None:
         ).fetch_message(config.channels['availability_message'])
 
         await msg.add_reaction(
-            discord.PartialEmoji(
-                id=config.channels['availability_reaction'],
-                name='available',
-            )
+            discord.PartialEmoji(id=config.channels['availability_reaction'], name='available')
         )
 
 
@@ -134,15 +138,13 @@ async def availability_check(rs: RoleSession, member: discord.Member) -> None:
         await remove_availability(rs, member)
 
 
-
 def check_member_join_date(member: discord.Member) -> int | None:
-    days = None
-    if member.guild.get_role(config.roles['newbie']) in member.roles:
-        if member.joined_at:
-            now = datetime.datetime.now(member.joined_at.tzinfo)
-            time_since_join = now - member.joined_at
-            days = time_since_join.days
-    return days
+    if member.guild.get_role(config.roles['newbie']) not in member.roles:
+        return None
+    if not member.joined_at:
+        return None
+    now = datetime.datetime.now(member.joined_at.tzinfo)
+    return (now - member.joined_at).days
 
 
 async def full_check_member(rs: RoleSession, member: discord.Member) -> None:
@@ -156,60 +158,67 @@ async def full_check_member(rs: RoleSession, member: discord.Member) -> None:
 async def check_all_members() -> None:
     server = bot.get_guild(config.TARGET_GUILD)
     await server.chunk()
-    total_members = server.member_count
-    member_n = 0
     members = server.members
-    for member in members:
-        member_n += 1
-        percent = round(member_n * 100 / total_members, 1)
+    total = len(members)
+
+    for i, member in enumerate(members, 1):
         if not member.bot:
             async with RoleSession(member) as rs:
                 await full_check_member(rs, member)
-        print(f'checking members - {percent}')
+        print(f'checking members - {round(i * 100 / total, 1)}%')
 
-    await general.update_status(status=discord.Status.online) # type: ignore
-
-
-last_activity_cache = {}
+    await general.update_status(status=discord.Status.online)  # type: ignore
 
 
-def update_cache(member_id: int, ts: float = None):
+async def check_inactivity() -> None:
+    """Standalone inactivity check used by the .check_inactive_people command."""
+    await run_activity_checks()
+
+
+# ---------------------------------------------------------------------------
+# activity cache
+# ---------------------------------------------------------------------------
+
+last_activity_cache: dict[int, float] = {}
+
+bot_inactive_pending: set[int] = set()
+bot_unavailable_pending: set[int] = set()
+user_unavailable_pending: set[int] = set()
+
+
+def update_cache(member_id: int, ts: float = None) -> None:
     last_activity_cache[member_id] = ts or discord.utils.utcnow().timestamp()
 
 
-async def build_activity_cache():
-    """runs once on startup to prevent false positives"""
+async def build_activity_cache() -> None:
+    """Runs once on startup to seed the cache and prevent false positives."""
     guild = bot.get_guild(config.TARGET_GUILD)
     chat = bot.get_channel(config.channels['chat'])
 
-    print("building activity cache...")
-    # 10k should be enough to cover the last week of activity
+    print('building activity cache...')
     async for msg in chat.history(limit=10000):
         ts = msg.created_at.timestamp()
 
-        # update for the author
         if not msg.author.bot:
             if ts > last_activity_cache.get(msg.author.id, 0):
                 update_cache(msg.author.id, ts)
-
-        # check for bot mentions (vc logs, joins, etc)
         elif msg.author == bot.user:
-            keyword = "<:join:1436503008924926052>"
-            if keyword in msg.content:
-                # find all sequences of digits (ids) in the message
-                potential_ids = re.findall(r'\d{17,19}', msg.content)
-                for user_id_str in potential_ids:
-                    user_id = int(user_id_str)
+            if '<:join:1436503008924926052>' in msg.content:
+                for user_id in (int(x) for x in re.findall(r'\d{17,19}', msg.content)):
                     if ts > last_activity_cache.get(user_id, 0):
                         update_cache(user_id, ts)
 
-    print(f"cache built. tracked {len(last_activity_cache)} members.")
+    print(f'cache built — tracked {len(last_activity_cache)} members.')
 
 
-async def run_activity_checks():
+async def run_activity_checks() -> None:
+    """
+    Called every 45 minutes by member_checker.
+    Marks members inactive if they haven't spoken in 6 days.
+    Removes availability if they haven't been active in 1.5 hours.
+    """
     guild = bot.get_guild(config.TARGET_GUILD)
     now = discord.utils.utcnow().timestamp()
-
     cutoff_6d = now - (6 * 24 * 60 * 60)
     cutoff_1h = now - (1.5 * 60 * 60)
 
@@ -220,49 +229,74 @@ async def run_activity_checks():
             continue
 
         last_ts = last_activity_cache.get(m.id, 0)
+        needs_inactive = (
+            not general.has_role(m, config.roles['inactive'])
+            and not general.has_role(m, config.roles['explained_inactive'])
+            and last_ts < cutoff_6d
+        )
+        needs_unavail = (
+            general.has_role(m, config.roles['available'])
+            and last_ts < cutoff_1h
+        )
 
-        # we only open a session if we actually need to change something
-        needs_inactive = not general.has_role(m, config.roles['inactive']) and last_ts < cutoff_6d
-        needs_unavail = general.has_role(m, config.roles['available']) and last_ts < cutoff_1h
+        if not needs_inactive and not needs_unavail:
+            continue
 
-        if needs_inactive or needs_unavail:
-            async with RoleSession(m) as rs:
-                if needs_unavail:
-                    if not availability_msg:
-                        ch = guild.get_channel(config.channels['availability'])
-                        availability_msg = await ch.fetch_message(config.channels['availability_message'])
-
-                    rs.remove('available')
-                    await availability_msg.remove_reaction(
-                        discord.PartialEmoji(id=config.channels['availability_reaction'], name='available'), m
+        async with RoleSession(m) as rs:
+            if needs_unavail:
+                bot_unavailable_pending.add(m.id)
+                if not availability_msg:
+                    ch = guild.get_channel(config.channels['availability'])
+                    availability_msg = await ch.fetch_message(
+                        config.channels['availability_message']
                     )
-                    await general.send(config.message('unavailable_auto_bot', name=m.mention,
-                                                      available_count=general.emojify(str(await count_available(guild)), 'b')),
-                                       pings=discord.AllowedMentions.none())
+                rs.remove('available')
+                await availability_msg.remove_reaction(
+                    discord.PartialEmoji(
+                        id=config.channels['availability_reaction'],
+                        name='available',
+                    ),
+                    m,
+                )
+                await general.send(
+                    config.message(
+                        'unavailable_auto_bot',
+                        name=m.mention,
+                        available_count=emojify(str(await count_available(guild)), 'b'),
+                    ),
+                    pings=discord.AllowedMentions.none(),
+                )
 
-                if needs_inactive:
-                    rs.add('inactive')
-                    rs.remove('person')
+            if needs_inactive:
+                bot_inactive_pending.add(m.id)
+                rs.add('inactive')
+                rs.remove('person')
 
     await general.update_status()
 
 
-INTERESTED_PREFIX = "🎮 interested in "
-INTERESTED_PREFIX_BASE = "🎮🟢 interested in "
-INTERESTED_PREFIX_STAR = "🎮⭐ interested in "
-INTERESTED_PREFIX_ULTIMATE = "🎮☄️ interested in "
+# ---------------------------------------------------------------------------
+# interested roles  (tiered reaction roles with debounce)
+# ---------------------------------------------------------------------------
+
+INTERESTED_PREFIX = '🎮 interested in '
+INTERESTED_PREFIX_BASE = '🎮🟢 interested in '
+INTERESTED_PREFIX_STAR = '🎮⭐ interested in '
+INTERESTED_PREFIX_ULTIMATE = '🎮☄️ interested in '
 
 INTERESTED_CHANNEL_ID = 1464608724667858975
 INTERESTED_MESSAGE_BASE = 1464609114612302035
 INTERESTED_MESSAGE_STAR = 1467834855315210376
 INTERESTED_MESSAGE_ULTIMATE = 1467834856640745542
 
-user_pending_changes = {}
-user_debounce_tasks = {}
-user_initial_states = {}
+user_pending_changes: dict = {}
+user_debounce_tasks: dict = {}
+user_initial_states: dict = {}
 
-def get_interested_role_map(guild: discord.Guild, message_id: int):
+
+def get_interested_role_map(guild: discord.Guild, message_id: int) -> dict:
     role_map = {}
+
     if message_id == INTERESTED_MESSAGE_BASE:
         prefixes = [INTERESTED_PREFIX_BASE, INTERESTED_PREFIX]
     elif message_id == INTERESTED_MESSAGE_STAR:
@@ -276,99 +310,94 @@ def get_interested_role_map(guild: discord.Guild, message_id: int):
         suffix = None
         for p in prefixes:
             if role.name.startswith(p):
-                suffix = role.name.replace(p, "").strip().lower()
+                suffix = role.name.replace(p, '').strip().lower()
                 break
-
-        if not suffix: continue
-
-        if suffix == "miscellaneous hosts":
-            role_map["🎮"] = role
+        if not suffix:
             continue
 
-        # remove any char that isn't a letter, number, or space, then swap spaces for underscores
-        clean_suffix = "".join(c for c in suffix if c.isalnum() or c.isspace())
-        emoji_name = f"badge_{clean_suffix.replace(' ', '_')}"
-        emoji = discord.utils.get(guild.emojis, name=emoji_name)
+        if suffix == 'miscellaneous hosts':
+            role_map['🎮'] = role
+            continue
+
+        clean = ''.join(c for c in suffix if c.isalnum() or c.isspace())
+        emoji = discord.utils.get(guild.emojis, name=f"badge_{clean.replace(' ', '_')}")
         if emoji:
             role_map[str(emoji)] = role
+
     return role_map
 
 
-async def process_interested_changes(user_id: int, guild: discord.Guild):
-    if user_id not in user_pending_changes: return
+async def process_interested_changes(user_id: int, guild: discord.Guild) -> None:
+    if user_id not in user_pending_changes:
+        return
 
     changes = user_pending_changes.pop(user_id)
     initial = user_initial_states.pop(user_id, set())
 
-    # calculate net changes from initial state
     final_roles = (initial | changes['added']) - changes['removed']
     net_added = final_roles - initial
     net_removed = initial - final_roles
 
     member = guild.get_member(user_id)
-    if not member or (not net_added and not net_removed): return
+    if not member or (not net_added and not net_removed):
+        return
 
-    # now commit the actual role changes
     async with RoleSession(member) as rs:
         for role in net_added:
             rs.add(role.id)
         for role in net_removed:
             rs.remove(role.id)
 
-    def format_names(roles):
+    def format_names(roles: set) -> str:
         names = [f"**{r.name.split('interested in ')[-1]}**" for r in roles]
         if len(names) > 1:
             return f"{', '.join(names[:-1])} and {names[-1]}"
         return names[0]
 
-    output = []
+    lines = []
     if net_removed:
-        output.append(
-            f"<:no_multiplayer:1463357263811973303> {member.mention} is no longer interested in {format_names(net_removed)}")
+        lines.append(
+            f'<:no_multiplayer:1463357263811973303> {member.mention} is no longer interested in {format_names(net_removed)}'
+        )
     if net_added:
-        output.append(
-            f"<:yes_multiplayer:1463357364110495754> {member.mention} is now interested in {format_names(net_added)}")
+        lines.append(
+            f'<:yes_multiplayer:1463357364110495754> {member.mention} is now interested in {format_names(net_added)}'
+        )
 
-    if output:
-        await general.send('\n'.join(output), pings=AllowedMentions.none())
+    if lines:
+        await general.send('\n'.join(lines), pings=AllowedMentions.none())
 
 
-async def schedule_interested_debounce(user_id: int, guild: discord.Guild):
+async def schedule_interested_debounce(user_id: int, guild: discord.Guild) -> None:
     if user_id in user_debounce_tasks:
         user_debounce_tasks[user_id].cancel()
 
-    async def wait():
+    async def _wait():
         await asyncio.sleep(7)
         await process_interested_changes(user_id, guild)
         user_debounce_tasks.pop(user_id, None)
 
-    user_debounce_tasks[user_id] = asyncio.create_task(wait())
+    user_debounce_tasks[user_id] = asyncio.create_task(_wait())
 
 
-async def sync_interested_reactions():
+async def sync_interested_reactions() -> None:
     guild = bot.get_guild(config.TARGET_GUILD)
     channel = guild.get_channel(INTERESTED_CHANNEL_ID)
-    if not channel: return
+    if not channel:
+        return
 
     for mid in [INTERESTED_MESSAGE_BASE, INTERESTED_MESSAGE_STAR, INTERESTED_MESSAGE_ULTIMATE]:
         try:
             msg = await channel.fetch_message(mid)
             role_map = get_interested_role_map(guild, mid)
-
-            # sort the items by role position (descending) to get the correct visual order
-            # higher position in discord role list = "later" in the channel role list
-            # usually role lists are: [Newest/Top] ... [Oldest/Bottom]
-            # but for display purposes we want them in the order they appear in the map
-            # which is determined by the order we find them in guild.roles
             sorted_emojis = sorted(
                 role_map.keys(),
                 key=lambda e: role_map[e].position,
-                reverse=True
+                reverse=True,
             )
-
             existing = [str(r.emoji) for r in msg.reactions if r.me]
             for emoji_str in sorted_emojis:
                 if emoji_str not in existing:
                     await msg.add_reaction(emoji_str)
         except Exception as e:
-            print(f"sync error for {mid}: {e}")
+            print(f'sync error for {mid}: {e}')

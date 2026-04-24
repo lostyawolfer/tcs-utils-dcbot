@@ -134,8 +134,17 @@ class RoleSession:
             if role:
                 final_roles.discard(role)
 
-        final_roles = _ensure_roles(final_roles, self.guild)
-        final_roles = _fix_categories(final_roles, self.guild)
+        if not self.member.bot:
+            final_roles = _ensure_roles(final_roles, self.guild)
+            final_roles = _fix_categories(final_roles, self.guild)
+        else:
+            guild = self.member.guild
+            bot_role = guild.get_role(config.roles['bot'])
+            person_role = guild.get_role(config.roles['person'])
+            if bot_role: final_roles.add(bot_role)
+            if person_role: final_roles.discard(person_role)
+
+
 
         if final_roles != set(fresh_member.roles):
             await fresh_member.edit(roles=list(final_roles))

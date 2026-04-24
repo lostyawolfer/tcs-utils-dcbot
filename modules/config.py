@@ -86,9 +86,9 @@ roles = {
     "completion_server_base_star": 1453450000297365576
 }
 
-def get_starting_roles(bot: commands.Bot):
-    for role_id in roles["new_people"]:
-        role = bot.get_guild(TARGET_GUILD).get_role(role_id)
+# def get_starting_roles(bot: commands.Bot):
+#     for role_id in roles["new_people"]:
+#         role = bot.get_guild(TARGET_GUILD).get_role(role_id)
 
 
 
@@ -233,22 +233,24 @@ _messages = {
         f"{emoji['app_join']} {{mention}} computed its way in"
     ],
     "leave": [
-        f"{emoji['leave']} {{mention}} couldn't handle The Backdoor any longer...",
-        f"{emoji['leave']} {{mention}} disconnected. Please check your internet connection and try again. (Error Code: 277)",
-        f"{emoji['leave']} {{mention}} ran out of crucifixes, I guess...",
-        f"{emoji['leave']} {{mention}} ragequit",
-        f"{emoji['leave']} {{mention}} saw the light. it was outside. outside this server. they're happier now",
-        f"{emoji['leave']} well off {{mention}} goes ig"
+        f"{emoji['leave']} {{mention}} ({{display}}) couldn't handle The Backdoor any longer...",
+        f"{emoji['leave']} {{mention}} ({{display}}) disconnected. Please check your internet connection and try again. (Error Code: 277)",
+        f"{emoji['leave']} {{mention}} ({{display}}) ran out of crucifixes, I guess...",
+        f"{emoji['leave']} {{mention}} ({{display}}) ragequit",
+        f"{emoji['leave']} {{mention}} ({{display}}) saw the light. it was outside. outside this server. they're happier now",
+        f"{emoji['leave']} well off {{mention}} ({{display}}) goes ig"
     ],
     "kick": [
-        f"{emoji['kick']} {{mention}} was kicked from this experience (Error Code: 267)",
-        f"{emoji['kick']} {{mention}} slipped on a nanner peel and fell out of bounds! what? the nanner peel was placed by an admin? ohhhh, ok, gotcha",
-        f"{emoji['kick']} an admin's mighty foot sent {{mention}} flying. a reminder that you shouldn't fly during the challenge, that's cheating"
+        f"{emoji['kick']} {{mention}} ({{display}}) was kicked from this experience (Error Code: 267)",
+        f"{emoji['kick']} {{mention}} ({{display}}) slipped on a nanner peel placed by a mod and fell out of bounds",
+        f"{emoji['kick']} an mod's mighty foot sent {{mention}} ({{display}}) flying. a reminder that you shouldn't fly during the challenge, that's cheating",
+        f"{emoji['ban']} {{mention}} ({{display}}) got electrocuted. not by surge, though",
+        f"{emoji['ban']} {{mention}} ({{display}}) got Figured out. by a mod."
     ],
     "ban": [
-        f"{emoji['ban']} {{mention}} got electrocuted. not by surge, though",
-        f"{emoji['ban']} {{mention}} was kicked from this experience: You have been permanently blacklisted from This Challenge Sucks (Error Code: 267)",
-        f"{emoji['ban']} {{mention}} got figured out. by an admin."
+        f"{emoji['ban']} {{mention}} ({{display}}) got banned (ay yo)",
+        f"{emoji['ban']} {{mention}} ({{display}}) was kicked from this experience: You have been permanently blacklisted from This Challenge Sucks (Error Code: 267)",
+        f"{emoji['ban']} a mod got very angry and decided to ban {{mention}} ({{display}})"
     ],
     "kick_bot": [
         f"{emoji['app_leave']} well off {{mention}} goes ig",

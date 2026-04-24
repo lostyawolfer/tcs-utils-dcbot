@@ -182,7 +182,7 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
     lines = ['# __THE LEADERBOARD__', '\n-# ** **']
 
     for rank_idx, (actual_rank, points, members) in enumerate(ranked_leaderboard):
-        if rank_idx >= 10:
+        if rank_idx >= 15:
             break
 
         members.sort(key=lambda m: m.display_name.lower())
@@ -192,13 +192,15 @@ async def update_leaderboard_message(bot, guild: discord.Guild):
         emoji = LB_EMOJI.get(display_rank, "")
 
         if display_rank == 1:
-            lines.append(f'# {emoji} `{points:2} pts` {member_mentions}')
+            lines.append(f'# {emoji} `{points:3} pts` {member_mentions}')
         elif display_rank == 2:
-            lines.append(f'## {emoji} `{points:2} pts` {member_mentions}')
+            lines.append(f'## {emoji} `{points:3} pts` {member_mentions}')
         elif display_rank == 3:
-            lines.append(f'### {emoji} `{points:2} pts` {member_mentions}')
+            lines.append(f'### {emoji} `{points:3} pts` {member_mentions}')
+        elif display_rank < 10:
+            lines.append(f'{display_rank}. `{points:3} pts` {member_mentions}')
         else:
-            lines.append(f'{display_rank}. `{points:2} pts` {member_mentions}')
+            lines.append(f'-# {display_rank}. `{points:3} pts` {member_mentions}')
 
     if len(lines) <= 2:
         lines.append('no one on the leaderboard yet!')

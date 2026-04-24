@@ -21,6 +21,43 @@ LEADERBOARD_DISPLAY_ROLES = {
 }
 
 # -------------------------
+# difficulty placeholders
+# -------------------------
+
+_DIFFICULTY_PLACEHOLDERS = [
+    "<:badge_placeholder_custom_npc:1468336218407436328>",      # 0  – NPC
+    "<:badge_placeholder_custom_normal:1468336216171614490>",   # 1  – normal (1-2)
+    "<:badge_placeholder_custom_hard:1468336226154184867>",     # 2  – hard (3-4)
+    "<:badge_placeholder_custom_insane:1468336205635784988>",   # 3  – insane (5-7)
+    "<:badge_placeholder_custom_extreme:1468336223444537414>",  # 4  – extreme (8-10)
+    "<:badge_placeholder_custom_brutal:1468336220609314877>",   # 5  – brutal (11-13)
+    "<:badge_placeholder_custom_maso:1468336214124925073>",     # 6  – masochistic (14-17)
+    "<:badge_placeholder_custom_leg:1468336228914172119>",      # 7  – legendary (18-23)
+    "<:badge_placeholder_custom_godlike:1468518569619886111>",  # 8  – godlike (24+)
+]
+
+
+def _points_to_difficulty(points: int) -> int:
+    if points <= 0:  return 0
+    if points <= 2:  return 1
+    if points <= 4:  return 2
+    if points <= 7:  return 3
+    if points <= 10: return 4
+    if points <= 13: return 5
+    if points <= 17: return 6
+    if points <= 23: return 7
+    return 8
+
+
+def get_challenge_emoji(guild: discord.Guild, name: str, points: int) -> str:
+    """Return the badge emoji for a challenge, or a difficulty placeholder."""
+    emoji = badge_emoji_for_name(guild, name)
+    if emoji:
+        return str(emoji)
+    return _DIFFICULTY_PLACEHOLDERS[_points_to_difficulty(points)]
+
+
+# -------------------------
 # helpers
 # -------------------------
 
@@ -40,8 +77,9 @@ def get_owned_badge_roles(member: discord.Member):
     guild = member.guild
     roles_by_name = {r.name: r for r in guild.roles}
 
-    owned_badges = set()
-    all_badges = set()
+    owned_badges = set()   # set[discord.Role]
+    all_badges = set()     # set[discord.Role]
+    badge_points: dict[int, int] = {}  # role_id -> points
 
     for role in guild.roles:
         info = parse_challenge_role(role)
@@ -52,6 +90,7 @@ def get_owned_badge_roles(member: discord.Member):
         badge = roles_by_name.get(badge_name)
         if badge:
             all_badges.add(badge)
+            badge_points[badge.id] = info['points']
             if role in member.roles:
                 owned_badges.add(badge)
 
@@ -66,10 +105,12 @@ def get_owned_badge_roles(member: discord.Member):
         b = roles_by_name.get(badge_name)
         if b:
             all_badges.add(b)
+            # exceptions are always top-tier; default to godlike placeholder
+            badge_points.setdefault(b.id, 24)
             if c and c in member.roles:
                 owned_badges.add(b)
 
-    return owned_badges, all_badges
+    return owned_badges, all_badges, badge_points
 
 
 def has_leaderboard_opt_in(member: discord.Member) -> bool:
@@ -92,7 +133,7 @@ class WardrobeOpenView(View):
     )
     async def open(self, interaction: discord.Interaction, _):
         member = interaction.user
-        owned, _ = get_owned_badge_roles(member)
+        owned, _, _ = get_owned_badge_roles(member)
 
         if not owned and not has_leaderboard_opt_in(member):
             return await interaction.response.send_message(  # type: ignore
@@ -112,7 +153,7 @@ class WardrobeSelectView(View):
         super().__init__(timeout=60)
         self.member = member
 
-        owned, _ = get_owned_badge_roles(member)
+        owned, _, badge_points = get_owned_badge_roles(member)
 
         # top_1_emoji = discord.utils.get(member.guild.emojis, name="leaderboard_top_1")
         # top_2_emoji = discord.utils.get(member.guild.emojis, name="leaderboard_top_2")
@@ -133,14 +174,29 @@ class WardrobeSelectView(View):
         ]
 
         for badge in sorted(owned, key=lambda r: r.position, reverse=True):
-            emoji = badge_emoji_for_name(
-                member.guild, badge.name.replace("👁 ", "")
-            )
+            badge_display_name = badge.name.replace("👁 ", "")
+            pts = badge_points.get(badge.id, 0)
+            raw_emoji = badge_emoji_for_name(member.guild, badge_display_name)
+            # SelectOption emoji must be a discord.Emoji/PartialEmoji or a
+            # unicode str — custom guild emoji objects work directly; for the
+            # placeholder strings we parse out the id so discord accepts them.
+            if raw_emoji:
+                select_emoji = raw_emoji
+            else:
+                difficulty = _points_to_difficulty(pts)
+                placeholder_str = _DIFFICULTY_PLACEHOLDERS[difficulty]
+                # extract id from "<:name:id>" for PartialEmoji
+                import re as _re
+                m = _re.match(r"<:(\w+):(\d+)>", placeholder_str)
+                select_emoji = (
+                    discord.PartialEmoji(name=m.group(1), id=int(m.group(2)))
+                    if m else None
+                )
             options.append(
                 discord.SelectOption(
                     label=badge.name.replace("👁 ", ""),
                     value=str(badge.id),
-                    emoji=emoji,
+                    emoji=select_emoji,
                 )
             )
 
@@ -150,7 +206,7 @@ class WardrobeSelectView(View):
 class WardrobeSelect(Select):
     async def callback(self, interaction: discord.Interaction):
         member = interaction.user
-        _, all_badges = get_owned_badge_roles(member)
+        _, all_badges, _ = get_owned_badge_roles(member)
 
         choice = self.values[0]
 

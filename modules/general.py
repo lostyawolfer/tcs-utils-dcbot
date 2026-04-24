@@ -52,7 +52,7 @@ async def count_filtered_members(guild: Guild) -> int:
         member_count += 1
     return member_count
 
-async def count_available(guild: Guild) -> int:
+async def count_available(guild: discord.Guild) -> int:
     channel = guild.get_channel(config.channels['availability'])
     try:
         msg = await channel.fetch_message(config.channels['availability_message'])
@@ -63,21 +63,25 @@ async def count_available(guild: Guild) -> int:
         if reaction.emoji.id == config.channels['availability_reaction']:
             found_reaction = reaction
             break
-    res = 0
-    if found_reaction:
-        res = found_reaction.count
-    if found_reaction and found_reaction.me:
-        res -= 1
-    return res
+    if not found_reaction:
+        return 0
+    count = found_reaction.count
+    if found_reaction.me:
+        count -= 1
+    return count
 
-async def count_in_vc(guild: Guild, vc: str = 'vc') -> int:
-    return len(guild.get_channel(config.channels[vc]).members)
+
+async def count_in_vc(guild: discord.Guild, vc: str = 'vc') -> int:
+    channel = guild.get_channel(config.channels[vc])
+    if not channel:
+        return 0
+    return len(channel.members)
 
 async def set_status(text: str, *, status: discord.Status = None) -> None:
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=text), status=status)
 
 
-async def get_status_text(guild: Guild) -> str:
+async def get_status_text(guild: discord.Guild) -> str:
     vc_count = await count_in_vc(guild, 'vc')
     vc_2_count = await count_in_vc(guild, 'vc2')
     vc_3_count = await count_in_vc(guild, 'vc3')
@@ -98,17 +102,19 @@ async def get_status_text(guild: Guild) -> str:
 
     text_available = ''
     if available_count:
-        text_available = f' / {available_count} available'
         if vc_count or vc_2_count or vc_3_count:
             text_available = f' / {available_count} av.'
+        else:
+            text_available = f' / {available_count} available'
 
-    status = f'{text_members}{text_available}{text_in_vc}'
-
-    return status
+    return f'{text_members}{text_available}{text_in_vc}'
 
 
 async def update_status(status: discord.Status = None) -> None:
-    status_text = await get_status_text(bot.get_guild(TARGET_GUILD))
+    guild = bot.get_guild(config.TARGET_GUILD)
+    if not guild:
+        return
+    status_text = await get_status_text(guild)
     await set_status(status_text, status=status)
 
 
