@@ -13,12 +13,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v5.0.0-2'
+version = 'v5.0.1'
 
 changelog = \
 f"""
 :tada: **{version} changelog**
-- small leaderboard design change
+- add a little helper command
 """
 
 ################################################################
@@ -1047,6 +1047,122 @@ async def unavailable(ctx, member: discord.Member):
     # await remove_availability_auto(member)
     async with RoleSession(member) as rs:
         rs.remove(config.roles['available'])
+
+
+
+CHALLENGE_ROLE_CATEGORIES = {
+    "badge":     "badges",       # fragment of your badges category name
+    "display":   "display",      # fragment of your display badge category name
+    "pingable":  "pingable",     # fragment of your pingable/interested category name
+}
+
+
+def _find_category_role(
+    guild: discord.Guild, name_fragment: str
+) -> discord.Role | None:
+    """Find a category role whose name contains name_fragment (case-insensitive)."""
+    for role in guild.roles:
+        if role.name.startswith("──╱") and name_fragment.lower() in role.name.lower():
+            return role
+    return None
+
+
+def _get_category_bottom_position(
+    guild: discord.Guild, category_role: discord.Role
+) -> int:
+    """
+    Return the position a new role should be placed at — just above the
+    'none' role in the category, or just above the next category/floor.
+    Roles are ordered lowest position = bottom in Discord's hierarchy.
+    """
+    sorted_roles = sorted(guild.roles, key=lambda r: r.position, reverse=True)
+
+    in_category = False
+    last_position = category_role.position
+
+    for role in sorted_roles:
+        if role.id == category_role.id:
+            in_category = True
+            continue
+
+        if not in_category:
+            continue
+
+        # hit another category or @everyone → stop
+        if role.name.startswith("──╱") or role.is_default():
+            break
+
+        last_position = role.position
+
+    # place at the very bottom of this category (lowest position within it)
+    return max(last_position - 1, 1)
+
+
+@bot.command()
+@general.has_perms("owner")
+@general.try_bot_perms
+async def create_challenge(ctx, *, name: str):
+    """
+    Creates 3 roles for a new challenge and places them in their categories.
+
+    Usage: .create_challenge <challenge name>
+    """
+    guild = ctx.guild
+    status = await ctx.send(f":hourglass: creating roles for **{name}**...")
+
+    role_definitions = [
+        {
+            "key": "badge",
+            "name": f"🆕 {name}",
+            "category_fragment": CHALLENGE_ROLE_CATEGORIES["badge"],
+        },
+        {
+            "key": "display",
+            "name": f"🆕👁 {name}",
+            "category_fragment": CHALLENGE_ROLE_CATEGORIES["display"],
+        },
+        {
+            "key": "pingable",
+            "name": f"🆕 {name}",
+            "category_fragment": CHALLENGE_ROLE_CATEGORIES["pingable"],
+        },
+    ]
+
+    errors = []
+    created = []
+
+    for definition in role_definitions:
+        category = _find_category_role(guild, definition["category_fragment"])
+        if not category:
+            errors.append(
+                f"❌ could not find a category containing "
+                f'`{definition["category_fragment"]}` for role `{definition["name"]}`'
+            )
+            continue
+
+        try:
+            role = await guild.create_role(
+                name=definition["name"],
+                reason=f"challenge creation by {ctx.author.display_name}",
+            )
+            target_position = _get_category_bottom_position(guild, category)
+            await role.edit(position=target_position)
+            created.append(f":white_check_mark: {role.mention} → under {category.mention}")
+        except discord.Forbidden:
+            errors.append(f"❌ missing permissions to create/move role `{definition['name']}`")
+        except discord.HTTPException as e:
+            errors.append(f"❌ failed to create/move role `{definition['name']}`: {e}")
+
+    lines = [f"challenge roles created for **{name}**"]
+    lines.extend(created)
+    if errors:
+        lines.append("")
+        lines.extend(errors)
+
+    await status.edit(
+        content="\n".join(lines),
+        allowed_mentions=discord.AllowedMentions.none(),
+    )
 
 
 if __name__ == '__main__':
