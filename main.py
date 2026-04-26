@@ -13,12 +13,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v5.0.1'
+version = 'v5.0.2'
 
 changelog = \
 f"""
 :tada: **{version} changelog**
-- add a little helper command
+- (hopefully) fix the availability thing
 """
 
 ################################################################

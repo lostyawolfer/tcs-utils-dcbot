@@ -104,6 +104,9 @@ async def remove_availability(rs: RoleSession, member: discord.Member) -> None:
             pings=AllowedMentions.none(),
         )
 
+    # mark as user-initiated so on_member_update doesn't send a second message
+    user_unavailable_pending.add(member.id)
+
     rs.remove('available')
     rs.add('not_available')
 
