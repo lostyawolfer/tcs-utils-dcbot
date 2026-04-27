@@ -148,60 +148,61 @@ class WardrobeOpenView(View):
         )
 
 
+BADGES_PER_PAGE = 23  # 23 badges + 2 fixed options = 25 max
+
 class WardrobeSelectView(View):
-    def __init__(self, member: discord.Member):
+    def __init__(self, member: discord.Member, page: int = 0):
         super().__init__(timeout=60)
         self.member = member
+        self.page = page
 
         owned, _, badge_points = get_owned_badge_roles(member)
+        self.sorted_badges = sorted(owned, key=lambda r: r.position, reverse=True)
+        self.total_pages = max(1, -(-len(self.sorted_badges) // BADGES_PER_PAGE))  # ceil div
 
-        # top_1_emoji = discord.utils.get(member.guild.emojis, name="leaderboard_top_1")
-        # top_2_emoji = discord.utils.get(member.guild.emojis, name="leaderboard_top_2")
-        # top_3_emoji = discord.utils.get(member.guild.emojis, name="leaderboard_top_3")
-        options = [
-            discord.SelectOption(
-                label="none",
-                description="remove displayed badge",
-                value="none",
-                emoji="🚫",
-            ),
-            discord.SelectOption(
-                label="leaderboard rank",
-                description="show a medal if you're on top-3, show nothing otherwise",
-                value=LEADERBOARD_OPTION_VALUE,
-                emoji="🏆",
-            ),
+        fixed_options = [
+            discord.SelectOption(label="none", description="remove displayed badge", value="none", emoji="🚫"),
+            discord.SelectOption(label="leaderboard rank", description="show a medal if you're on top-3, show nothing otherwise", value=LEADERBOARD_OPTION_VALUE, emoji="🏆"),
         ]
 
-        for badge in sorted(owned, key=lambda r: r.position, reverse=True):
+        start = page * BADGES_PER_PAGE
+        page_badges = self.sorted_badges[start:start + BADGES_PER_PAGE]
+
+        options = fixed_options if page == 0 else []
+        for badge in page_badges:
             badge_display_name = badge.name.replace("👁 ", "")
             pts = badge_points.get(badge.id, 0)
             raw_emoji = badge_emoji_for_name(member.guild, badge_display_name)
-            # SelectOption emoji must be a discord.Emoji/PartialEmoji or a
-            # unicode str — custom guild emoji objects work directly; for the
-            # placeholder strings we parse out the id so discord accepts them.
             if raw_emoji:
                 select_emoji = raw_emoji
             else:
                 difficulty = _points_to_difficulty(pts)
                 placeholder_str = _DIFFICULTY_PLACEHOLDERS[difficulty]
-                # extract id from "<:name:id>" for PartialEmoji
                 import re as _re
                 m = _re.match(r"<:(\w+):(\d+)>", placeholder_str)
-                select_emoji = (
-                    discord.PartialEmoji(name=m.group(1), id=int(m.group(2)))
-                    if m else None
-                )
-            options.append(
-                discord.SelectOption(
-                    label=badge.name.replace("👁 ", ""),
-                    value=str(badge.id),
-                    emoji=select_emoji,
-                )
-            )
+                select_emoji = discord.PartialEmoji(name=m.group(1), id=int(m.group(2))) if m else None
+            options.append(discord.SelectOption(
+                label=badge.name.replace("👁 ", ""),
+                value=str(badge.id),
+                emoji=select_emoji,
+            ))
 
         self.add_item(WardrobeSelect(options=options))
 
+        if self.total_pages > 1:
+            prev_btn = discord.ui.Button(label="◀ prev", style=discord.ButtonStyle.secondary, disabled=(page == 0))
+            next_btn = discord.ui.Button(label="next ▶", style=discord.ButtonStyle.secondary, disabled=(page >= self.total_pages - 1))
+
+            async def prev_callback(interaction: discord.Interaction):
+                await interaction.response.edit_message(view=WardrobeSelectView(member, page - 1))  # type: ignore
+
+            async def next_callback(interaction: discord.Interaction):
+                await interaction.response.edit_message(view=WardrobeSelectView(member, page + 1))  # type: ignore
+
+            prev_btn.callback = prev_callback
+            next_btn.callback = next_callback
+            self.add_item(prev_btn)
+            self.add_item(next_btn)
 
 class WardrobeSelect(Select):
     async def callback(self, interaction: discord.Interaction):

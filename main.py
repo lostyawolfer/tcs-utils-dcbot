@@ -13,12 +13,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v5.0.2-1'
+version = 'v5.0.3'
 
 changelog = \
 f"""
 :tada: **{version} changelog**
-- fix stupid ahh npc sending wrong emoji on kick
+- fix badge wardrobe by adding "other challenges" thing by adding pages to selector thank you claude
 """
 
 ################################################################
