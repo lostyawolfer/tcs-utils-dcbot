@@ -244,8 +244,8 @@ _messages = {
         f"{emoji['kick']} {{mention}} ({{display}}) was kicked from this experience (Error Code: 267)",
         f"{emoji['kick']} {{mention}} ({{display}}) slipped on a nanner peel placed by a mod and fell out of bounds",
         f"{emoji['kick']} an mod's mighty foot sent {{mention}} ({{display}}) flying. a reminder that you shouldn't fly during the challenge, that's cheating",
-        f"{emoji['ban']} {{mention}} ({{display}}) got electrocuted. not by surge, though",
-        f"{emoji['ban']} {{mention}} ({{display}}) got Figured out. by a mod."
+        f"{emoji['kick']} {{mention}} ({{display}}) got electrocuted. not by surge, though",
+        f"{emoji['kick']} {{mention}} ({{display}}) got Figured out. by a mod."
     ],
     "ban": [
         f"{emoji['ban']} {{mention}} ({{display}}) got banned (ay yo)",
