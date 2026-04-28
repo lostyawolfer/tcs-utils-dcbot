@@ -13,12 +13,13 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v5.0.3'
+version = 'v5.0.4'
 
 changelog = \
 f"""
 :tada: **{version} changelog**
-- fix badge wardrobe by adding "other challenges" thing by adding pages to selector thank you claude
+- add "mentionable=true" to .save command role creation
+- add support for spaces in .save and .rename commands (automatically replaces with dashes)
 """
 
 ################################################################
@@ -750,19 +751,35 @@ async def save(ctx, *args):
         return await ctx.send("usage: `.save [name] @member1 @member2 ...`")
 
     # Parse arguments - check if first arg is a member or a name
-    save_name = None
-    members = []
+    # save_name = None
+    # members = []
+    #
+    # for i, arg in enumerate(args):
+    #     try:
+    #         member = await commands.MemberConverter().convert(ctx, arg)
+    #         members.append(member)
+    #     except commands.MemberNotFound:
+    #         # If it's the first argument, and we have no members yet, treat as name
+    #         if i == 0 and not members:
+    #             save_name = arg
+    #         else:
+    #             return await ctx.send(f"couldn't find member: `{arg}`")
 
-    for i, arg in enumerate(args):
+    name_parts = []
+    members = []
+    name_done = False
+
+    for arg in args:
         try:
             member = await commands.MemberConverter().convert(ctx, arg)
             members.append(member)
+            name_done = True
         except commands.MemberNotFound:
-            # If it's the first argument, and we have no members yet, treat as name
-            if i == 0 and not members:
-                save_name = arg
-            else:
+            if name_done or members:
                 return await ctx.send(f"couldn't find member: `{arg}`")
+            name_parts.append(arg)
+
+    save_name = " ".join(name_parts) if name_parts else None
 
     if not members:
         return await ctx.send("usage: `.save [name] @member1 @member2 ...`")
@@ -772,7 +789,8 @@ async def save(ctx, *args):
 
 @bot.command()
 @general.try_bot_perms
-async def rename(ctx, name: str = None):
+async def rename(ctx, *args):
+    name = " ".join(args) if args else None
     await rename_save(ctx, name)
 
 

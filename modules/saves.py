@@ -54,6 +54,7 @@ async def create_save(ctx, members: list[discord.Member], save_name: str = None)
     save_role = await guild.create_role(
         name=SAVE_ROLE_TEMPLATE.format(num=new_num),
         reason="new save group created",
+        mentionable=True
     )
 
     # assign role to members
@@ -64,6 +65,7 @@ async def create_save(ctx, members: list[discord.Member], save_name: str = None)
 
     # create channel name
     if save_name:
+        save_name = save_name.replace(" ", "-")
         channel_name = f"💾┃save-{new_num}┃{save_name}"
     else:
         channel_name = SAVE_CHANNEL_TEMPLATE.format(num=new_num)
@@ -148,6 +150,7 @@ async def rename_save(ctx, name: str = None):
 
     # Create new channel name
     if name:
+        name = name.replace(" ", "-")
         new_name = f"💾┃save-{save_num}┃{name}"
     else:
         new_name = f"💾┃save-{save_num}"
