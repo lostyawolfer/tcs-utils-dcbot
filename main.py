@@ -13,13 +13,13 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v5.0.4'
+version = 'v5.0.4-1'
 
 changelog = \
 f"""
 :tada: **{version} changelog**
-- add "mentionable=true" to .save command role creation
-- add support for spaces in .save and .rename commands (automatically replaces with dashes)
+- add reaction to .force_check_all
+- add autorestart of member checker when crashes
 """
 
 ################################################################
@@ -34,7 +34,9 @@ async def member_checker():
 
 @member_checker.error
 async def member_checker_error(error: Exception):
-    await general.send(f'-# :warning: member_checker crashed :/ ```{error}```', 'mod_chat')
+    member_checker.stop()
+    member_checker.start()
+    await general.send(f'-# :warning: member_checker crashed :/ ```{error}```\n\n-# restarted it, but if you need to restart it manually use .force_check_all (available to mods too btw)', 'mod_chat')
     # the loop will automatically restart on next interval since we don't re-raise
 
 @bot.event
@@ -60,6 +62,7 @@ async def on_ready():
 async def force_check_all(ctx):
     member_checker.stop()
     member_checker.start()
+    await ctx.message.add_reaction("✅")
 
 @bot.command()
 @general.try_bot_perms
