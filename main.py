@@ -13,13 +13,13 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v5.0.4-1'
+version = 'v5.0.5'
 
 changelog = \
 f"""
 :tada: **{version} changelog**
-- add reaction to .force_check_all
-- add autorestart of member checker when crashes
+- add a special command for lostya to mark themself unavailable and make the bot let others know about that if pinged
+- trying out something like "modmail" where a dm to the bot forwards something to mod chat
 """
 
 ################################################################
@@ -54,6 +54,23 @@ async def on_ready():
     await msg.reply('-# :white_check_mark: done')
     if not member_checker.is_running():
         member_checker.start()
+
+
+
+pings = True
+
+@bot.command()
+@general.try_bot_perms
+@general.has_perms('owner')
+async def p(ctx):
+    global pings
+    if pings:
+        await ctx.message.add_reaction("🪫")
+        pings = False
+    else:
+        await ctx.message.add_reaction("🔋")
+        pings = True
+
 
 
 @bot.command()
@@ -540,7 +557,8 @@ async def on_message(message: discord.Message):
         return
 
     if not message.guild:
-        return  # ignore DMs
+        await general.send(f'***DM FROM {message.author.mention}** ({message.author.display_name})**:***\n\n{message.content}\n\n*replies to this message are automatically forwarded to the sender*', 'mod_chat')
+        await message.channel.send('*your message has been forwarded to mod chat*')
 
     if message.guild.id == TARGET_GUILD:
         activity.update_cache(message.author.id)
@@ -549,6 +567,16 @@ async def on_message(message: discord.Message):
             await message.channel.send(
                 f'link: **https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server**',
                 suppress_embeds=True)
+
+        if message.channel == bot.get_channel(config.channels['mod_chat']):
+            pattern = r'<@.+>'
+            match = re.match(pattern, message.content)
+            if match:
+                member_id = int(match.group(1)[2:][:-1])
+                member = bot.get_user(member_id)
+                await member.send(f'***a mod responded:***\n\n{message.content}')
+                await message.channel.send(f'*your message has been forwarded to {member.mention}*')
+
 
         if 'one more' in message.content.lower():
             await message.channel.send(
@@ -569,6 +597,15 @@ async def on_message(message: discord.Message):
         #             "ping moderators instead; they will escalate if necessary.\n"
         #             "-# more info: https://discord.com/channels/1426972810332340406/1434248797369663518/1490686502160695336"
         #         )
+        global pings
+        if not pings:
+            if isinstance(message.author, discord.Member):
+                if '<@534097411048603648>' in message.content:
+                    await message.reply(
+                        "*note: lostya marked themself temporarily unavailable. they will come back to the ping later.*\n"
+                        "*in the meanwhile, try pinging one of the other available mods instead.*\n"
+                        "-# *please do not delete your message. it is better if they come back and see the ping's source, instead of wondering where the ghost ping came from.*"
+                    )
 
         # roleplay actions
         rp_actions = {
