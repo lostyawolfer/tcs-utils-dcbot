@@ -13,13 +13,12 @@ from modules.bot_init import bot
 
 ################################################################
 
-version = 'v5.0.5'
+version = 'v5.0.5-1'
 
 changelog = \
 f"""
 :tada: **{version} changelog**
-- add a special command for lostya to mark themself unavailable and make the bot let others know about that if pinged
-- trying out something like "modmail" where a dm to the bot forwards something to mod chat
+- hotfix
 """
 
 ################################################################
@@ -568,9 +567,9 @@ async def on_message(message: discord.Message):
                 f'link: **https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server**',
                 suppress_embeds=True)
 
-        if message.channel == bot.get_channel(config.channels['mod_chat']):
+        if message.channel == bot.get_channel(config.channels['mod_chat']) and message.reference and isinstance(message.reference.resolved, discord.Message):
             pattern = r'<@.+>'
-            match = re.match(pattern, message.content)
+            match = re.match(pattern, message.reference.resolved.content)
             if match:
                 member_id = int(match.group(1)[2:][:-1])
                 member = bot.get_user(member_id)
