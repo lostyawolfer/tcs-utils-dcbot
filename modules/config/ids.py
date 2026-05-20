@@ -103,13 +103,28 @@ emoji = {
     "kick": "<:kick:1439803052826689537>",
     "app_join": "<:newapp:1438882548829913209>",
     "app_leave": "<:removedapp:1438882550075621538>",
+
     "available": "<:available:1436525036281532449>",
     "unavailable": "<:notavailable:1436528517956374578>",
+
+    "edit": "<:edit:1444529076516688064>",
+
     "join_vc": "<:join_vc:1436503046107566181>",
     "leave_vc": "<:leave_vc:1436528566174220289>",
+    "edit_g": "<:edit_g:1464760651120509072>",
+
     "join_vc_2": "<:join_vc_2:1444102928880242709>",
     "leave_vc_2": "<:leave_vc_2:1444327229210497237>",
+    "edit_p": "<:edit_p:1464760669596553246>",
+
     "join_vc_3": "<:join_vc_3:1464759555199078474>",
+    "edit_r": "<:edit_r:1464760671031005396>",
+
+    "stage_join": "<:join_stage:1506528797652947036>",
+    "stage_leave": "<:leave_stage:1506528799003512953>",
+    "stage_speaker": "<:stage_speaker:1506528796545908856>",
+    "stage_listener": "<:stage_listener:1506528795438616726>",
+
     "promotion": "<:promotion:1442087863347974294>",
     "demotion": "<:demotion:1442087886391607376>",
     "birthday": "",
@@ -121,10 +136,6 @@ emoji = {
     "gor": "<:group_of_rushers:1443250418418188402>",
     "pdo": "<:professional_door_opener:1443719522908504215>",
     "nn": "<:neverending_night:1443768885097529394>",
-    "edit": "<:edit:1444529076516688064>",
-    "edit_g": "<:edit_g:1464760651120509072>",
-    "edit_p": "<:edit_p:1464760669596553246>",
-    "edit_r": "<:edit_r:1464760671031005396>",
     "newbie": "<:upvote:1434612815062237195>",
     "inactive": "🛌",
     "inactive_revoke": "🏆",

@@ -10,7 +10,7 @@ _messages = {
         f"{emoji['join']} heya, {{mention}}, welcome! mind you, this entire server is a safespot",
         f"{emoji['join']} it's time for {{mention}} to acknowledge the possibility of pain and seizure",
         f"{emoji['join']} {{mention}} just joined! quick, everyone look like we know what we're doing!",
-        f"{emoji['join']} uhh, hey, {{mention}}, you have any sanity? We're running low, could we please borrow some?",
+        f"{emoji['join']} uhh, hey, {{mention}}, you have any sanity? we're running low, could we please borrow some?",
         f"{emoji['join']} let's hope {{mention}} has it all Figured out"
     ],
     "join_bot": [
@@ -77,6 +77,11 @@ _messages = {
     "edit_vc_3": [f"{emoji['edit_r']} **{{member}}** set the third voice channel's status to **{{status}}**"],
     "edit_vc_3_no_status": [f"{emoji['edit_r']} **{{member}}** changed the third voice channel's status"],
     "edit_vc_3_clear": [f"{emoji['edit_r']} **{{member}}** cleared the third voice channel's status"],
+
+    "join_stage": [f"{emoji['stage_join']} **{{member}}** joined the stage"],
+    "leave_stage": [f"{emoji['stage_leave']} **{{member}}** left the stage"],
+    "speaker_stage": [f"{emoji['stage_speaker']} **{{member}}** is now speaking on the stage"],
+    "listener_stage": [f"{emoji['stage_listener']} **{{member}}** is now listening on the stage"],
 
     "promotion": [
         f"{emoji['promotion']} {{mention}} is now a moderator!"

@@ -16,15 +16,11 @@ from modules import activity, badges, general, role_management, verification
 
 log = logging.getLogger(__name__)
 
-VERSION = 'v6.0.0'
+VERSION = 'v6.0.1'
 
 CHANGELOG = f"""
 ## {VERSION} changelog
-- huge refactor: god-file main.py → 8 cogs, modules/ pure logic
-- config.py split into a package; module-level IDs centralised
-- ruff + pytest + GitHub Actions CI; 156 tests
-- .update now runs `pip install -r requirements.txt` before the restart
-- countless bug fixes; see REFACTOR.md
+- add stage support for chat voice state update messages
 """
 
 

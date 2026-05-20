@@ -78,6 +78,20 @@ class ActivityCog(commands.Cog):
                 ))
                 rs.add(info['in_vc'])
 
+            # stage
+            is_stage_before = isinstance(before.channel, discord.StageChannel)
+            is_stage_after = isinstance(after.channel, discord.StageChannel)
+
+            if is_stage_after and before.channel != after.channel:
+                messages.append(config.message('join_stage', member=member.mention))
+
+            if is_stage_before and before.channel != after.channel:
+                messages.append(config.message('leave_stage', member=member.mention))
+
+            if is_stage_before and is_stage_after and before.channel == after.channel:
+                if before.suppress and not after.suppress: messages.append(config.message('speaker_stage', member=member.mention))
+                elif not before.suppress and after.suppress: messages.append(config.message('listener_stage', member=member.mention))
+
         if messages:
             await member.guild.get_channel(
                 config.channels['chat']
