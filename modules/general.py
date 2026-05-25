@@ -47,9 +47,8 @@ def count_filtered_members(guild: Guild) -> int:
     for member in guild.members:
         if member.bot:
             continue
-        for excluded_role in excluded_roles:
-            if excluded_role and excluded_role in member.roles:
-                continue
+        if any(role in member.roles for role in excluded_roles if role):
+            continue
         member_count += 1
     return member_count
 

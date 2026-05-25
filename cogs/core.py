@@ -16,11 +16,12 @@ from modules import activity, badges, general, role_management, verification
 
 log = logging.getLogger(__name__)
 
-VERSION = 'v6.0.3'
+VERSION = 'v6.0.3-1'
 
 CHANGELOG = f"""
 ## {VERSION} changelog
-- bot's status member counter now excludes inactive people too (previously only excluded alts and bots) 
+- bot's status member counter now excludes inactive people too (previously only excluded alts and bots)
+  - patch 
 """
 
 
