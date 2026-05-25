@@ -16,11 +16,11 @@ from modules import activity, badges, general, role_management, verification
 
 log = logging.getLogger(__name__)
 
-VERSION = 'v6.0.2'
+VERSION = 'v6.0.3'
 
 CHANGELOG = f"""
 ## {VERSION} changelog
-- add autocreating threads in <#1448500884664225866>
+- bot's status member counter now excludes inactive people too (previously only excluded alts and bots) 
 """
 
 

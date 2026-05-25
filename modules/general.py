@@ -35,22 +35,24 @@ async def send_timed_delete_msg(text: str, duration: int = 10, where: str = 'cha
     await timed_delete_msg(msg, text, duration)
 
 
+def count_filtered_members(guild: Guild) -> int:
+    excluded_role_ids = [config.roles['alts'], config.roles['inactive']]
+    excluded_roles = [guild.get_role(role_id) for role_id in excluded_role_ids]
 
-async def count_filtered_members(guild: Guild) -> int:
-    excluded_role_id = config.roles['alts']
-    excluded_role = guild.get_role(excluded_role_id)
-
-    if excluded_role is None:
-        log.warning('role id %s not found', excluded_role_id)
+    for excluded_role in excluded_roles:
+        if excluded_role is None:
+            log.warning('role id %s not found', '#')
 
     member_count = 0
     for member in guild.members:
         if member.bot:
             continue
-        if excluded_role and excluded_role in member.roles:
-            continue
+        for excluded_role in excluded_roles:
+            if excluded_role and excluded_role in member.roles:
+                continue
         member_count += 1
     return member_count
+
 
 def matches_availability_emoji(emoji) -> bool:
     """True if ``emoji`` is the configured availability reaction emoji.
@@ -101,19 +103,19 @@ async def get_status_text(guild: discord.Guild) -> str:
     vc_2_count = await count_in_vc(guild, 'vc2')
     vc_3_count = await count_in_vc(guild, 'vc3')
     available_count = await count_available(guild)
-    members = await count_filtered_members(guild)
+    members = count_filtered_members(guild)
 
-    text_members = f'{members} 👥'
+    text_members = f'👥 {members}'
 
     text_in_vc = ''
     if vc_count or vc_2_count or vc_3_count:
-        text_in_vc = ' / vc'
+        text_in_vc = ' / '
         if vc_count:
-            text_in_vc += f' - {vc_count} 🟢'
+            text_in_vc += f'{vc_count} 🟢'
         if vc_2_count:
-            text_in_vc += f' - {vc_2_count} 🟣'
+            text_in_vc += f'{' - ' if vc_count else ''}{vc_2_count} 🟣'
         if vc_3_count:
-            text_in_vc += f' - {vc_3_count} 🔴'
+            text_in_vc += f'{' - ' if vc_count or vc_2_count else ''}{vc_3_count} 🔴'
 
     text_available = ''
     if available_count:
