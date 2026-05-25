@@ -329,6 +329,13 @@ class ServerEventsCog(commands.Cog):
         if message.guild.id == TARGET_GUILD:
             activity.update_cache(message.author.id)
 
+            if message.channel.id == config.channels['suggestions'] and not isinstance(message.channel, discord.Thread):
+                try:
+                    thread_name = message.clean_content[:50] or message.author.display_name
+                    await message.create_thread(name=thread_name)
+                except discord.DiscordException:
+                    pass
+
             if message.content.lower() == 'ps':     # '<#1426974154556702720>' in message.content or
                 await message.channel.send(
                     'link: **https://www.roblox.com/share?code=1141897d2bd9a14e955091d8a4061ee5&type=Server**',

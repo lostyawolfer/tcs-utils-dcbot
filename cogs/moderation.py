@@ -93,7 +93,8 @@ class ModerationCog(commands.Cog):
                 f'hey there! you got kicked from **these challenges suck** for the following reason:\n'
                 f'> {reason}\n'
                 f'\n'
-                f"this isn't a ban. [you can freely reapply to the server at any point if you wish!](https://discord.gg/AU2yAuXJQ7)"
+                f"this isn't a ban. [you can freely reapply to the server at any point if you wish!](https://discord.gg/AU2yAuXJQ7)\n"
+                f"-# (if the link isn't working, try contacting the mods - you can text to this bot and i will send the message to mod chat with your user mention so they could see your profile!)"
             )
             await ctx.send('-# sent the kicked guy a dm btw')
         except discord.HTTPException:

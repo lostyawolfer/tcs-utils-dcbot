@@ -16,11 +16,11 @@ from modules import activity, badges, general, role_management, verification
 
 log = logging.getLogger(__name__)
 
-VERSION = 'v6.0.1'
+VERSION = 'v6.0.2'
 
 CHANGELOG = f"""
 ## {VERSION} changelog
-- add stage support for chat voice state update messages
+- add autocreating threads in <#1448500884664225866>
 """
 
 
