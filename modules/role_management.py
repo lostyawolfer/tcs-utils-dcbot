@@ -150,22 +150,23 @@ def _ensure_roles(current_roles: set, guild: discord.Guild) -> set:
         else:
             current_roles.discard(role)
 
-    is_leader = has(config.roles["leader"])
+    # is_leader = has(config.roles["leader"])
     is_available = has(config.roles["available"])
     is_inactive = has(config.roles["inactive"])
+    is_booster = has(config.roles["booster"])
 
-    update(
-        config.roles["in_vc_leader"], is_leader and has(config.roles["in_vc"])
-    )
-    update(
-        config.roles["in_vc_2_leader"],
-        is_leader and has(config.roles["in_vc_2"]),
-    )
-    update(
-        config.roles["in_vc_3_leader"],
-        is_leader and has(config.roles["in_vc_3"]),
-    )
-    update(config.roles["available_leader"], is_leader and is_available)
+    # update(
+    #     config.roles["in_vc_leader"], is_leader and has(config.roles["in_vc"])
+    # )
+    # update(
+    #     config.roles["in_vc_2_leader"],
+    #     is_leader and has(config.roles["in_vc_2"]),
+    # )
+    # update(
+    #     config.roles["in_vc_3_leader"],
+    #     is_leader and has(config.roles["in_vc_3"]),
+    # )
+    # update(config.roles["available_leader"], is_leader and is_available)
 
     update(
         config.roles["available_not_in_vc"],
@@ -189,6 +190,16 @@ def _ensure_roles(current_roles: set, guild: discord.Guild) -> set:
     else:
         update(config.roles["explained_inactive"], False)
         update(config.roles["person"], True)
+
+    update(
+        config.roles["booster_newbie"], is_booster and has(config.roles["newbie"])
+    )
+    update(
+        config.roles["booster_inactive"], is_booster and is_inactive
+    )
+    update(
+        config.roles["booster_explained_inactive"], is_booster and has(config.roles["explained_inactive"])
+    )
 
     return current_roles
 

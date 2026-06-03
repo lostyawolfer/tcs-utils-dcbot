@@ -16,12 +16,14 @@ from modules import activity, badges, general, role_management, verification
 
 log = logging.getLogger(__name__)
 
-VERSION = 'v6.0.3-1'
+VERSION = 'v6.0.4'
 
 CHANGELOG = f"""
 ## {VERSION} changelog
-- bot's status member counter now excludes inactive people too (previously only excluded alts and bots)
-  - patch 
+- add booster role variations for role colors (back to tradition!) 
+-# (yes i wasted a couple roles for this but dw by the time we are going to add more challenges the role problem will be resolved)
+-# (back to tradition as in role combination roles just for colors like the previous leader available leader in vc etc)
+- also remove unused leader available/leader in vc X roles
 """
 
 

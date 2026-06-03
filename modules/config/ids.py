@@ -29,15 +29,15 @@ roles = {
     "leader": 1426973394099896507,
 
 
-    "in_vc_leader": 1427076452477702191,
-    "in_vc_2_leader": 1444027828898238605,
-    "in_vc_3_leader": 1464748454193659967,
+    # "in_vc_leader": 1427076452477702191,
+    # "in_vc_2_leader": 1444027828898238605,
+    # "in_vc_3_leader": 1464748454193659967,
 
     "in_vc": 1427076261586669688,
     "in_vc_2": 1444027810594295908,
     "in_vc_3": 1464748438754295975,
 
-    "available_leader": 1434629548347232326,
+    # "available_leader": 1434629548347232326,
     "available": 1434629510031999269,
     "available_not_in_vc": 1442132263071645779,
     "available_not_in_vc_2": 1444027740352155688,
@@ -57,6 +57,11 @@ roles = {
     "spoiler": 1451675068114669740,
     "verifier": 1466886852039671962,
     "alts": 1427013313837011175,  # excluded from member counts
+
+    "booster": 1429256434323034235,
+    "booster_inactive": 1511745346852884582,
+    "booster_explained_inactive": 1511745396630753280,
+    "booster_newbie": 1511745775976321144,
 
     # leaderboard display badges (user-chosen)
     "lb_display_top_1": 1469749458777538776,
