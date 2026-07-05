@@ -16,14 +16,11 @@ from modules import activity, badges, general, role_management, verification
 
 log = logging.getLogger(__name__)
 
-VERSION = 'v6.0.4'
+VERSION = 'v6.0.5'
 
 CHANGELOG = f"""
 ## {VERSION} changelog
-- add booster role variations for role colors (back to tradition!) 
--# (yes i wasted a couple roles for this but dw by the time we are going to add more challenges the role problem will be resolved)
--# (back to tradition as in role combination roles just for colors like the previous leader available leader in vc etc)
-- also remove unused leader available/leader in vc X roles
+- small fix of crashing member checker due to previous deletion of leader in vc roles
 """
 
 
