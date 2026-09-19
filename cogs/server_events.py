@@ -445,7 +445,7 @@ class ServerEventsCog(commands.Cog):
         content = before.content if before.content else "*no text content*"
 
         body = (
-            f"## <:edit:1444529076516688064> __**message edited**__\n"
+            f"-# ** **\n## // <:edit:1444529076516688064> __**message edited**__ //\n"
             f"- **author:** {before.author.mention} (`{before.author.id}`)\n"
             f"- **channel:** {before.channel.mention}\n"
             f"- **sent at:** {timestamp}\n"
@@ -473,7 +473,7 @@ class ServerEventsCog(commands.Cog):
         content = message.content if message.content else "*no text content*"
 
         body = (
-            f"## <:no:1454950318042255410> **message deleted**\n"
+            f"-# ** **\n## // <:no:1454950318042255410> __**message deleted**__ //\n"
             f"- **author:** {message.author.mention} (`{message.author.id}`)\n"
             f"- **channel:** {message.channel.mention}\n"
             f"- **sent at:** {timestamp}\n"
