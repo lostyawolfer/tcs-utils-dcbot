@@ -421,6 +421,71 @@ class ServerEventsCog(commands.Cog):
         # handler is additive; discord.py's default on_message still runs and
         # dispatches commands. Calling it would double-fire every command.
 
+    async def _get_surrounding_links(self, message: discord.Message) -> str:
+        links = []
+        try:
+            async for prev_msg in message.channel.history(limit=1, before=discord.Object(id=message.id)):
+                links.append(f"[message before]({prev_msg.jump_url})")
+            async for next_msg in message.channel.history(limit=1, after=discord.Object(id=message.id)):
+                links.append(f"[message after]({next_msg.jump_url})")
+        except (discord.Forbidden, discord.HTTPException):
+            return "unavailable (missing history perms)"
+        return " | ".join(links) if links else "none found"
+
+    @commands.Cog.listener()
+    async def on_message_edit(self, before: discord.Message, after: discord.Message):
+        if before.author.bot:
+            return
+        if not before.guild or before.guild.id != TARGET_GUILD:
+            return
+        if before.content == after.content:
+            return
+
+        timestamp = f"<t:{int(before.created_at.timestamp())}:f>"
+        content = before.content if before.content else "*no text content*"
+
+        body = (
+            f":pencil: **message edited**\n"
+            f"- **author:** {before.author.mention} (`{before.author.id}`)\n"
+            f"- **channel:** {before.channel.mention}\n"
+            f"- **sent at:** {timestamp}\n"
+            f"- **jump:** [jump to message]({before.jump_url})\n\n"
+            f"**previous content:**\n{content}"
+        )
+
+        if before.attachments:
+            att_list = "\n".join(f"- {a.url}" for a in before.attachments)
+            body += f"\n\n**attachments:**\n{att_list}"
+
+        await general.send(body, 'deleted_vault', pings=discord.AllowedMentions.none())
+
+    @commands.Cog.listener()
+    async def on_message_delete(self, message: discord.Message):
+        if message.author.bot:
+            return
+        if not message.guild or message.guild.id != TARGET_GUILD:
+            return
+
+        timestamp = f"<t:{int(message.created_at.timestamp())}:f>"
+        surrounding = await self._get_surrounding_links(message)
+        content = message.content if message.content else "*no text content*"
+
+        body = (
+            f":wastebasket: **message deleted**\n"
+            f"- **author:** {message.author.mention} (`{message.author.id}`)\n"
+            f"- **channel:** {message.channel.mention}\n"
+            f"- **sent at:** {timestamp}\n"
+            f"- **surrounding messages:** {surrounding}\n\n"
+            f"**content:**\n{content}"
+        )
+
+        if message.attachments:
+            att_list = "\n".join(f"- {a.url} ({a.filename})" for a in message.attachments)
+            body += f"\n\n**attachments:**\n{att_list}\n-# note: deleted cdn links expire quickly"
+
+        await general.send(body, 'deleted_vault', pings=discord.AllowedMentions.none())
+
+
     # ── audit log: VC status changes ────────────────────────────────────────
 
     @commands.Cog.listener()

@@ -99,6 +99,7 @@ channels = {
     "leaderboard": 1456353494448734331,
     "challenge_log_thread": 1457200972215484417,
     "suggestions": 1448500884664225866,
+    "deleted_vault": 1550918177716961320,
 }
 
 

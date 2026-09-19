@@ -16,11 +16,11 @@ from modules import activity, badges, general, role_management, verification
 
 log = logging.getLogger(__name__)
 
-VERSION = 'v6.0.5'
+VERSION = 'v6.1.0'
 
 CHANGELOG = f"""
 ## {VERSION} changelog
-- small fix of crashing member checker due to previous deletion of leader in vc roles
+- add message logging
 """
 
 
