@@ -153,7 +153,7 @@ class ServerEventsCog(commands.Cog):
                     )
 
                 had_all_ultimate = after.guild.get_role(config.roles["completion_all_ultimate"]) in after_roles
-                has_all_ultimate = has_all_challenges(after, {"⭐", "☄"})
+                has_all_ultimate = has_all_challenges(after, {"🟢", "⭐", "☄"})
 
                 if has_all_ultimate and not had_all_ultimate:
                     rs.add(config.roles["completion_all_ultimate"])
