@@ -235,8 +235,7 @@ class ServerEventsCog(commands.Cog):
             else:
                 await general.send(config.message('join', mention=member.mention))
                 await general.send(msg='-# **read below for just a quick tour around :3**\n'
-                                        '-# - please read <#1442604555798974485> and <#1426974985402187776>! they\'re very important!\n'
-                                        '-# - grab some <#1464608724667858975> to get pinged when someone wants to play a challenge\n'
+                                        '-# - please read <#1442604555798974485> and <#1455010906818871459>! they\'re very important!\n'
                                         '-# - grab <#1434653852367585300> when you are ready to play! (don\'t forget to remove it when you stop being available!)\n'
                                         '-# - read some of the challenge channels to get started! complete challenges to get points to get higher on the <#1456353494448734331>\n'
                                         '-# - to get the private server link, simply say "ps" in any channel, the bot will send it\n'
