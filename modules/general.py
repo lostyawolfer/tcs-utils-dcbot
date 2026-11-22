@@ -193,10 +193,8 @@ def can_moderate_member(func):
         member = args[ctx_index + 1] if ctx_index + 1 < len(args) else kwargs.get('member')
 
         if not member:
-            await ctx.send(config.message("bot_doesnt_have_perms"))
-            return await ctx.send(f'<@{config.OWNER_ID}> fix ur fucking bot\n'
-                                  'you added a @can_moderate_member decorator where you shouldn\'t have dumbass\n'
-                                  '-# [can_moderate_member expects a member in the command args, no member arg found]')
+            #await ctx.send(config.message("bot_doesnt_have_perms"))
+            return await ctx.send(f'u didnt specify who to kick bro')
         if member == ctx.author:
             return await ctx.send(config.message("nuh_uh"))
         if member == ctx.guild.me:
