@@ -16,12 +16,11 @@ from modules import activity, badges, general, role_management, verification
 
 log = logging.getLogger(__name__)
 
-VERSION = 'v6.1.1'
+VERSION = 'v6.1.2'
 
 CHANGELOG = f"""
 ## {VERSION} changelog
-- update member quick guide (remove host pings)
-- fix "has all ultimate challenges" role condition
+- fix lock unlock perms
 """
 
 
