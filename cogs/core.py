@@ -16,11 +16,12 @@ from modules import activity, badges, general, role_management, verification
 
 log = logging.getLogger(__name__)
 
-VERSION = 'v6.1.3'
+VERSION = 'v6.1.4'
 
 CHANGELOG = f"""
 ## {VERSION} changelog
 - fixed my fucking bot
+- reinstate button fix on rejected runs
 """
 
 
