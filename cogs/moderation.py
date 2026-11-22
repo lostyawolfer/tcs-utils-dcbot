@@ -54,7 +54,7 @@ class ModerationCog(commands.Cog):
                 msg += f'\nreason: {reason}'
             await ctx.send(msg)
         except AttributeError:
-            ctx.send('you didnt specify who to van')
+            await ctx.send('you didnt specify who to van')
 
     @commands.command()
     @general.try_bot_perms
@@ -65,7 +65,7 @@ class ModerationCog(commands.Cog):
                 msg += f'\nreason: {reason}'
             await ctx.send(msg)
         except AttributeError:
-            ctx.send('you didnt specify who to war')
+            await ctx.send('you didnt specify who to war')
 
     # ── pin / unpin ─────────────────────────────────────────────────────────
 
