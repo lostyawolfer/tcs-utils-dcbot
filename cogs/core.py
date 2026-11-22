@@ -16,11 +16,11 @@ from modules import activity, badges, general, role_management, verification
 
 log = logging.getLogger(__name__)
 
-VERSION = 'v6.1.2'
+VERSION = 'v6.1.3'
 
 CHANGELOG = f"""
 ## {VERSION} changelog
-- fix lock unlock perms
+- fixed my fucking bot
 """
 
 
