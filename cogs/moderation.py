@@ -167,16 +167,25 @@ class ModerationCog(commands.Cog):
 
     @commands.command()
     @general.try_bot_perms
-    @general.has_perms('manage_channels')
+    @general.has_perms("manage_channels")
     async def lock(self, ctx):
-        await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
+        default_role = ctx.guild.default_role
+        overwrite = ctx.channel.overwrites_for(default_role)
+        overwrite.send_messages = False
+    
+        await ctx.channel.set_permissions(default_role, overwrite=overwrite)
         await ctx.send(config.message("channel_lock"))
-
+    
+    
     @commands.command()
     @general.try_bot_perms
-    @general.has_perms('manage_channels')
+    @general.has_perms("manage_channels")
     async def unlock(self, ctx):
-        await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=None)
+        default_role = ctx.guild.default_role
+        overwrite = ctx.channel.overwrites_for(default_role)
+        overwrite.send_messages = None
+    
+        await ctx.channel.set_permissions(default_role, overwrite=overwrite)
         await ctx.send(config.message("channel_unlock"))
 
     # ── message purge ───────────────────────────────────────────────────────
