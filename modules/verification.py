@@ -966,7 +966,6 @@ class RejectConfirmView(View):
             log.warning("verification: HTTP error swallowed", exc_info=True)
         await thread.send(VM["reject_notify"].format(mention=interaction.user.mention))
         await thread.edit(archived=True, locked=True)
-        _clean_state(thread.id)
 
     @discord.ui.button(label=VM["btn_cancel"], style=discord.ButtonStyle.secondary)
     async def cancel_btn(self, interaction: discord.Interaction, button: Button):
@@ -986,6 +985,7 @@ class RejectResolveView(View):
         state['rejected'] = False
         _save_state()
         thread = interaction.channel
+        await thread.edit(archived=False, locked=False)
         remaining = state['verifiers_needed'] - state['verifiers_done']
         await _set_tags(thread, [TAG_NEEDS_VERIFICATION, _verifier_tag(remaining)])
         content = _build_challenge_message(state, interaction.guild)
