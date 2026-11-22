@@ -48,18 +48,24 @@ class ModerationCog(commands.Cog):
     @commands.command()
     @general.try_bot_perms
     async def van(self, ctx, member: discord.Member = None, *, reason: str = None):
-        msg = f'{member.mention} has been vanned :white_check_mark:'
-        if reason:
-            msg += f'\nreason: {reason}'
-        await ctx.send(msg)
+        try:
+            msg = f'{member.mention} has been vanned :white_check_mark:'
+            if reason:
+                msg += f'\nreason: {reason}'
+            await ctx.send(msg)
+        except AttributeError:
+            ctx.send('you didnt specify who to van')
 
     @commands.command()
     @general.try_bot_perms
     async def war(self, ctx, member: discord.Member = None, *, reason: str = None):
-        msg = f'{member.mention} has been warred :white_check_mark:'
-        if reason:
-            msg += f'\nreason: {reason}'
-        await ctx.send(msg)
+        try:
+            msg = f'{member.mention} has been warred :white_check_mark:'
+            if reason:
+                msg += f'\nreason: {reason}'
+            await ctx.send(msg)
+        except AttributeError:
+            ctx.send('you didnt specify who to war')
 
     # ── pin / unpin ─────────────────────────────────────────────────────────
 
