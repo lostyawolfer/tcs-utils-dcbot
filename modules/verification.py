@@ -128,6 +128,22 @@ def _get_challenge_roles(guild: discord.Guild):
     joke.sort(key=lambda r: r.name)
     return official, custom, joke
 
+def _challenge_role_mention(guild: discord.Guild, role_id: Optional[int]) -> str:
+    """Return the mention for a challenge's pingable counterpart role."""
+    if not role_id:
+        return "???"
+        
+    role = guild.get_role(role_id)
+    info = parse_challenge_role(role) if role else None
+    if info:
+        counterpart_name = f"{info['name']} /{info['points']}/"
+        counterpart = discord.utils.get(guild.roles, name=counterpart_name)
+        if counterpart:
+            return counterpart.mention
+            
+    # Fall back to the original role if the counterpart cannot be found.
+    return f"<@&{role_id}>"
+
 def _verifiers_for_points(points: int) -> int:
     return 3 if points >= 14 else 2
 
@@ -191,7 +207,8 @@ def _build_challenge_message(state: dict, guild: discord.Guild) -> str:
     role = guild.get_role(role_id) if role_id else None
     info = parse_challenge_role(role) if role else None
     name = info['name'] if info else "???"
-    role_mention = f"<@&{role_id}>" if role_id else "???"
+    
+    role_mention = _challenge_role_mention(guild, role_id)
     op_mention = f"<@{op_id}>"
     st = state.get('state', '')
 
@@ -236,7 +253,6 @@ def _build_challenge_message(state: dict, guild: discord.Guild) -> str:
 def _no_ping():
     return discord.AllowedMentions.none()
 
-
 async def _check_mod(interaction: discord.Interaction) -> bool:
     """Return True if the interaction's invoker is a mod (or the server owner).
 
@@ -253,14 +269,13 @@ async def _check_mod(interaction: discord.Interaction) -> bool:
             return False
     return True
 
-
 # ── Verification logic ──────────────────────────────────────────────────────
 
 _NONCE_SEPARATOR = "::vnonce::"
 
 async def _do_verify(thread: discord.Thread, state: dict, user_id: int, mention: str, bot_msg: discord.Message):
     VM = config.verification_messages
-    role_mention = f"<@&{state['selected_role_id']}>" if state.get('selected_role_id') else "???"
+    role_mention = _challenge_role_mention(thread.guild, state.get('selected_role_id'))
     if user_id not in state['verified_by']:
         state['verified_by'].append(user_id)
     state['verifiers_done'] += 1
@@ -361,9 +376,11 @@ async def _complete_verification(thread: discord.Thread, state: dict, bot_msg: d
     if member and role_id:
         async with RoleSession(member) as rs:
             rs.add(role_id)
-    role_mention = f"<@&{role_id}>" if role_id else "???"
+            
+    role_mention = _challenge_role_mention(thread.guild, role_id)
     last = state.get('last_verifier', 'someone')
     await thread.send(VM["verif_done_thread"].format(role_mention=role_mention, last=last), allowed_mentions=_no_ping())
+    
     if bot_msg:
         try:
             role = thread.guild.get_role(role_id) if role_id else None
@@ -371,7 +388,7 @@ async def _complete_verification(thread: discord.Thread, state: dict, bot_msg: d
             name = info['name'] if info else "???"
             op_mention = f"<@{op_id}>"
             final_lines = [
-                VM["msg_header_title"].format(role_mention=role_mention),
+                VM["verif_done_bot"].format(role_mention=role_mention),
                 VM["msg_header_body"].format(op_mention=op_mention, name=name),
             ]
             if state.get('video_url'):
@@ -380,11 +397,10 @@ async def _complete_verification(thread: discord.Thread, state: dict, bot_msg: d
             if verified_by:
                 verifier_mentions = ", ".join(f"<@{uid}>" for uid in verified_by)
                 final_lines.append(VM["msg_body_verified_by"].format(verifiers=verifier_mentions))
-            final_lines.append("")
-            final_lines.append(VM["verif_done_bot"].format(role_mention=role_mention))
             await bot_msg.edit(content="\n".join(final_lines), view=None, allowed_mentions=AllowedMentions.none())
         except discord.HTTPException:
             log.warning("verification: HTTP error swallowed", exc_info=True)
+            
     await thread.edit(archived=True, locked=True)
     _clean_state(thread.id)
 
@@ -495,7 +511,6 @@ class ChallengeCategoryView(View):
             allowed_mentions=_no_ping(),
         )
 
-
 class ReopenView(View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -516,7 +531,6 @@ class ReopenView(View):
             content=VM["flow_pick_category"].format(op_mention=f"<@{state['op_id']}>"),
             view=view,
         )
-
 
 class ChallengeMenuView(View):
     def __init__(self, category: str, roles: list[discord.Role], page: int = 0, guild: discord.Guild = None, per_page: int = 25):
@@ -636,7 +650,6 @@ class ChallengeMenuView(View):
             if starter:
                 await _handle_video_check(starter, thread, state, interaction.message)
 
-
 class ChallengeConfirmView(View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -672,7 +685,6 @@ class ChallengeConfirmView(View):
         view = ChallengeMenuView(cat, roles, 0, interaction.guild)
         await interaction.response.edit_message(content=VM["flow_pick_challenge"], view=view)
 
-
 class NoFootageView(View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -687,7 +699,6 @@ class NoFootageView(View):
         state['state'] = 'needs_verification'
         _save_state()
         await _enter_verification_phase(interaction.channel, state, interaction.message)
-
 
 class OwnerVerifyPromptView(View):
     def __init__(self, is_redo: bool):
@@ -712,7 +723,6 @@ class OwnerVerifyPromptView(View):
     async def cancel(self, interaction: discord.Interaction, button: Button):
         await interaction.response.edit_message(content=VM["info_cancelled"], view=None)
 
-
 class OwnerVerifySelfView(View):
     def __init__(self):
         super().__init__()
@@ -734,7 +744,6 @@ class OwnerVerifySelfView(View):
     @discord.ui.button(label=VM["btn_cancel"], style=discord.ButtonStyle.secondary)
     async def cancel(self, interaction: discord.Interaction, button: Button):
         await interaction.response.edit_message(content=VM["info_cancelled"], view=None)
-
 
 class VerificationView(View):
     def __init__(self, verifiers_needed: int, hide_change: bool = False):
@@ -882,7 +891,6 @@ class VerificationView(View):
         view = ChallengeMenuView(cat, roles, 0, interaction.guild)
         await interaction.response.edit_message(content=VM["flow_pick_challenge"], view=view)
 
-
 class ReportConfirmView(View):
     def __init__(self):
         super().__init__()
@@ -894,7 +902,7 @@ class ReportConfirmView(View):
         _save_state()
         thread = interaction.channel
         await _set_tags(thread, [TAG_REPORTED])
-        role_mention = f"<@&{state['selected_role_id']}>" if state.get('selected_role_id') else "???"
+        role_mention = _challenge_role_mention(interaction.guild, state.get('selected_role_id'))
         content = _build_challenge_message(state, interaction.guild)
         await interaction.response.edit_message(content=VM["report_escalated"], view=None)
         main_msg = thread.get_partial_message(state['message_id'])
@@ -907,7 +915,6 @@ class ReportConfirmView(View):
     @discord.ui.button(label=VM["btn_cancel"], style=discord.ButtonStyle.secondary)
     async def cancel_btn(self, interaction: discord.Interaction, button: Button):
         await interaction.response.edit_message(content=VM["report_cancelled"], view=None)
-
 
 class ReportResolveView(View):
     def __init__(self):
@@ -944,7 +951,6 @@ class ReportResolveView(View):
         await interaction.response.edit_message(content=content, view=ManualModeView(), allowed_mentions=_no_ping())
         await thread.send(VM["manual_activated"].format(mention=interaction.user.mention), allowed_mentions=_no_ping())
 
-
 class RejectConfirmView(View):
     def __init__(self):
         super().__init__()
@@ -971,7 +977,6 @@ class RejectConfirmView(View):
     async def cancel_btn(self, interaction: discord.Interaction, button: Button):
         await interaction.response.edit_message(content=VM["reject_cancelled"], view=None)
 
-
 class RejectResolveView(View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -992,7 +997,6 @@ class RejectResolveView(View):
         view = VerificationView(remaining, hide_change=state['verifiers_done'] > 0)
         await interaction.response.edit_message(content=content, view=view, allowed_mentions=_no_ping())
         await thread.send(VM["rejected_resolved"].format(mention=interaction.user.mention), allowed_mentions=_no_ping())
-
 
 class ManualModeView(View):
     def __init__(self):
@@ -1020,7 +1024,7 @@ class ManualModeView(View):
             return
         state = _get_state(interaction.channel_id)
         thread = interaction.channel
-        role_mention = f"<@&{state['selected_role_id']}>" if state.get('selected_role_id') else "???"
+        role_mention = _challenge_role_mention(interaction.guild, state.get('selected_role_id'))
         await interaction.response.edit_message(content=VM["verif_done_bot"].format(role_mention=role_mention), view=None, allowed_mentions=_no_ping())
         await thread.send(VM["manual_verify_no_roles"].format(role_mention=role_mention, mention=interaction.user.mention), allowed_mentions=_no_ping())
         await thread.edit(archived=True, locked=True)
@@ -1041,12 +1045,11 @@ class ManualModeView(View):
         if member and role_id:
             async with RoleSession(member) as rs:
                 rs.add(role_id)
-        role_mention = f"<@&{role_id}>" if role_id else "???"
+        role_mention = _challenge_role_mention(interaction.guild, role_id)
         await interaction.response.edit_message(content=VM["verif_done_bot"].format(role_mention=role_mention), view=None, allowed_mentions=_no_ping())
         await thread.send(VM["manual_verify_roles"].format(role_mention=role_mention, mention=interaction.user.mention), allowed_mentions=_no_ping())
         await thread.edit(archived=True, locked=True)
         _clean_state(thread.id)
-
 
 # ── Polling ─────────────────────────────────────────────────────────────────
 
@@ -1097,7 +1100,6 @@ async def video_polling_loop():
                     log.warning("verification: HTTP error swallowed", exc_info=True)
         except Exception:
             log.exception("video_polling_loop: transient error swallowed; loop continues")
-
 
 # ── Restore ─────────────────────────────────────────────────────────────────
 
