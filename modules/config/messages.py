@@ -182,7 +182,7 @@ verification_messages = {
     "msg_header_title": "# <:doors_clock:1499578504000311386> {role_mention} completion",
     "msg_header_body": "{op_mention} completed **{name}**",
     "msg_body_reported": "## <:disconnect:1499465485144686682> reported - awaiting moderator review",
-    "msg_body_manual": "## <:required:1463357222632292458> manual mode - only moderators can act",
+    "msg_body_manual": "## <:required:1574948968624820324> manual mode - only moderators can act",
     "msg_body_ready": "## <:yes:1463357188964618413> video is ready // {done}/{needed} verifications",
     "msg_body_ready_last": "-# last verifier: {last}",
     "msg_body_uploading": "## <:doors_globe:1499578536904622101> the video is uploading",
@@ -199,10 +199,10 @@ verification_messages = {
     "flow_pick_challenge": "# pick a challenge\nuse the dropdown to select the one you completed",
     "flow_ignore": "# <:disconnect:1499465485144686682> this thread is marked as incomplete or failed\nthe runner stated this is a failed or incomplete run.\nif this changes, click the button below to turn it back into a verification request.",
     "flow_ask_video": "<@{op_id}> **the bot only supports youtube links.**\nedit your original post to add one, or paste a link in this chat.\n***by the way, you can send the link even before it's finished uploading! the bot will ping the verifiers when it's watchable automatically.***\nif you don't have footage or are using another platform, click below to skip the youtube requirement.",
-    "flow_manual_desc": "\n\n<:required:1463357222632292458> **manual mode** - only moderators can interact with the buttons below. use them to resolve this thread.",
+    "flow_manual_desc": "\n\n<:required:1574948968624820324> **manual mode** - only moderators can interact with the buttons below. use them to resolve this thread.",
 
     # ── Verification event messages ──
-    "verif_ping": "## <:required:1463357222632292458> <@&{VERIFIER_ROLE_ID}> new **{name}** completion!\n-# after watching the video click \"verify\" on the pinned message above\n-# if something needs a moderator, click \"request mod\" instead\n-# make sure the correct challenge is selected",
+    "verif_ping": "## <:required:1574948968624820324> <@&{VERIFIER_ROLE_ID}> new **{name}** completion!\n-# after watching the video click \"verify\" on the pinned message above\n-# if something needs a moderator, click \"request mod\" instead\n-# make sure the correct challenge is selected",
     "verif_in_progress": "<:yes:1463357188964618413> verified by {mention} // {remaining} more needed",
     "verif_complete": "<:yes:1463357188964618413> verified by {mention} // run is verified!",
     "verif_done_bot": "# <:doors_trophy:1499481077272674456> verified {role_mention} completion",
