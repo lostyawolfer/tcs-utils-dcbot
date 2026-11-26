@@ -16,11 +16,11 @@ from modules import activity, badges, general, role_management, verification
 
 log = logging.getLogger(__name__)
 
-VERSION = 'v6.1.5'
+VERSION = 'v6.1.6'
 
 CHANGELOG = f"""
 ## {VERSION} changelog
-- fix challenge owners getting added to verification threads for that challenge
+- update required icon in messages to the new one
 """
 
 
